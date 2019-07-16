@@ -1,0 +1,8 @@
+Запуск отдельного модуля с тестами: pytest -p no:warnings tests/test_{module_name}.py -s -v -x
+Запуск отдельного класса с тестами в модуле: pytest -p no:warnings tests/test_{module_name}.py::{Class_name} -s -v
+Запуск отдельного теста: pytest -p no:warnings tests/test_{module_name}.py::{Class_name}::{Test_name} -s -v  # НЕ ЗАПУСКАТЬ, СТОИТ ЗАВИСИМОСТЬ ОТ НУЛЕВОГО ТЕСТА
+
+Параметры запуска :
+--ADMIN=L8Nu_2HWFFozdyKhIPDrC0SFE8gSJeoRSeffnGH44QMtcJPDou70N6ECqYJ2UG3iMv5K
+--USER1=anymoneyuser1@mailinator.com:123456
+--USER2=anymoneyuser2@mailinator.com:123456

@@ -1,0 +1,12 @@
+methods
+
+.pytest_cache
+
+.idea
+
+tech
+
+
+tests/**/*.pyc
+
+users/**/*.pyc
