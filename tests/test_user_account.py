@@ -97,7 +97,7 @@ class TestRegistration:
         User.registration(email='anymoneyuser100@mailinator.com', pwd='Ac*12')
         assert User.resp_registration['error'] == {"code": -32070, "message": "InvalidPassLength", "data": "pwd"}
 
-    def test_registration_12(self):
+    def test_registration_12(self): 
         """ Registration without email. """
         User.registration(email=None, pwd='Ac*123')
         assert User.resp_registration['error'] == {"code": -32080, "message": "InvalidLoginType", "data": "logintype"}
