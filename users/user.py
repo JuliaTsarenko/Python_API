@@ -139,6 +139,7 @@ class User:
         r = requests.post(url=self.wapi_url,
                           json={'method': 'account.renew', 'params': {}, 'jsonrpc': 2.0, 'id': self.ex_id()},
                           headers=self.headers, verify=False)
+        print('\n', 'self.headers', self.headers)
         print(r.text)
         try:
             self.headers['x-token'] = loads(r.text)['result']['token']
@@ -437,6 +438,7 @@ class User:
         # pprint.pprint(self.headers)
         r = requests.post(url=self.wapi_url, json=data, headers=self.headers, verify=False)
         # print('\n', r.text)
+        # pprint.pprint(loads(r.text))
         try:
             self.resp_delegate = loads(r.text)['result']
         except KeyError:

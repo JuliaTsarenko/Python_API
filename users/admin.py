@@ -240,23 +240,24 @@ class Admin:
 
     def create_personal_fee(self, mult=0, add=0, _min=0, _max=0, around='ceil', tp=0, currency=None, is_active=False,
                             payway_id=None, merchant_id=None):
-        requests.post(url=self.admin_url,
+        response = requests.post(url=self.admin_url,
                       json={'model': 'fee',
                             'method': 'insert',
                             'data': {'fee': {'max': _max, 'add': add, 'm': around, 'mult': mult, 'min': _min},
-                                     'tp': tp, 'currency_id': currency[currency], 'payway_id': payway_id,
+                                     'tp': tp, 'currency_id': self.currency[currency], 'payway_id': payway_id,
                                      'merchant_id': merchant_id, 'is_active': is_active}, 'selector': {}},
                       params=self.params, verify=False)
+        print(response.text)
 
-    def set_fee(self, mult=0, add=0, _min=0, _max=0, around='ceil', tp=0, currency=None, payway=None,
+    def set_fee(self, mult=0, add=0, _min=0, _max=0, around='ceil', tp=0, currency_id=None, payway_id=None,
                 is_active=True, merchant_id=None):
         r = requests.post(url=self.admin_url,
                       json={'model': 'fee',
                             'method': 'update',
                             'data': {'fee': {'max': _max, 'add': add, 'm': around, 'mult': mult, 'min': _min},
                                      'is_active': is_active},
-                            'selector': {'currency_id': ['=', self.currency[currency]],
-                                         'payway_id': ['=', payway],
+                            'selector': {'currency_id': ['=', currency_id],
+                                         'payway_id': ['=', payway_id],
                                          'tp': ['=', tp],
                                          'merchant_id': ['=', merchant_id]}},
                       params=self.params, verify=False)
@@ -318,11 +319,11 @@ class Admin:
                       params=self.params, verify=False)
 
     def set_order_status(self, lid, status):
+        time.sleep(1)
         requests.post(url=self.admin_url,
                       json={'model': 'order', 'method': 'update', 'data': {'status': status},
                             'selector': {'lid': ['in', [lid]]}},
                       params=self.params, verify=False)
-        time.sleep(1)
 
 
     def set_st_value(self, name, value=False):
@@ -337,6 +338,7 @@ class Admin:
 
 if __name__ == '__main__':
     admin = Admin(email='viktor.yahoda@gmail.com', pwd='*Anycash15')
+    admin.create_personal_fee(tp=0, currency='UAH', is_active=False, payway_id=admin.payway['visamc']['id'], merchant_id=None)
     # admin.create_personal_exchange_fee(in_curr='UAH', out_curr='USD', merchant_id=703687441778420, fee=0, is_active=True)
     # admin.set_fee(tp=10, add=1000000000, currency_id='580542139465839', payway_id='598134325510280', is_active=True, merchant_id='703687441778420')
     #print(len(admin.get_payways()))

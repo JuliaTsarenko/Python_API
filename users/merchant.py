@@ -30,7 +30,7 @@ class Merchant:
                 'x-signature': sign.create_sign(self.akey, data['params'], time_sent),
                 'x-utc-now-ms': time_sent}
 
-    def balance(self, curr):
+    def balance(self, curr=None):
         time.sleep(2)
         self.req_id = self._id()
         data = {'method': 'merchant.balance', 'params': {'curr': curr}, 'jsonrpc': 2.0, 'id': self.req_id}
@@ -40,8 +40,19 @@ class Merchant:
                                    'x-signature': sign.create_sign(self.akey, data['params'], time_sent),
                                    'x-utc-now-ms': time_sent},
                           verify=False)
-        self.resp_balance = loads(r.text)['result']
-        return loads(r.text)['result'][curr]
+        # pprint.pprint(loads(r.text))
+        try:
+            self.resp_balance = loads(r.text)['result']
+            if curr == None:
+                # print('==========>', loads(r.text)['result'])
+                return loads(r.text)['result']
+            else:
+                # print('+++++++++++', loads(r.text)['result'][curr])
+                return loads(r.text)['result'][curr]
+        except KeyError:
+            # print('-------------', loads(r.text))
+            self.resp_balance = loads(r.text)
+            return loads(r.text)
 
 
     def order_get(self, o_lid, ibill=False):
@@ -144,7 +155,7 @@ class Merchant:
         except KeyError:
             self.resp_convert_params = loads(r.text)['error']
 
-    def payin_create(self, payway, amount, in_curr, out_curr, payee, contact, region, payer):
+    def payin_create(self, payway, amount, in_curr, out_curr, payee=None, contact=None, region=None, payer=None):
         self.req_id = self._id()
         data = {'method': 'payin.create',
                 'params': {'payway': payway, 'amount': amount, 'in_curr': in_curr, 'out_curr': out_curr,
@@ -152,11 +163,12 @@ class Merchant:
                 'jsonrpc': 2.0, 'id': self._id()}
         time_sent = self.time_sent()
         r = requests.post(url=self.japi_url, json=data, headers=self.headers(data, time_sent), verify=False)
+        print('\n', r.text)
         try:
             self.resp_payin_create = loads(r.text)['result']
             self.payin_lid = loads(r.text)['result']['lid']
         except KeyError:
-            self.resp_payin_create = loads(r.text)
+            self.resp_payin_create = loads(r.text)['error']
 
     def payin_params(self, payway, in_curr, out_curr):
         self.req_id = self._id()
@@ -165,35 +177,11 @@ class Merchant:
                 'jsonrpc': 2.0, 'id': self.req_id}
         time_sent = self.time_sent()
         r = requests.post(url=self.japi_url, json=data, headers=self.headers(data, time_sent), verify=False)
-        self.resp_payin_params = loads(r.text)
-
-    def payout_create(self, payway, amount, in_curr, out_curr, userdata):
-        self.req_id = self._id()
-        data = {'method': 'payout.create',
-                'params': {'payway': payway, 'amount': amount, 'in_curr': in_curr, 'out_curr': out_curr,
-                           'userdata': userdata, 'externalid': self._id()},
-                'jsonrpc': 2.0, 'id': self.req_id}
-        time_sent = self.time_sent()
-        r = requests.post(url=self.japi_url, json=data, headers=self.headers(data, time_sent), verify=False)
-        self.resp_payout_create = loads(r.text)
-
-    def payout_params(self, payway, in_curr, out_curr):
-        self.req_id = self._id()
-        data = {'method': 'payout.params',
-                'params': {'payway': payway, 'in_curr': in_curr, 'out_curr': out_curr},
-                'jsonrpc': 2.0, 'id': self.req_id}
-        time_sent = self.time_sent()
-        r = requests.post(url=self.japi_url, json=data, headers=self.headers(data, time_sent), verify=False)
-        self.resp_payout_params = loads(r.text)
-
-    def in_curr_list(self, payway, out_curr):
-        self.req_id = self._id()
-        data = {'method': 'payout.in_curr_list',
-                'params': {'payway': payway, 'out_curr': out_curr},
-                'jsonrpc': 2.0, 'id': self.req_id}
-        time_sent = self.time_sent()
-        r = requests.post(url=self.japi_url, json=data, headers=self.headers(data, time_sent), verify=False)
-        self.resp_payout_in_curr_list = loads(r.text)
+        print('\n', r.text)
+        try:
+            self.resp_payin_params = loads(r.text)['result']
+        except KeyError:
+            self.resp_payin_create = loads(r.text)['error']
 
     def transfer_create(self, amount, out_curr, tgt, in_curr=None):
         self.req_id = self._id()
@@ -243,5 +231,78 @@ class Merchant:
             self.resp_payout_params = loads(r.text)['result']
         except KeyError:
             self.resp_payout_params = loads(r.text)
+
+    def payout_in_curr_list(self, payway, out_curr):
+        self.req_id = self._id()
+        data = {'method': 'payout.in_curr_list',
+                'params': {'out_curr': out_curr, 'payway': payway},
+                'jsonrpc': 2.0, 'id': self.req_id}
+        # print('data', data)
+        time_sent = self.time_sent()
+        r = requests.post(url=self.japi_url, json=data, headers=self.headers(data, time_sent), verify=False)
+        # print('r.text', r.text)
+        # pprint.pprint(loads(r.text))
+        try:
+            self.resp_payout_in_curr_list = loads(r.text)['result']
+        except KeyError:
+            self.resp_payout_in_curr_list = loads(r.text)
+
+    def payout_get_cheque(self, lid):
+        self.req_id = self._id()
+        data = {'method': 'payout.get_cheque',
+                'params': {'lid': str(lid)},
+                'jsonrpc': 2.0, 'id': self.req_id}
+        # print('data', data)
+        time_sent = self.time_sent()
+        r = requests.post(url=self.japi_url, json=data, headers=self.headers(data, time_sent), verify=False)
+        # print('r.text', r.text)
+        # pprint.pprint(loads(r.text))
+        try:
+            self.resp_payout_in_curr_list = loads(r.text)['result']
+        except KeyError:
+            self.resp_payout_in_curr_list = loads(r.text)['error']
+
+
+    def currency_list(self):
+        self.req_id = self._id()
+        data = {'method': 'merchant.currency_list', 'params': {}, 'jsonrpc': 2.0, 'id': self.req_id}
+        time_sent = self.time_sent()
+        r = requests.post(url=self.japi_url, json=data,
+                          headers={'x-merchant': str(self.lid),
+                                   'x-signature': sign.create_sign(self.akey, data['params'], time_sent),
+                                   'x-utc-now-ms': time_sent},
+                          verify=False)
+        # pprint.pprint(loads(r.text))
+        self.resp_currency_list = loads(r.text)
+        return loads(r.text)
+
+
+    def exchange_list(self):
+        self.req_id = self._id()
+        data = {'method': 'merchant.exchange_list', 'params': {}, 'jsonrpc': 2.0, 'id': self.req_id}
+        time_sent = self.time_sent()
+        r = requests.post(url=self.japi_url, json=data,
+                          headers={'x-merchant': str(self.lid),
+                                   'x-signature': sign.create_sign(self.akey, data['params'], time_sent),
+                                   'x-utc-now-ms': time_sent},
+                          verify=False)
+        # pprint.pprint(loads(r.text))
+        self.resp_exchange_list = loads(r.text)
+        return loads(r.text)
+
+
+    def payway_list(self):
+        self.req_id = self._id()
+        data = {'method': 'merchant.payway_list', 'params': {}, 'jsonrpc': 2.0, 'id': self.req_id}
+        time_sent = self.time_sent()
+        r = requests.post(url=self.japi_url, json=data,
+                          headers={'x-merchant': str(self.lid),
+                                   'x-signature': sign.create_sign(self.akey, data['params'], time_sent),
+                                   'x-utc-now-ms': time_sent},
+                          verify=False)
+        pprint.pprint(loads(r.text))
+        self.resp_payway_list = loads(r.text)
+        return loads(r.text)
+
 
 

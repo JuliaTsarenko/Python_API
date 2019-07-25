@@ -1,6 +1,7 @@
 import pytest
 from users.user import User
 from users.admin import Admin
+from users.tools import *
 
 
 def pytest_addoption(parser):
@@ -113,7 +114,7 @@ def _drop_pwd(email='anymoneyuser1@mailinator.com'):
 
 @pytest.yield_fixture(scope='class')
 def _personal_exchange_fee():
-    print(' \n Creating personal exchange fee')
+    print('\n Creating personal exchange fee')
     admin.create_personal_exchange_fee(in_curr=admin.currency['UAH'], out_curr=admin.currency['USD'],
                                        merchant_id=user1.merchant1.id, fee=0, is_active=False)
     admin.create_personal_exchange_fee(in_curr=admin.currency['USD'], out_curr=admin.currency['UAH'],
@@ -127,19 +128,24 @@ def _personal_exchange_fee():
     admin.create_personal_exchange_fee(in_curr=admin.currency['USD'], out_curr=admin.currency['BTC'],
                                        merchant_id=user1.merchant1.id, fee=0, is_active=False)
     yield
-    print(' \n Deleted personal exchange fee')
+    print(' \n Deleting personal exchange fee')
     admin.delete_personal_exchange_fee(merchant_id=user1.merchant1.id)
 
 
-@pytest.mark.skip(scope='class')
-def _personal_fee():
-    admin.create_personal_fee(currency=admin.currency['USD'], is_active=False, payway_id=admin.payway['perfect']['id'],
-                              merchant_id=user1.merchant1.lid)
-    admin.create_personal_fee(currency=admin.currency['USD'], is_active=False, payway_id=admin.payway['cash_kiev']['id'],
-                              merchant_id=user1.merchant1.lid)
-    print(' \n Creating personal payin fee')
+@pytest.yield_fixture(scope='class')
+def _personal_operation_fee():
+    print('\n Creating personal PAYIN fee')
+    admin.create_personal_fee(currency='USD', is_active=False, payway_id=admin.payway['perfect']['id'],
+                              merchant_id=user1.merchant1.id)
+    admin.create_personal_fee(currency='USD', is_active=False, payway_id=admin.payway['cash_kiev']['id'],
+                              merchant_id=user1.merchant1.id)
+    admin.create_personal_fee(currency='BTC', is_active=False, payway_id=admin.payway['btc']['id'],
+                              merchant_id=user1.merchant1.id)
+    admin.create_personal_fee(currency='UAH', is_active=False, payway_id=admin.payway['privat24']['id'],
+                              merchant_id=user1.merchant1.id)
     yield
-    print(' \n Deleted personal payin fee')
+    print('\n Deleting personal PAYIN fee')
+    admin.delete_personal_fee(merchant_id=user1.merchant1.id)
 
 
 @pytest.yield_fixture(scope='class')
@@ -150,17 +156,17 @@ def delete_personal_exchange_fee():
 @pytest.yield_fixture(scope='function')
 def _disable_personal_operation_fee_transfer_USD():
     yield
-    admin.set_fee(tp=30, currency='USD', is_active=False, merchant_id=user1.merchant1.id)
+    admin.set_fee(tp=30, currency_id=admin.currency['USD'], is_active=False, merchant_id=user1.merchant1.id)
 
 @pytest.yield_fixture(scope='function')
 def _disable_personal_operation_fee_transfer_BTC():
     yield
-    admin.set_fee(tp=30, currency='BTC', is_active=False, merchant_id=user1.merchant1.id)
+    admin.set_fee(tp=30, currency_id=admin.currency['BTC'], is_active=False, merchant_id=user1.merchant1.id)
 
 @pytest.yield_fixture(scope='function')
 def _disable_personal_operation_fee_transfer_UAH():
     yield
-    admin.set_fee(tp=30, currency='UAH', is_active=False, merchant_id=user1.merchant1.id)
+    admin.set_fee(tp=30, currency_id=admin.currency['UAH'], is_active=False, merchant_id=user1.merchant1.id)
 
 @pytest.yield_fixture(scope='function')
 def _enable_merchant_is_active():
@@ -195,6 +201,10 @@ def _enable_currency():
     admin.set_currency_activity(name='USD', is_disabled=False, is_active=True)
     admin.set_currency_activity(name='BTC', is_disabled=False, is_active=True)
     admin.set_currency_activity(name='RUB', is_disabled=False, is_active=True)
+    admin.set_currency_activity(name='BCHABC', is_disabled=False, is_active=True)
+    admin.set_currency_activity(name='ETH', is_disabled=False, is_active=True)
+    admin.set_currency_activity(name='USDT', is_disabled=False, is_active=True)
+    admin.set_currency_activity(name='LTC', is_disabled=False, is_active=True)
 
 
 def _disable_personal_exchange_fee():
@@ -233,12 +243,22 @@ def _merchant_activate():
 @pytest.yield_fixture(scope='function')
 def _enable_exchange_operation_UAH_RUB():
     yield
-    admin.set_rate_exchange(rate=2666600000, fee=0, in_currency='UAH', out_currency='RUB')
+    admin.set_rate_exchange(rate=bl(2.46305), fee=0, in_currency='UAH', out_currency='RUB')
 
 @pytest.yield_fixture(scope='function')
 def _enable_exchange_operation_UAH_USD():
     yield
-    admin.set_rate_exchange(rate=28199900000, fee=0, in_currency='UAH', out_currency='USD')
+    admin.set_rate_exchange(rate=bl(25.91463), fee=bl(0.04), in_currency='UAH', out_currency='USD')
+
+@pytest.yield_fixture(scope='function')
+def _enable_exchange_operation_RUB_UAH():
+    yield
+    admin.set_rate_exchange(rate=bl(2.48757), fee=0, in_currency='RUB', out_currency='UAH')
+
+@pytest.yield_fixture(scope='function')
+def _enable_exchange_operation_USD_UAH():
+    yield
+    admin.set_rate_exchange(rate=bl(25.7355), fee=bl(0.03), in_currency='USD', out_currency='UAH')
 
 @pytest.yield_fixture(scope='function')
 def _activate_kuna():

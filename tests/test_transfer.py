@@ -115,9 +115,9 @@ class TestTransfer:
         and with common absolute fee 1 USD for transfer with personal percent fee 1% for transfer
         and with personal absolute fee 0.5 USD for transfer. """
         admin.set_wallet_amount(balance=bl(10), currency='USD', merch_lid=user1.merchant1.lid)
-        admin.set_fee(mult=10000000, add=500000000, _min=0, _max=0, around='ceil', tp=30, currency='USD',
+        admin.set_fee(mult=bl(0.01), add=bl(0.5), _min=0, _max=0, around='ceil', tp=30, currency='USD',
                       is_active=True, merchant_id=user1.merchant1.id)
-        admin.set_fee(mult=20000000, add=1000000000, _min=0, _max=0, around='ceil', tp=30, currency='USD', is_active=True)
+        admin.set_fee(mult=bl(0.02), add=bl(1), _min=0, _max=0, around='ceil', tp=30, currency='USD', is_active=True)
         user1.merchant1.transfer_create(tgt=user1.merchant2.lid, amount='5', out_curr='USD')
         assert user1.merchant1.resp_transfer_create['result']['status'] == 'done'
         assert user1.merchant1.resp_transfer_create['result']['in_amount'] == '5'
@@ -175,9 +175,10 @@ class TestTransfer:
         admin.set_wallet_amount(balance=bl(1), currency='BTC', merch_lid=user1.merchant2.lid)
         admin.set_rate_exchange(rate=3580654100000, fee=500000, in_currency='USD', out_currency='BTC',
                                 tech_min=bl(1), tech_max=bl(2000))
-        admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=30, currency='BTC',
+        admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=30, currency_id=admin.currency['BTC'],
                       is_active=False, merchant_id=user1.merchant1.lid)
-        admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=30, currency='BTC', is_active=False)
+        admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=30, currency_id=admin.currency['BTC'],
+                      is_active=False)
         user1.delegate(params={'merch_model': 'transfer', 'merch_method': 'create', 'externalid': user1.ex_id(),
                                'm_lid': user1.merchant1.lid, 'tgt': user1.merchant2.lid,
                                'amount': '0.43', 'in_curr': 'USD', 'out_curr': 'BTC'})
@@ -1303,7 +1304,6 @@ class TestTransfer:
                                 tech_min=bl(0.1), tech_max=bl(10000))
 
 
-
 class TestParams:
     """ Testing transfer params method. """
 
@@ -1314,92 +1314,187 @@ class TestParams:
         admin.set_currency_precision(is_crypto=False, admin_min=bl(0.01), admin_max=bl(3000), precision=2)
         admin.set_currency_precision(is_crypto=True, admin_min=bl(0.000001), admin_max=bl(3), precision=8)
 
-    def test_params_1(self):
-        """ Getting params for transfer UAH the same owner: UAH to UAN by OWNER without fee for transfer"""
-        admin.set_wallet_amount(balance=bl(0.01), currency='UAH', merch_lid=user1.merchant1.lid)
-        admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=30, currency='UAH',
-                      is_active=False, merchant_id=user1.merchant1.id)
-        admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=30, currency='UAH', is_active=False)
-        user1.delegate(params={'merch_model': 'transfer', 'merch_method': 'params',  'm_lid': user1.merchant1.lid, 'out_curr': 'UAH'})
-        assert user1.resp_delegate['in_curr'] == 'UAH'
-        assert user1.resp_delegate['in_curr_balance'] == '0.01'
-        assert user1.resp_delegate['is_convert'] == False
-        assert user1.resp_delegate['max'] == '3000'
-        assert user1.resp_delegate['min'] == '0.01'
-        assert user1.resp_delegate['min_balance_limit'] == '0.01'
-        assert user1.resp_delegate['out_curr'] == 'UAH'
-        assert user1.resp_delegate['out_fee'] == {}
-        assert user1.resp_delegate['rate'] == ['1', '1']
+    # def test_params_1(self):
+    #     """ Getting params for transfer UAH the same owner: UAH to UAN by OWNER without fee for transfer"""
+    #     admin.set_wallet_amount(balance=bl(0.01), currency='UAH', merch_lid=user1.merchant1.lid)
+    #     admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=30, currency='UAH',
+    #                   is_active=False, merchant_id=user1.merchant1.id)
+    #     admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=30, currency='UAH', is_active=False)
+    #     user1.delegate(params={'merch_model': 'transfer', 'merch_method': 'params',  'm_lid': user1.merchant1.lid, 'out_curr': 'UAH'})
+    #     assert user1.resp_delegate['in_curr'] == 'UAH'
+    #     assert user1.resp_delegate['in_curr_balance'] == '0.01'
+    #     assert user1.resp_delegate['is_convert'] == False
+    #     assert user1.resp_delegate['max'] == '3000'
+    #     assert user1.resp_delegate['min'] == '0.01'
+    #     assert user1.resp_delegate['min_balance_limit'] == '0.01'
+    #     assert user1.resp_delegate['out_curr'] == 'UAH'
+    #     assert user1.resp_delegate['out_fee'] == {}
+    #     assert user1.resp_delegate['rate'] == ['1', '1']
+    #
+    # def test_params_2(self):
+    #     """ Getting params for transfer USD to another owner: USD to USD by MERCHANT without fee for transfer. """
+    #     admin.set_currency_precision(is_crypto=False, admin_min=bl(5), admin_max=bl(3000), precision=2)
+    #     admin.set_wallet_amount(balance=bl(5), currency='USD', merch_lid=user1.merchant1.lid)
+    #     admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=30, currency='USD',
+    #                   is_active=False, merchant_id=user1.merchant1.id)
+    #     admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=30, currency='USD', is_active=False)
+    #     user1.merchant1.transfer_params(out_curr='USD')
+    #     assert user1.merchant1.resp_transfer_params['in_curr'] == 'USD'
+    #     assert user1.merchant1.resp_transfer_params['in_curr_balance'] == '5'
+    #     assert user1.merchant1.resp_transfer_params['is_convert'] == False
+    #     assert user1.merchant1.resp_transfer_params['max'] == '3000'
+    #     assert user1.merchant1.resp_transfer_params['min'] == '5'
+    #     assert user1.merchant1.resp_transfer_params['min_balance_limit'] == '5'
+    #     assert user1.merchant1.resp_transfer_params['out_curr'] == 'USD'
+    #     assert user1.merchant1.resp_transfer_params['out_fee'] == {}
+    #     assert user1.merchant1.resp_transfer_params['rate'] == ['1', '1']
+    #
+    # def test_params_3(self):
+    #     """ Getting params for transfer BTC the same owner: BTC to BTC by MERCHANT without fee for transfer. """
+    #     admin.set_wallet_amount(balance=bl(0.00999), currency='BTC', merch_lid=user1.merchant1.lid)
+    #     admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=30, currency='BTC',
+    #                   is_active=False, merchant_id=user1.merchant1.id)
+    #     admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=30, currency='BTC', is_active=False)
+    #     user1.merchant1.transfer_params(out_curr='BTC')
+    #     assert user1.merchant1.resp_transfer_params['in_curr'] == 'BTC'
+    #     assert user1.merchant1.resp_transfer_params['in_curr_balance'] == '0.00999'
+    #     assert user1.merchant1.resp_transfer_params['is_convert'] == False
+    #     assert user1.merchant1.resp_transfer_params['max'] == '3'
+    #     assert user1.merchant1.resp_transfer_params['min'] == '0.000001'
+    #     assert user1.merchant1.resp_transfer_params['min_balance_limit'] == '0.000001'
+    #     assert user1.merchant1.resp_transfer_params['out_curr'] == 'BTC'
+    #     assert user1.merchant1.resp_transfer_params['out_fee'] == {}
+    #     assert user1.merchant1.resp_transfer_params['rate'] == ['1', '1']
+    #
+    # def test_params_4(self):
+    #     """ Getting params for transfer USD to another owner: USD to USD by OWNER with common percent fee 1% for transfer
+    #     and with common absolute fee 0.5 USD for transfer. """
+    #     admin.set_currency_precision(is_crypto=False, admin_min=bl(5), admin_max=bl(3000), precision=2)
+    #     admin.set_wallet_amount(balance=bl(10), currency='USD', merch_lid=user1.merchant1.lid)
+    #     admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=30, currency='USD',
+    #                   is_active=False, merchant_id=user1.merchant1.id)
+    #     admin.set_fee(mult=bl(0.01), add=bl(0.5), _min=0, _max=0, around='ceil', tp=30, currency='USD', is_active=True)
+    #     user1.delegate(params={'merch_model': 'transfer', 'merch_method': 'params',  'm_lid': user1.merchant1.lid, 'out_curr': 'USD'})
+    #     assert user1.resp_delegate['in_curr'] == 'USD'
+    #     assert user1.resp_delegate['in_curr_balance'] == '10'
+    #     assert user1.resp_delegate['is_convert'] == False
+    #     assert user1.resp_delegate['max'] == '3000'
+    #     assert user1.resp_delegate['min'] == '5'
+    #     assert user1.resp_delegate['min_balance_limit'] == '5.55'
+    #     assert user1.resp_delegate['out_curr'] == 'USD'
+    #     assert user1.resp_delegate['out_fee'] == {'add': '0.5', 'max': '0', 'method': 'ceil', 'min': '0', 'mult': '0.01'}
+    #     assert user1.resp_delegate['rate'] == ['1', '1']
+    #
+    # def test_params_5(self):
+    #     """ Getting params for transfer BTC to another owner: BTC to BTC by MERCHANT
+    #     with common absolute fee 0.0001 BTC for transfer. """
+    #     admin.set_wallet_amount(balance=bl(0.004), currency='BTC', merch_lid=user1.merchant1.lid)
+    #     admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=30, currency='BTC',
+    #                   is_active=False, merchant_id=user1.merchant1.id)
+    #     admin.set_fee(mult=0, add=100000, _min=0, _max=0, around='ceil', tp=30, currency='BTC', is_active=True)
+    #     user1.merchant1.transfer_params(out_curr='BTC')
+    #     assert user1.merchant1.resp_transfer_params['in_curr'] == 'BTC'
+    #     assert user1.merchant1.resp_transfer_params['in_curr_balance'] == '0.004'
+    #     assert user1.merchant1.resp_transfer_params['is_convert'] == False
+    #     assert user1.merchant1.resp_transfer_params['max'] == '3'
+    #     assert user1.merchant1.resp_transfer_params['min'] == '0.000001'
+    #     assert user1.merchant1.resp_transfer_params['min_balance_limit'] == '0.000101'
+    #     assert user1.merchant1.resp_transfer_params['out_curr'] == 'BTC'
+    #     assert user1.merchant1.resp_transfer_params['out_fee'] == \
+    #            {'add': '0.0001', 'max': '0', 'method': 'ceil', 'min': '0', 'mult': '0'}
+    #     assert user1.merchant1.resp_transfer_params['rate'] == ['1', '1']
+    #
+    # def test_params_6(self, _custom_fee, _disable_personal_operation_fee_transfer_USD):
+    #     """ Getting params for transfer USD the same owner: USD to USD by MERCHANT
+    #     with common percent fee 2% for transfer and with common absolute fee 1 USD for transfer
+    #     with personal percent fee 1% for transfer and with personal absolute fee 0.5 USD for transfer. """
+    #     admin.set_currency_precision(is_crypto=False, admin_min=bl(5), admin_max=bl(3000), precision=2)
+    #     admin.set_wallet_amount(balance=bl(10), currency='USD', merch_lid=user1.merchant1.lid)
+    #     admin.set_fee(mult=bl(0.01), add=bl(0.5), _min=0, _max=0, around='ceil', tp=30, currency='USD',
+    #                   is_active=True, merchant_id=user1.merchant1.id)
+    #     admin.set_fee(mult=bl(0.02), add=bl(1), _min=0, _max=0, around='ceil', tp=30, currency='USD', is_active=True)
+    #     user1.merchant1.transfer_params(out_curr='USD')
+    #     assert user1.merchant1.resp_transfer_params['in_curr'] == 'USD'
+    #     assert user1.merchant1.resp_transfer_params['in_curr_balance'] == '10'
+    #     assert user1.merchant1.resp_transfer_params['is_convert'] == False
+    #     assert user1.merchant1.resp_transfer_params['max'] == '3000'
+    #     assert user1.merchant1.resp_transfer_params['min'] == '5'
+    #     assert user1.merchant1.resp_transfer_params['min_balance_limit'] == '5.55'
+    #     assert user1.merchant1.resp_transfer_params['out_curr'] == 'USD'
+    #     assert user1.merchant1.resp_transfer_params['out_fee'] == \
+    #            {'add': '0.5', 'max': '0', 'method': 'ceil', 'min': '0', 'mult': '0.01'}
+    #     assert user1.merchant1.resp_transfer_params['rate'] == ['1', '1']
+    #
+    # def test_params_7(self, _custom_fee, _disable_personal_operation_fee_transfer_BTC):
+    #     """ Getting params for transfer BTC to another owner: BTC to BTC by OWNER
+    #     with common percent fee 5% for transfer and with common absolute fee 0.0002 BTC for transfer
+    #     with personal percent fee 3% for transfer and with personal absolute fee 0.0001 BTC for transfer. """
+    #     admin.set_wallet_amount(balance=bl(0.004), currency='BTC', merch_lid=user1.merchant1.lid)
+    #     admin.set_fee(mult=30000000, add=100000, _min=0, _max=0, around='ceil', tp=30, currency='BTC',
+    #                   is_active=True, merchant_id=user1.merchant1.id)
+    #     admin.set_fee(mult=50000000, add=200000, _min=0, _max=0, around='ceil', tp=30, currency='BTC', is_active=True)
+    #     user1.delegate(params={'merch_model': 'transfer', 'merch_method': 'params',  'm_lid': user1.merchant1.lid,
+    #                            'out_curr': 'BTC'})
+    #     assert user1.resp_delegate['in_curr'] == 'BTC'
+    #     assert user1.resp_delegate['in_curr_balance'] == '0.004'
+    #     assert user1.resp_delegate['is_convert'] == False
+    #     assert user1.resp_delegate['max'] == '3'
+    #     assert user1.resp_delegate['min'] == '0.000001'
+    #     assert user1.resp_delegate['min_balance_limit'] == '0.00010103'
+    #     assert user1.resp_delegate['out_curr'] == 'BTC'
+    #     assert user1.resp_delegate['out_fee'] == {'add': '0.0001', 'max': '0', 'method': 'ceil', 'min': '0', 'mult': '0.03'}
+    #     assert user1.resp_delegate['rate'] == ['1', '1']
 
-    def test_params_2(self):
-        """ Getting params for transfer USD to another owner: USD to USD by MERCHANT without fee for transfer. """
-        admin.set_currency_precision(is_crypto=False, admin_min=bl(5), admin_max=bl(3000), precision=2)
-        admin.set_wallet_amount(balance=bl(5), currency='USD', merch_lid=user1.merchant1.lid)
-        admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=30, currency='USD',
-                      is_active=False, merchant_id=user1.merchant1.id)
-        admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=30, currency='USD', is_active=False)
-        user1.merchant1.transfer_params(out_curr='USD')
-        assert user1.merchant1.resp_transfer_params['in_curr'] == 'USD'
-        assert user1.merchant1.resp_transfer_params['in_curr_balance'] == '5'
-        assert user1.merchant1.resp_transfer_params['is_convert'] == False
-        assert user1.merchant1.resp_transfer_params['max'] == '3000'
-        assert user1.merchant1.resp_transfer_params['min'] == '5'
-        assert user1.merchant1.resp_transfer_params['min_balance_limit'] == '5'
-        assert user1.merchant1.resp_transfer_params['out_curr'] == 'USD'
-        assert user1.merchant1.resp_transfer_params['out_fee'] == {}
-        assert user1.merchant1.resp_transfer_params['rate'] == ['1', '1']
 
-    def test_params_3(self):
-        """ Getting params for transfer BTC the same owner: BTC to BTC by MERCHANT without fee for transfer. """
-        admin.set_wallet_amount(balance=bl(0.00999), currency='BTC', merch_lid=user1.merchant1.lid)
-        admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=30, currency='BTC',
-                      is_active=False, merchant_id=user1.merchant1.id)
-        admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=30, currency='BTC', is_active=False)
-        user1.merchant1.transfer_params(out_curr='BTC')
-        assert user1.merchant1.resp_transfer_params['in_curr'] == 'BTC'
-        assert user1.merchant1.resp_transfer_params['in_curr_balance'] == '0.00999'
-        assert user1.merchant1.resp_transfer_params['is_convert'] == False
-        assert user1.merchant1.resp_transfer_params['max'] == '3'
-        assert user1.merchant1.resp_transfer_params['min'] == '0.000001'
-        assert user1.merchant1.resp_transfer_params['min_balance_limit'] == '0.000001'
-        assert user1.merchant1.resp_transfer_params['out_curr'] == 'BTC'
-        assert user1.merchant1.resp_transfer_params['out_fee'] == {}
-        assert user1.merchant1.resp_transfer_params['rate'] == ['1', '1']
-
-    def test_transfer_4(self):
-        """ Transfer 5 USD to another owner: USD to USD by OWNER with common percent fee 1% for transfer
-        and with common absolute fee 0.5 USD for transfer. """
-        admin.set_currency_precision(is_crypto=False, admin_min=bl(5), admin_max=bl(3000), precision=2)
-        admin.set_wallet_amount(balance=bl(10), currency='USD', merch_lid=user1.merchant1.lid)
-        admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=30, currency='USD',
-                      is_active=False, merchant_id=user1.merchant1.id)
-        admin.set_fee(mult=bl(0.01), add=bl(0.5), _min=0, _max=0, around='ceil', tp=30, currency='USD', is_active=True)
+    def test_transfer_9(self):
+        """ Transfer 0.43 BTC the same owner: USD to BTC by OWNER with internal exchange
+        and with common percent fee 0.05% for exchange. """
+        admin.set_wallet_amount(balance=bl(1600), currency='USD', merch_lid=user1.merchant1.lid)
+        admin.set_wallet_amount(balance=bl(1), currency='BTC', merch_lid=user1.merchant2.lid)
+        admin.set_rate_exchange(rate=3580654100000, fee=500000, in_currency='USD', out_currency='BTC',
+                                tech_min=bl(1), tech_max=bl(2000))
+        admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=30, currency_id=admin.currency['BTC'],
+                      is_active=False, merchant_id=user1.merchant1.lid)
+        admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=30, currency_id=admin.currency['BTC'],
+                      is_active=False)
         user1.delegate(params={'merch_model': 'transfer', 'merch_method': 'create', 'externalid': user1.ex_id(),
-                               'm_lid': user1.merchant1.lid, 'tgt': user2.merchant1.lid,
-                               'amount': '5', 'out_curr': 'USD'})
-        assert user1.resp_delegate['status'] == 'done'
-        assert user1.resp_delegate['in_amount'] == '5'
-        assert user1.resp_delegate['out_amount'] == '5'
-        assert user1.resp_delegate['in_fee_amount'] == '0.55'
-        assert user1.resp_delegate['reqdata']['amount'] == '5'
-        assert user1.resp_delegate['out_fee_amount'] == '0.55'
-        assert user1.merchant1.balance(curr='USD') == '4.45'
+                               'm_lid': user1.merchant1.lid, 'tgt': user1.merchant2.lid,
+                               'amount': '0.43', 'in_curr': 'USD', 'out_curr': 'BTC'})
+        # pprint.pprint(user1.resp_delegate)
+        assert user1.resp_delegate['in_amount'] == '1540.46'
+        assert user1.resp_delegate['in_fee_amount'] == '0'
+        assert user1.resp_delegate['out_amount'] == '0.43'
+        assert user1.resp_delegate['rate'] == ['3582.44443', '1']
+        assert user1.resp_delegate['reqdata']['amount'] == '0.43'
+        # user1.merchant1.balance(curr='USD')
+        # assert user1.merchant1.resp_balance['USD'] == '59.54'
+        # time.sleep(2)
+        # user1.merchant2.balance(curr='BTC')
+        # assert user1.merchant2.resp_balance['BTC'] == '1.43'
 
-    def test_params_4(self):
-        """ Getting params for transfer USD to another owner: USD to USD by OWNER with common percent fee 1% for transfer
-        and with common absolute fee 0.5 USD for transfer. """
-        admin.set_currency_precision(is_crypto=False, admin_min=bl(5), admin_max=bl(3000), precision=2)
-        admin.set_wallet_amount(balance=bl(10), currency='USD', merch_lid=user1.merchant1.lid)
-        admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=30, currency='USD',
-                      is_active=False, merchant_id=user1.merchant1.id)
-        admin.set_fee(mult=bl(0.01), add=bl(0.5), _min=0, _max=0, around='ceil', tp=30, currency='USD', is_active=True)
-        user1.delegate(params={'merch_model': 'transfer', 'merch_method': 'params',  'm_lid': user1.merchant1.lid, 'out_curr': 'USD'})
+    def test_params_9(self):
+        """ Getting params for transfer BTC the same owner: USD to BTC by OWNER with internal exchange
+        and with common percent fee 0.05% for exchange. """
+        admin.set_wallet_amount(balance=bl(1600), currency='USD', merch_lid=user1.merchant1.lid)
+        admin.set_wallet_amount(balance=bl(1), currency='BTC', merch_lid=user1.merchant2.lid)
+        admin.set_rate_exchange(rate=3580654100000, fee=500000, in_currency='USD', out_currency='BTC',
+                                tech_min=bl(1), tech_max=bl(2000))
+        admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=30, currency_id=admin.currency['BTC'],
+                      is_active=False, merchant_id=user1.merchant1.lid)
+        admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=30, currency_id=admin.currency['BTC'],
+                      is_active=False)
+        user1.delegate(params={'merch_model': 'transfer', 'merch_method': 'params',  'm_lid': user1.merchant1.lid,
+                               'in_curr': 'USD', 'out_curr': 'BTC'})
+        pprint.pprint(user1.resp_delegate)
+        assert user1.resp_delegate['from_in_curr_balance'] == '0.44662241'
         assert user1.resp_delegate['in_curr'] == 'USD'
-        assert user1.resp_delegate['in_curr_balance'] == '10'
-        assert user1.resp_delegate['is_convert'] == False
-        assert user1.resp_delegate['max'] == '3000'
-        assert user1.resp_delegate['min'] == '5'
-        assert user1.resp_delegate['min_balance_limit'] == '5.56'
-        assert user1.resp_delegate['out_curr'] == 'USD'
-        assert user1.resp_delegate['out_fee'] == None
-        assert user1.resp_delegate['rate'] == ['1', '1']
+        assert user1.resp_delegate['in_curr_balance'] == '1600'
+        assert user1.resp_delegate['is_convert'] == True
+        assert user1.resp_delegate['max'] == '0.55883645'
+        assert user1.resp_delegate['min'] == '0.00027941'
+        assert user1.resp_delegate['min_balance_limit'] == '1.0005'
+        assert user1.resp_delegate['out_curr'] == 'BTC'
+        assert user1.resp_delegate['out_fee'] == {}
+        assert user1.resp_delegate['rate'] == ['3582.44443', '1']
+
+
