@@ -13,4 +13,7 @@ def create_sign(key, data, utc_now):
         if not isinstance(v, (dict, list, type(None)))
     ) + str(utc_now)
 
+    msg = msg.lower()
+
     return hmac.new(key.encode(), msg.encode(), hashlib.sha512).hexdigest()
+

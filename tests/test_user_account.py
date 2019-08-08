@@ -1,7 +1,9 @@
 import pytest
+import time
 from users.user import User
 
 
+@pytest.mark.usefixtures('_validate_pwd_off')
 class TestRegistration:
     """ Registration by email. """
 
@@ -19,7 +21,6 @@ class TestRegistration:
         user1.authorization_by_email(email='anymoneyuser100@mailinator.com', pwd='Ac*123')
         assert user1.resp_authorization['session']['token'] == admin.get_session(email='anymoneyuser100@mailinator.com')
 
-
     def test_registration_2(self, _delete_user):
         """ Registration to busy not activated email. """
         User.registration(email='anymoneyuser100@mailinator.com', pwd='Ac*123')
@@ -32,7 +33,6 @@ class TestRegistration:
         assert user1.resp_authorization['error'] == {"code": -32090, "message": "NotFound", "data": "pwd"}
         user1.authorization_by_email(email='anymoneyuser100@mailinator.com', pwd='Ac*456')
         assert user1.resp_authorization['session']['token'] == admin.get_session(email='anymoneyuser100@mailinator.com')
-
 
     def test_registration_3(self, _delete_user):
         """ Registration on busy and activated email. """
@@ -56,6 +56,7 @@ class TestRegistration:
         User.registration(email='anymoneyuser100@mailinator.com', pwd='Ac*123')
         User.confirm_registration(code=None, key=User.confirm_key)
         assert User.resp_confirm['error'] == {"code": -32033, "message": "Auth2Wrong"}
+        assert admin.get_user(email='anymoneyuser100@mailinator.com')['lvl'] == 10
 
     def test_registration_6(self, _delete_user):
         """ Registration with wrong one time code. """
@@ -91,12 +92,15 @@ class TestRegistration:
         """ Registration without password. """
         User.registration(email='anymoneyuser100@mailinator.com', pwd=None)
         assert User.resp_registration['error'] == {"code": -32070, "message": "InvalidParam", "data": {"reason": "None is not acceptable for pwd"}}
+        assert admin.get_user(email='anymoneyuser100@mailinator.com') == {'exception': "User wasn't found"}
 
     def test_registration_11(self):
         """ Registration with password less than 6 symbols. """
+        admin.set_front_params(pass_length_min=6)
         User.registration(email='anymoneyuser100@mailinator.com', pwd='Ac*12')
         assert User.resp_registration['error'] == {"code": -32082, "message": "InvalidPassLength",
                                                    "data": {"reason": "Must contain at least 6 symbols"}}
+        assert admin.get_user(email='anymoneyuser100@mailinator.com') == {'exception': "User wasn't found"}
 
     def test_registration_12(self):
         """ Registration without email. """
@@ -113,6 +117,7 @@ class TestRegistration:
         """ Registration with wrong format email: double @. """
         User.registration(email='anymoneyuser100@@mailinator.com', pwd='Ac*123')
         assert User.resp_registration['error'] == {"code": -32035, "message": "InvalidField"}
+        assert admin.get_user(email='anymoneyuser100@@mailinator.com') == {'exception': "User wasn't found"}
 
     def test_registration_15(self):
         """ Registration with wrong format email: without string before @. """
@@ -124,12 +129,84 @@ class TestRegistration:
         """ Registration with wrong format email: without domain part. """
         User.registration(email='anymoneyuser100@mailinator', pwd='Ac*123')
         assert User.resp_registration['error'] == {"code": -32035, "message": "InvalidField"}
+        assert admin.get_user(email='anymoneyuser100@mailinator') == {'exception': "User wasn't found"}
 
     def test_registration_17(self):
         """ Registration with wrong format email: without host part. """
         User.registration(email='anymoneyuser100@.com', pwd='Ac*123')
         assert User.resp_registration['error'] == {"code": -32035, "message": "InvalidField"}
         assert admin.get_user(email='anymoneyuser100.com')['exception'] == "User wasn't found"
+
+    def test_registration_18(self, _delete_user):
+        """ Success registration by email with max length password. """
+        admin.set_front_params(pass_length_max=50)
+        User.registration(email='anymoneyuser100@mailinator.com',
+                          pwd='aA.123............................................')
+        User.confirm_registration(key=User.confirm_key, code=admin.get_onetime_code('anymoneyuser100@mailinator.com'))
+        assert admin.get_user(email='anymoneyuser100@mailinator.com')['lvl'] == 20
+        assert admin.get_session(email='anymoneyuser100@mailinator.com') == User.headers['x-token']
+        user1.authorization_by_email(email='anymoneyuser100@mailinator.com',
+                                     pwd='aA.123............................................')
+        assert user1.resp_authorization['session']['token'] == admin.get_session(email='anymoneyuser100@mailinator.com')
+
+    def test_registration_19(self):
+        """ Registration with password longer than max length symbols. """
+        admin.set_front_params(pass_length_max=50)
+        User.registration(email='anymoneyuser100@mailinator.com',
+                          pwd='aA.123.............................................')
+        assert User.resp_registration['error'] == {"code": -32082, "message": "InvalidPassLength",
+                                                   "data": {"reason": "Must not contain more than 50 symbols"}}
+        assert admin.get_user(email='anymoneyuser100@mailinator.com') == {'exception': "User wasn't found"}
+
+    def test_registration_20(self, _delete_user):
+        """ Registration with password with active validate params. """
+        admin.set_front_params(min_upp_case_char=1, min_low_case_char=1, min_digits_qty=1, min_spec_char_qty=1)
+        User.registration(email='anymoneyuser100@mailinator.com', pwd='aA.123')
+        User.confirm_registration(key=User.confirm_key, code=admin.get_onetime_code('anymoneyuser100@mailinator.com'))
+        assert admin.get_user(email='anymoneyuser100@mailinator.com')['lvl'] == 20
+        assert admin.get_session(email='anymoneyuser100@mailinator.com') == User.headers['x-token']
+        user1.authorization_by_email(email='anymoneyuser100@mailinator.com', pwd='aA.123')
+        assert user1.resp_authorization['session']['token'] == admin.get_session(email='anymoneyuser100@mailinator.com')
+
+    def test_registration_21(self):
+        """ Registration with invalidate password (without upp case char). """
+        admin.set_front_params(min_upp_case_char=1)
+        User.registration(email='anymoneyuser100@mailinator.com', pwd='aa.123')
+        assert User.resp_registration['error'] == {"code": -32083, "message": "InvalidPassPattern",
+                                                   "data": {"reason": "Must have at least 1 upper case character(s)"}}
+        assert admin.get_user(email='anymoneyuser100@mailinator.com') == {'exception': "User wasn't found"}
+
+    def test_registration_22(self):
+        """ Registration with invalidate password (without low case char). """
+        admin.set_front_params(min_low_case_char=1)
+        User.registration(email='anymoneyuser100@mailinator.com', pwd='AA.123')
+        assert User.resp_registration['error'] == {"code": -32083, "message": "InvalidPassPattern",
+                                                   "data": {"reason": "Must have at least 1 lower case character(s)"}}
+        assert admin.get_user(email='anymoneyuser100@mailinator.com') == {'exception': "User wasn't found"}
+
+    def test_registration_23(self):
+        """ Registration with invalidate password (without digits)."""
+        admin.set_front_params(min_digits_qty=1)
+        User.registration(email='anymoneyuser100@mailinator.com', pwd='aA.aaa')
+        assert User.resp_registration['error'] == {"code": -32083, "message": "InvalidPassPattern",
+                                                   "data": {"reason": "Must have at least 1 digit(s)"}}
+        assert admin.get_user(email='anymoneyuser100@mailinator.com') == {'exception': "User wasn't found"}
+
+    def test_registration_24(self):
+        """ Registration with invalidate password (without spec char)."""
+        admin.set_front_params(min_spec_char_qty=1)
+        User.registration(email='anymoneyuser100@mailinator.com', pwd='aAa123')
+        assert User.resp_registration['error'] == {"code": -32083, "message": "InvalidPassPattern",
+                                                   "data": {"reason": "Must have at least 1 special character(s)"}}
+        assert admin.get_user(email='anymoneyuser100@mailinator.com') == {'exception': "User wasn't found"}
+
+    def test_registration_25(self, _delete_user):
+        """ Re-registration on not activated email with invalidate password. """
+        admin.set_front_params(min_spec_char_qty=1)
+        User.registration(email='anymoneyuser100@mailinator.com', pwd='Ac*123')
+        User.registration(email='anymoneyuser100@mailinator.com', pwd='Aaa123')
+        assert User.resp_registration['error'] == {"code": -32083, "message": "InvalidPassPattern",
+                                                   "data": {"reason": "Must have at least 1 special character(s)"}}
 
 
 class TestAuthorization:
@@ -149,8 +226,7 @@ class TestAuthorization:
 
     def test_autorization_2(self):
         """ Success autorization. """
-        user1.authorization_by_email(email=user1.email, pwd='Avtotest1!')
-        # print(user1.resp_authorization)
+        user1.authorization_by_email(email=user1.email, pwd=user1.pwd)
         assert user1.resp_authorization['session']['token'] == admin.get_session(email=user1.email)
 
     def test_autorization_3(self):
@@ -168,7 +244,7 @@ class TestAuthorization:
     def test_autorization_5(self, _disable_2type):
         """ Autorization with 2 step autorization. """
         user1.set_2type(tp='0')
-        user1.authorization_by_email(email=user1.email, pwd='Avtotest1!')
+        user1.authorization_by_email(email=user1.email, pwd=user1.pwd)
         print(user1.email)
         assert "key" in user1.resp_authorization['error']['data']
         user1.confirm_registration(code=admin.get_onetime_code(email=user1.email), key=user1.confirm_key, user=user1)
@@ -178,7 +254,7 @@ class TestAuthorization:
     def test_autorization_6(self, _delete_auth2type_token, _disable_2type):
         """ Authorization with 2 step with wrong code. """
         user1.set_2type(tp=0)
-        user1.authorization_by_email(email=user1.email, pwd='123456')
+        user1.authorization_by_email(email=user1.email, pwd=user1.pwd)
         user1.confirm_registration(code='000000', key=user1.confirm_key, user=user1)
         assert 'error' in user1.resp_confirm
 
@@ -186,7 +262,7 @@ class TestAuthorization:
     def test_autorization_7(self, _delete_auth2type_token, _disable_2type):
         """ Authorization after deactivated 2 step auth token. """
         user1.set_2type(tp=0)
-        user1.authorization_by_email(email=user1.email, pwd='123456')
+        user1.authorization_by_email(email=user1.email, pwd=user1.pwd)
         code = admin.get_onetime_code(email=user1.email)
         user1.cancel_2auth(key=user1.confirm_key)
         user1.confirm_registration(code=code, key=user1.confirm_key, user=user1)
@@ -200,7 +276,6 @@ class TestAuthorization:
     def test_autorization_9(self):
         """ Renew session. """
         user1.renew_session()
-        print('\n', 'user1.resp_renew', user1.resp_renew)
         assert 'token' in user1.resp_renew
         assert user1.headers['x-token'] == admin.get_session(email=user1.email)
 
@@ -208,12 +283,13 @@ class TestAuthorization:
         """ Renew session with wrong session token. """
         user1.headers['x-token'] = '1'
         user1.renew_session()
-        assert user1.resp_renew['error'] == {'code': -32041, 'message': 'InvalidToken', 'data': 'Unauthorized'}
+        assert user1.resp_renew['error'] == {'code': -32091, 'data': {'reason': 'Invalid or expired session token', 'token': '1'},
+                                             'message': 'Unauth'}
 
     def test_autorization_11(self):
         """ Authorization without password. """
         user1.authorization_by_email(email=user1.email, pwd=None)
-        assert user1.resp_authorization['error'] == {'code': -32000, 'message': 'NotFound', 'data': 'pwd'}
+        assert user1.resp_authorization['error'] == {'code': -32090, 'message': 'NotFound', 'data': 'pwd'}
 
     def test_autorization_12(self):
         """ Getting session by forgot password. """
@@ -226,17 +302,17 @@ class TestAuthorization:
         """ Banned on getting session by forgot password with added two step auth. """
         user1.set_2type(tp=0)
         user1.forgot(email=user1.email)
-        assert user1.resp_forgot['error'] == {'code': -32000, 'message': 'Unavailable', 'data': 'not enough factors for authorization'}
+        assert user1.resp_forgot['error'] == {'code': -32092, 'message': 'Unavailable', 'data': 'not enough factors for authorization'}
 
     def test_autorization_14(self):
         """ Getting session for not real email. """
         user1.forgot(email='anycashuser100@mailinator.com')
-        assert user1.resp_forgot['error'] == {'code': -32000, 'message': 'NotFound', 'data': 'email'}
+        assert user1.resp_forgot['error'] == {'code': -32090, 'message': 'NotFound', 'data': 'email'}
 
     def test_autorization_15(self):
         """ Getting session without email. """
         user1.forgot(email=None)
-        assert user1.resp_forgot['error'] == {'code': -32000, 'message': 'InvalidLoginType', 'data': 'logintype'}
+        assert user1.resp_forgot['error'] == {'code': -32080, 'message': 'InvalidLoginType', 'data': 'logintype'}
 
 
 class TestUpdate:
@@ -247,21 +323,15 @@ class TestUpdate:
         global admin, user1, user2
         admin, user1, user2 = start_session
 
-    def test_update_email_1(self):#, _drop_email):
+    def test_update_email_1(self, _drop_email):
         """ Update email and authorization by him. """
         user1.update_email(email='anymoneyuser1000@mailinator.com')
         user1.confirm_registration(code=admin.get_onetime_code(email=user1.email), key=user1.confirm_key, user=user1)
         assert user1.resp_confirm['session']['token'] == admin.get_session(email='anymoneyuser1000@mailinator.com')
-        print('\n', 'test_update_email_1 Step3')
         assert admin.get_user(email='anymoneyuser1000@mailinator.com')['email'] == 'anymoneyuser1000@mailinator.com'
-        print('\n', 'test_update_email_1 Step4')
         assert admin.get_session(email=user1.email)['exception'] == "Session wasn't found"
-        print('\n', 'test_update_email_1 Step5')
         user1.authorization_by_email(email='anymoneyuser1000@mailinator.com', pwd='123456')
-        print('\n', 'test_update_email_1 Step6')
-        print('\n', user1.resp_authorization)
         assert user1.resp_authorization['session']['token'] == admin.get_session(email='anymoneyuser1000@mailinator.com')
-        print('\n', 'test_update_email_1 Step7')
 
     def test_update_email_2(self, _disable_2type, _drop_email):
         """ Update email with activated two step auth. """
@@ -277,40 +347,40 @@ class TestUpdate:
     def test_update_email_3(self):
         """ Update email on booked email. """
         user1.update_email(email=user2.email)
-        assert user1.resp_update_email['error'] == {'code': -32000, 'message': 'Forbidden', 'data': user2.email}
+        assert user1.resp_update_email['error'] == {'code': -32034, 'message': 'Forbidden', 'data': user2.email}
         assert admin.get_user(email='anymoneyuser1@mailinator.com')['email'] == 'anymoneyuser1@mailinator.com'
 
     def test_update_email_4(self):
         """ Update email with wrong format: without string before @. """
         user1.update_email(email='@mailinator.com')
-        assert user1.resp_update_email['error'] == {'code': -32000, 'message': 'InvalidField'}
+        assert user1.resp_update_email['error'] == {'code': -32035, 'message': 'InvalidField'}
 
     def test_update_email_5(self):
         """ Update email with wrong format: with @@. """
         user1.update_email(email='anymoneyuser10@@mailinator.com')
-        assert user1.resp_update_email['error'] == {'code': -32000, 'message': 'InvalidField'}
+        assert user1.resp_update_email['error'] == {'code': -32035, 'message': 'InvalidField'}
         assert admin.get_user(email='anymoneyuser10@@mailinator.com')['exception'] == "User wasn't found"
 
     def test_update_email_6(self):
         """ Update email with wrong format: without domain part after @. """
         user1.update_email(email='anymoneyuser10@')
-        assert user1.resp_update_email['error'] == {'code': -32000, 'message': 'InvalidField'}
+        assert user1.resp_update_email['error'] == {'code': -32035, 'message': 'InvalidField'}
 
     def test_update_email_7(self):
         """ Update email with wrong format: without @. """
         user1.update_email(email='anymoneyuser10mailinator.com')
-        assert user1.resp_update_email['error'] == {'code': -32000, 'message': 'InvalidField'}
+        assert user1.resp_update_email['error'] == {'code': -32035, 'message': 'InvalidField'}
         assert admin.get_user(email='anymoneyuser10mailinator.com')['exception'] == "User wasn't found"
 
     def test_update_email_8(self):
-        """ Update email with wrong format: without empty string. """
+        """ Update email with wrong format: with empty string. """
         user1.update_email(email='')
-        assert user1.resp_update_email['error'] == {'code': -32000, 'message': 'InvalidField'}
+        assert user1.resp_update_email['error'] == {'code': -32035, 'message': 'InvalidField'}
 
     def test_update_email_9(self):
         """ Update email without email string. """
         user1.update_email(email=None)
-        assert user1.resp_update_email['error'] == {'code': -32000, 'message': 'InvalidField'}
+        assert user1.resp_update_email['error'] == {'code': -32035, 'message': 'InvalidField'}
 
 
 @pytest.mark.skip(reason='Save password 123456 on real account. ')
@@ -346,6 +416,129 @@ class TestUpdatePassword:
         assert admin.get_session(email=user1.email) == user1.headers['x-token']
 
 
+class TestUpdatePassword2:
+    """ Updating password. """
+
+    def test_0(self, start_session):
+        """ Warm. """
+        global admin, user1, user2
+        admin, user1, user2 = start_session
+
+    def test_update_password_1(self, _registration_and_delete):
+        """ Update password. """
+        user1.update_pwd(pwd='As.123')
+        assert user1.resp_update_pwd['session']['token'] == admin.get_session(email='anymoneyuser100@mailinator.com')
+        user1.authorization_by_email(email='anymoneyuser100@mailinator.com', pwd='As.123')
+        assert user1.resp_authorization['session']['token'] == admin.get_session(email='anymoneyuser100@mailinator.com')
+
+    def test_update_password_2(self, _registration_and_delete):
+        """ Update password with empty password. """
+        user1.update_pwd(pwd=None)
+        assert user1.resp_update_pwd['error'] == {"code": -32070, "message": "InvalidParam",
+                                                 'data': {'reason': 'None is not acceptable for pwd'}}
+
+    def test_update_password_3(self, _registration_and_delete):
+        """ Update password with 2 step auth. """
+        user1.set_2type(tp=0)
+        user1.update_pwd(pwd='As.123')
+        user1.confirm_registration(code=admin.get_onetime_code(email='anymoneyuser100@mailinator.com'),
+                                   key=user1.confirm_key, user=user1)
+        assert user1.resp_confirm['session']['token'] == admin.get_session(email='anymoneyuser100@mailinator.com')
+        user1.authorization_by_email(email='anymoneyuser100@mailinator.com', pwd='As.123')
+        user1.confirm_registration(code=admin.get_onetime_code(email='anymoneyuser100@mailinator.com'),
+                                   key=user1.confirm_key, user=user1)
+        assert user1.resp_confirm['session']['token'] == admin.get_session(email='anymoneyuser100@mailinator.com')
+
+    def test_update_password_4(self, _registration_and_delete):
+        """ Update password with no confirm 2 step auth. """
+        user1.set_2type(tp=0)
+        user1.update_pwd(pwd='As.123')
+        user1.authorization_by_email(email='anymoneyuser100@mailinator.com', pwd='As.123')
+        assert user1.resp_authorization['error'] == {"code": -32090, "message": "NotFound", "data": "pwd"}
+
+    def test_update_password_5(self, _registration_and_delete):
+        """ Update invalidate password with 2 step auth. """
+        admin.set_front_params(pass_length_min=6)
+        user1.set_2type(tp=0)
+        user1.update_pwd(pwd='12345')
+        user1.confirm_registration(code=admin.get_onetime_code(email='anymoneyuser100@mailinator.com'),
+                                   key=user1.confirm_key, user=user1)
+        assert user1.resp_confirm['error'] == {"code": -32082, "message": "InvalidPassLength",
+                                                   "data": {"reason": "Must contain at least 6 symbols"}}
+        user1.authorization_by_email(email='anymoneyuser100@mailinator.com', pwd='As.123')
+        assert user1.resp_authorization['error'] == {"code": -32090, "message": "NotFound", "data": "pwd"}
+
+    def test_update_password_6(self, _registration_and_delete):
+        """ Update password with 2 step auth without confirmation code. """
+        user1.set_2type(tp=0)
+        user1.update_pwd(pwd='As.123')
+        user1.confirm_registration(code=None, key=user1.confirm_key, user=user1)
+        assert user1.resp_confirm['error'] == {"code": -32033, "message": "Auth2Wrong"}
+        user1.authorization_by_email(email='anymoneyuser100@mailinator.com', pwd='As.123')
+        assert user1.resp_authorization['error'] == {"code": -32090, "message": "NotFound", "data": "pwd"}
+
+    def test_update_password_7(self, _registration_and_delete):
+        """ Update password with 2 step auth without auth2 key. """
+        user1.set_2type(tp=0)
+        user1.update_pwd(pwd='As.123')
+        user1.confirm_registration(code=admin.get_onetime_code(email='anymoneyuser100@mailinator.com'),
+                                   key=None, user=user1)
+        assert user1.resp_confirm['error'] == {"code": -32040, "message": "Req400", "data": "Bad Request"}
+
+    def test_update_password_8(self, _registration_and_delete):
+        """ Update password invalidate password (without upp case char). """
+        admin.set_front_params(min_upp_case_char=1)
+        user1.update_pwd(pwd='aa.123')
+        assert user1.resp_update_pwd['error'] == {"code": -32083, "message": "InvalidPassPattern",
+                                                   "data": {"reason": "Must have at least 1 upper case character(s)"}}
+        user1.authorization_by_email(email='anymoneyuser100@mailinator.com', pwd='aa.123')
+        assert user1.resp_authorization['error'] == {"code": -32090, "message": "NotFound", "data": "pwd"}
+
+    def test_update_password_9(self, _registration_and_delete):
+        """ Update password invalidate password (without low case char). """
+        admin.set_front_params(min_low_case_char=1)
+        user1.update_pwd(pwd='AA.123')
+        assert user1.resp_update_pwd['error'] == {"code": -32083, "message": "InvalidPassPattern",
+                                                   "data": {"reason": "Must have at least 1 lower case character(s)"}}
+        user1.authorization_by_email(email='anymoneyuser100@mailinator.com', pwd='AA.123')
+        assert user1.resp_authorization['error'] == {"code": -32090, "message": "NotFound", "data": "pwd"}
+
+    def test_update_password_10(self, _registration_and_delete):
+        """ Update password invalidate password (without digits)."""
+        admin.set_front_params(min_digits_qty=1)
+        user1.update_pwd(pwd='aA.aaa')
+        assert user1.resp_update_pwd['error'] == {"code": -32083, "message": "InvalidPassPattern",
+                                                   "data": {"reason": "Must have at least 1 digit(s)"}}
+        user1.authorization_by_email(email='anymoneyuser100@mailinator.com', pwd='aA.aaa')
+        assert user1.resp_authorization['error'] == {"code": -32090, "message": "NotFound", "data": "pwd"}
+
+    def test_update_password_11(self, _registration_and_delete):
+        """ Update password invalidate password (without spec char)."""
+        admin.set_front_params(min_spec_char_qty=1)
+        user1.update_pwd(pwd='aAa123')
+        assert user1.resp_update_pwd['error'] == {"code": -32083, "message": "InvalidPassPattern",
+                                                   "data": {"reason": "Must have at least 1 special character(s)"}}
+        user1.authorization_by_email(email='anymoneyuser100@mailinator.com', pwd='aAa123')
+        assert user1.resp_authorization['error'] == {"code": -32090, "message": "NotFound", "data": "pwd"}
+
+    def test_update_password_12(self, _registration_and_delete):
+        """ Update password invalidate password (longer than max length)."""
+        admin.set_front_params(pass_length_max=50)
+        user1.update_pwd(pwd='aA.123.............................................')
+        assert user1.resp_update_pwd['error'] == {"code": -32082, "message": "InvalidPassLength",
+                                                   "data": {"reason": "Must not contain more than 50 symbols"}}
+        user1.authorization_by_email(email='anymoneyuser100@mailinator.com', pwd='aA.123.............................................')
+        assert user1.resp_authorization['error'] == {"code": -32090, "message": "NotFound", "data": "pwd"}
+
+    def test_update_password_13(self, _registration_and_delete):
+        """ Success update password by email with max length password."""
+        admin.set_front_params(pass_length_max=50)
+        user1.update_pwd(pwd='aA.123............................................')
+        assert user1.resp_update_pwd['session']['token'] == admin.get_session(email='anymoneyuser100@mailinator.com')
+        user1.authorization_by_email(email='anymoneyuser100@mailinator.com', pwd='aA.123............................................')
+        assert user1.resp_authorization['session']['token'] == admin.get_session(email='anymoneyuser100@mailinator.com')
+
+
 class TestUpdateLanguage:
     """ Updating language. """
 
@@ -364,12 +557,12 @@ class TestUpdateLanguage:
     def test_update_language_2(self):
         """ Update language with wrong lang id. """
         user1.update_lang(lang='bb')
-        assert user1.resp_update_lang['error'] == {'code': -32000, 'message': 'InvalidField', 'data': 'lang'}
+        assert user1.resp_update_lang['error'] == {'code': -32035, 'message': 'InvalidField', 'data': 'lang'}
 
     def test_update_language_3(self):
         """ Update language without lang id. """
         user1.update_lang(lang=None)
-        assert user1.resp_update_lang['error'] == {'code': -32000, 'message': 'InvalidField', 'data': 'lang'}
+        assert user1.resp_update_lang['error'] == {'code': -32035, 'message': 'InvalidField', 'data': 'lang'}
 
 
 class TestUpdateTimezone:
@@ -389,13 +582,13 @@ class TestUpdateTimezone:
     def test_update_timezone_2(self):
         """ Update timezone with wrong format. """
         user1.update_tz(tz='Australia')
-        assert user1.resp_update_tz['error'] == {'code': -32000, 'message': 'InvalidParam'}
+        assert user1.resp_update_tz['error'] == {'code': -32070, 'message': 'InvalidParam'}
         assert admin.get_user(email=user1.email)['timezone'] == 'Europe/Amsterdam'
 
     def test_update_timezone_3(self):
         """ Update timezone with None value. """
         user1.update_tz(tz=None)
-        assert user1.resp_update_tz['error'] == {'code': -32000, 'message': 'InvalidParam'}
+        assert user1.resp_update_tz['error'] == {'code': -32070, 'message': 'InvalidParam'}
 
 
 class TestUpdateSafemode:
@@ -508,7 +701,7 @@ class TestPaywayList:
     def test_list_payway_5(self):
         """ Getting list with wrong tp. """
         user1.payway_list(tp='ch')
-        assert user1.resp_payway_list['error'] == {'code': -32000, 'message': 'InvalidParam', 'data': 'tp'}
+        assert user1.resp_payway_list['error'] == {'code': -32070, 'message': 'InvalidParam', 'data': {'reason': 'ch'}}
 
 
 class TestBookmark:
@@ -552,7 +745,7 @@ class TestBookmark:
     def test_create_bookmark_3(self):
         """ Create bookmark without m_lid. """
         user1.bookmark_create(m_lid=None, title='New', params={}, order=1)
-        assert user1.resp_bookmark_create['error'] == {'code': -32000, 'message': 'InvalidParam', 'data': 'm_lid'}
+        assert user1.resp_bookmark_create['error'] == {'code': -32070, 'message': 'InvalidParam', 'data': 'm_lid'}
         user1.bookmark_list(m_lid=user1.merchant1.lid, first=None, count=None)
         assert len(user1.resp_bookmark_list['data']) == 0
 
@@ -560,38 +753,39 @@ class TestBookmark:
     def test_create_bookmark_4(self):
         """ Create bookmark for wrong m_lid. """
         user1.bookmark_create(m_lid=1, title='New', params={}, order=0)
-        assert user1.resp_bookmark_create['error'] == {'code': -32010, 'message': 'InvalidMerchant', 'data': 'Server Error'}
+        assert 'error' in user1.resp_bookmark_create
 
 
     def test_create_bookmark_5(self):
         """ Create bookmark without title. """
         user1.bookmark_create(m_lid=user1.merchant1.lid, title=None, params={}, order=False)
-        assert user1.resp_bookmark_create['error'] == {'code': -32000, 'message': 'InvalidParam', 'data': 'title'}
+        assert user1.resp_bookmark_create['error'] == {'code': -32070, 'message': 'InvalidParam', 'data': 'title'}
 
 
     def test_create_bookmark_6(self):
         """ Create bookmark with string in params. """
         user1.bookmark_create(m_lid=user1.merchant1.lid, title='Test', params='String', order=False)
-        assert user1.resp_bookmark_create['error'] == {'code': -32000, 'message': 'InvalidParam', 'data': 'params'}
+        assert user1.resp_bookmark_create['error'] == {'code': -32070, 'message': 'InvalidParam', 'data': 'params'}
 
 
     def test_create_bookmark_7(self):
         """ Create bookmark without params. """
         user1.bookmark_create(m_lid=user1.merchant1.lid, title='Test', params=None, order=False)
-        assert user1.resp_bookmark_create['error'] == {'code': -32000, 'message': 'InvalidParam', 'data': 'params'}
+        assert user1.resp_bookmark_create['error'] == {'code': -32070, 'message': 'InvalidParam', 'data': 'params'}
 
 
     def test_create_bookmark_8(self):
         """ Create bookmark without order. """
         user1.bookmark_create(m_lid=user1.merchant1.lid, title='Test', params=None, order=None)
-        assert user1.resp_bookmark_create['error'] == {'code': -32000, 'message': 'InvalidParam', 'data': 'params'}
+        assert user1.resp_bookmark_create['error'] == {'code': -32070, 'message': 'InvalidParam', 'data': 'params'}
 
 
     def test_create_bookmark_9(self):
         """ Create bookmark without session. """
         session, user1.headers['x-token'] = user1.headers['x-token'], None
         user1.bookmark_create(m_lid=user1.merchant1.lid, title='Test', params=None, order=1)
-        assert user1.resp_bookmark_create['error'] == {'code': -32003, 'message': 'InvalidHeaders', 'data': 'Server Error'}
+        assert user1.resp_bookmark_create['error'] == {'code': -32003, 'message': 'InvalidHeaders',
+                                                       'data': {'reason': 'Add x-token to headers'}}
         user1.headers['x-token'] = session
 
     def test_update_bookmark_1(self):
@@ -639,6 +833,7 @@ class TestBookmark:
         user1.bookmark_create(m_lid=user1.merchant1.lid, title='New', params={'param1': 1}, order=True)
         session, user1.headers['x-token'] = user1.headers['x-token'], None
         user1.bookmark_delete(m_lid=user1.merchant1.lid, oid=user1.bookmark_oid)
-        assert user1.resp_bookmark_delete['error'] == {'code': -32003, 'message': 'InvalidHeaders', 'data': 'Server Error'}
+        assert user1.resp_bookmark_delete['error'] == {'code': -32003, 'message': 'InvalidHeaders',
+                                                       'data': {'reason': 'Add x-token to headers'}}
         user1.headers['x-token'] = session
         user1.bookmark_delete(m_lid=user1.merchant1.lid, oid=user1.bookmark_oid)

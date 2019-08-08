@@ -3,6 +3,6 @@
 Запуск отдельного теста: pytest -p no:warnings tests/test_{module_name}.py::{Class_name}::{Test_name} -s -v  # НЕ ЗАПУСКАТЬ, СТОИТ ЗАВИСИМОСТЬ ОТ НУЛЕВОГО ТЕСТА
 
 Параметры запуска :
---ADMIN=L8Nu_2HWFFozdyKhIPDrC0SFE8gSJeoRSeffnGH44QMtcJPDou70N6ECqYJ2UG3iMv5K
---USER1=anymoneyuser1@mailinator.com:123456
---USER2=anymoneyuser2@mailinator.com:123456
+--ADMIN=_iFb8_FMw8vghZNdqz2XBb1wHMv3POY5nLHHE7QGI_eqNsLK_qd0UGS2dMKVyXQV4Ngy
+--USER1=testjcash@gmail.com:aA/123
+--USER2=testjcash2@gmail.com:aA/123

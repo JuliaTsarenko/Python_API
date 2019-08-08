@@ -700,7 +700,7 @@ class TestWrongExchange:
 
 
 @pytest.mark.usefixtures('_personal_exchange_fee')
-class TestParams:
+class TestExchangeParams:
     """ Testing convert params method. """
 
     def test_0(self, start_session):

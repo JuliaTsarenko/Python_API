@@ -3,6 +3,7 @@ import random
 from users.merchant import Merchant
 from json import loads
 from string import ascii_uppercase
+from users.admin import Admin
 import pprint
 
 
@@ -20,14 +21,17 @@ class User:
     resp_registration = {}
     resp_confirm = {}
 
-    def __init__(self, user=None, admin=None):
+    def __init__(self, user=None, pwd=None, admin=None):
         if user:
             print(user)
+            print(pwd)
             self.params = {'token': ''}
             self.email = user['email']
+            self.pwd = pwd
             self.id = user['id']
             self.headers = {'x-token': ''}
             merchants = admin.get_merchants(owner_id=self.id)
+            print(merchants)
             self.merchant2 = Merchant(next(merchants))
             self.merchant1 = Merchant(next(merchants))
 
@@ -435,7 +439,6 @@ class User:
 
     def delegate(self, params):
         data = {'method': 'merchant.delegate', 'params': params, 'jsonrpc': 2.0, 'id': self.ex_id()}
-        # pprint.pprint(self.headers)
         r = requests.post(url=self.wapi_url, json=data, headers=self.headers, verify=False)
         # print('\n', r.text)
         # pprint.pprint(loads(r.text))
@@ -445,5 +448,11 @@ class User:
             self.resp_delegate = loads(r.text)['error']
 
 
-if __name__ == '__main__':
-    pass
+# if __name__ == '__main__':
+    # admin1 = Admin(token='RgqlIg6N_cEjSP5ve1GxfVvjAKtcuJiqeFqO_tXjmt0zKbo6rxnVm7FwOx7bOhHTBfrT')
+    # user1 = User()
+    # user1.authorization_by_email(email='testjcash@gmail.com', pwd='aA/123')
+    # user1.forgot('testjcash@gmail.com')
+    # user1.confirm_registration(key=user1.forgot_key, code=admin1.get_onetime_code(email='testjcash@gmail.com'))
+    # user1.update_pwd('aA/123')
+    # print(user1.resp_authorization)
