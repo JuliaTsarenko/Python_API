@@ -59,7 +59,7 @@ class User:
     def confirm_registration(key, code, user=None):
         if not user:
             r = requests.post(url=User.wapi_url,
-                              json={'method': 'account.auth2confirm', 'params': {'key': key, 'code': code},
+                              json={'method': 'account.auth2confirm', 'params': {'key': str(key), 'code': str(code)},
                                     'jsonrpc': 2.0, 'id': User.ex_id()},
                               verify=False)
             print(r.text)
@@ -70,7 +70,7 @@ class User:
                 User.resp_confirm = loads(r.text)
         else:
             r = requests.post(url=User.wapi_url,
-                              json={'method': 'account.auth2confirm', 'params': {'key': key, 'code': code},
+                              json={'method': 'account.auth2confirm', 'params': {'key': str(key), 'code': str(code)},
                                     'jsonrpc': 2.0, 'id': User.ex_id()},
                               verify=False)
             print(r.text)
@@ -96,12 +96,12 @@ class User:
     @staticmethod
     def cancel_2auth(key):
         requests.post(url=User.wapi_url,
-                      json={'method': 'account.auth2cancel', 'params': {'key': key}, 'jsonrpc': 2.0, 'id': User.ex_id()},
+                      json={'method': 'account.auth2cancel', 'params': {'key': str(key)}, 'jsonrpc': 2.0, 'id': User.ex_id()},
                       verify=False)
 
     def second_confirm(self, key, code):
         r = requests.post(url=User.wapi_url,
-                          json={'method': 'account.auth2confirm', 'params': {'key': key, 'code': code},
+                          json={'method': 'account.auth2confirm', 'params': {'key': str(key), 'code': str(code)},
                                 'jsonrpc': 2.0, 'id': User.ex_id()},
                           verify=False)
         try:
@@ -153,7 +153,7 @@ class User:
 
     def set_2type(self, tp=None):
         r = requests.post(url=self.wapi_url,
-                          json={'method': 'account.set_auth2type', 'params': {'tp': tp}, 'jsonrpc': 2.0, 'id': self.ex_id()},
+                          json={'method': 'account.set_auth2type', 'params': {'tp': str(tp)}, 'jsonrpc': 2.0, 'id': self.ex_id()},
                           headers=self.headers, verify=False)
         try:
             if type(loads(r.text)['error']['data']) == dict:
@@ -441,17 +441,17 @@ class User:
         data = {'method': 'merchant.delegate', 'params': params, 'jsonrpc': 2.0, 'id': self.ex_id()}
         r = requests.post(url=self.wapi_url, json=data, headers=self.headers, verify=False)
         # print('\n', r.text)
-        # pprint.pprint(loads(r.text))
         try:
             self.resp_delegate = loads(r.text)['result']
         except KeyError:
             self.resp_delegate = loads(r.text)['error']
 
 
-# if __name__ == '__main__':
-    # admin1 = Admin(token='RgqlIg6N_cEjSP5ve1GxfVvjAKtcuJiqeFqO_tXjmt0zKbo6rxnVm7FwOx7bOhHTBfrT')
-    # user1 = User()
-    # user1.authorization_by_email(email='testjcash@gmail.com', pwd='aA/123')
+if __name__ == '__main__':
+    admin1 = Admin(token='_RmwXc_7QNNxBbOMwQLAZ3xu7UlR8iHuT0cSehrPDcA4QFeRfY2S2vmhGE3B9ePGpw0q')
+    user1 = User()
+    user1.authorization_by_email(email='testjcash@gmail.com', pwd='aA/123')
+    user1.logout()
     # user1.forgot('testjcash@gmail.com')
     # user1.confirm_registration(key=user1.forgot_key, code=admin1.get_onetime_code(email='testjcash@gmail.com'))
     # user1.update_pwd('aA/123')

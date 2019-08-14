@@ -1,5 +1,4 @@
 import pytest
-import time
 from users.user import User
 
 

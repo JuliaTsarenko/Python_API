@@ -32,8 +32,6 @@ class TestPayinCalc:
         user1.delegate(params={'m_lid': user1.merchant1.lid,  'merch_model': 'payin', 'merch_method': 'calc',
                                'payway': 'payeer', 'amount': '1.02', 'in_curr': 'USD', 'out_curr': 'USD'})
         assert user1.resp_delegate['account_amount'] == '1.02'
-        assert user1.resp_delegate['in_curr'] == 'USD'
-        assert user1.resp_delegate['out_curr'] == 'USD'
         assert user1.resp_delegate['in_fee_amount'] == '0'
         assert user1.resp_delegate['out_fee_amount'] == '0'
 
@@ -43,11 +41,11 @@ class TestPayinCalc:
         admin.set_pwc(pw_id=admin.payway['btc']['id'], currency='BTC', is_out=False, is_active=True,
                       tech_min=bl(0.0008), tech_max=bl(1))
         user1.delegate(params={'m_lid': user1.merchant1.lid,  'merch_model': 'payin', 'merch_method': 'calc',
-                               'payway': 'btc', 'amount': '0.99999', 'in_curr': 'USD', 'out_curr': 'USD'})
+                               'payway': 'btc', 'amount': '0.99999', 'in_curr': 'BTC', 'out_curr': 'BTC'})
         assert user1.resp_delegate['account_amount'] == '0.99999'
         assert user1.resp_delegate['in_amount'] == '0.99999'
         assert user1.resp_delegate['out_amount'] == '0.99999'
-        assert user1.resp_delegate['origin_amount'] == '0.99999'
+        assert user1.resp_delegate['orig_amount'] == '0.99999'
 
     def test_payin_calc_4(self):
         """ Calc for payin from PRIVAT24 10 UAH by MERCHANT with common percent fee 15. """
@@ -58,9 +56,7 @@ class TestPayinCalc:
         user1.merchant1.payin_calc(payway='privat24', amount='10', in_curr='UAH', out_curr='UAH')
         assert user1.merchant1.resp_payin_calc['account_amount'] == '8.5'
         assert user1.merchant1.resp_payin_calc['in_amount'] == '10'
-        assert user1.merchant1.resp_payin_calc['in_curr'] == 'UAH'
         assert user1.merchant1.resp_payin_calc['out_amount'] == '10'
-        assert user1.merchant1.resp_payin_calc['out_curr'] == 'UAH'
         assert user1.merchant1.resp_payin_calc['in_fee_amount'] == '1.5'
         assert user1.merchant1.resp_payin_calc['out_fee_amount'] == '1.5'
 
@@ -88,9 +84,8 @@ class TestPayinCalc:
         assert user1.merchant1.resp_payin_calc['account_amount'] == '8.45'
         assert user1.merchant1.resp_payin_calc['in_amount'] == '10'
         assert user1.merchant1.resp_payin_calc['out_amount'] == '10'
-        assert user1.merchant1.resp_payin_calc['out_curr'] == 'UAH'
-        assert user1.merchant1.resp_payin_calc['in_fee_amount'] == '1.5'
-        assert user1.merchant1.resp_payin_calc['out_fee_amount'] == '1.5'
+        assert user1.merchant1.resp_payin_calc['in_fee_amount'] == '1.55'
+        assert user1.merchant1.resp_payin_calc['out_fee_amount'] == '1.55'
 
     def test_payin_calc_7(self, _custom_fee, _set_fee):
         """ Calc for payin from PERFECT 10 USD by OWNER with personal absolute fee 1 USD and personal percent fee 5.5%. """
@@ -120,7 +115,7 @@ class TestPayinCalc:
         assert user1.merchant1.resp_payin_calc['out_amount'] == '10'
         assert user1.merchant1.resp_payin_calc['in_fee_amount'] == '1.55'
         assert user1.merchant1.resp_payin_calc['out_fee_amount'] == '1.55'
-        assert user1.merchant1.resp_payin_calc['origin_amount'] == '10'
+        assert user1.merchant1.resp_payin_calc['orig_amount'] == '10'
 
     def test_payin_calc_9(self):
         """ Payin from QIWI 50 RUB by MERCHANT with exchange to UAH without any fee. """
@@ -128,14 +123,14 @@ class TestPayinCalc:
         admin.set_pwc(pw_id=admin.payway['qiwi']['id'], currency='RUB', is_out=False,
                       is_active=True, tech_min=bl(1), tech_max=bl(100))
         admin.set_rate_exchange(fee=0, rate=bl(2.6666), in_currency='RUB', out_currency='UAH')
-        user1.merchant1.payin_calc(payway='qiwi', amount='50', in_curr='RUB', out_curr='USD')
+        user1.merchant1.payin_calc(payway='qiwi', amount='50', in_curr='RUB', out_curr='UAH')
         assert user1.merchant1.resp_payin_calc['account_amount'] == '18.75'
         assert user1.merchant1.resp_payin_calc['in_amount'] == '50'
         assert user1.merchant1.resp_payin_calc['out_amount'] == '18.75'
         assert user1.merchant1.resp_payin_calc['in_fee_amount'] == '0'
         assert user1.merchant1.resp_payin_calc['out_fee_amount'] == '0'
 
-    def test_payin_calc_10(self):
+    def test_payin_calc_10(self, _custom_fee, _disable_personal_exchange_fee):
         """ Payin from PAYEER 8.33 USD by OWNER with exchange to UAH with common exchange fee 3%,
             with personal exchange fee 1.55%. """
         admin.set_fee(currency_id=admin.currency['USD'], payway_id=admin.payway['payeer']['id'], is_active=True)
@@ -149,9 +144,9 @@ class TestPayinCalc:
         assert user1.resp_delegate['account_amount'] == '231.26'
         assert user1.resp_delegate['rate'] == ['1', '27.7628']
         assert user1.resp_delegate['in_amount'] == '8.33'
-        assert user1.resp_delegate['origin_amount'] == '8.33'
+        assert user1.resp_delegate['orig_amount'] == '8.33'
 
-    def test_payin_calc_11(self):
+    def test_payin_calc_11(self, _custom_fee, _disable_personal_exchange_fee):
         """ Payin from PRIVAT24 115 UAH by OWNER with exchange to USD with common percent operation fee 5%
             with common absolute operation fee 5 UAH, with personal percent operation fee 3.5% with personal
             absolute operation fee 2 UAH, with common exchange fee 4% with personal exchange fee 2%. """
@@ -173,7 +168,7 @@ class TestPayinCalc:
         assert user1.resp_delegate['in_amount'] == '115'
         assert user1.resp_delegate['out_amount'] == '3.99'
 
-    def test_payin_calc_12(self):
+    def test_payin_calc_12(self, _custom_fee, _disable_personal_exchange_fee):
         """ Payin from BTC 0.0067 BTC by MERCHANT with exchange to USD with common percent operation fee 5%
             with common absolute operation fee 0.0003 BTC, with personal percent operation fee 3.5% with personal,
             with common exchange fee 3% with personal exchange fee 1.5%. """
@@ -236,7 +231,7 @@ class TestWrongPayinCalc:
     def test_wrong_payin_calc_5(self):
         """ Payin with not real payway. """
         user1.merchant1.payin_calc(payway='visam', amount='50', in_curr='UAH', out_curr='UAH')
-        assert user1.merchant1.resp_payin_calc == {'code': -32060, 'message': 'InvalidPayway', 'data': {'reason': 'visam'}}
+        assert user1.merchant1.resp_payin_calc == {'code': -32060, 'message': 'InvalidPayway', 'data': {'reason': 'visam is unknown'}}
 
     def test_wrong_payin_calc_6(self):
         """ Payin with deactivated pair CURRENCY : PAYWAY by pw_carrency table. """
@@ -252,7 +247,7 @@ class TestWrongPayinCalc:
         """ Payin with deactivated PAYWAY by payway table. """
         admin.set_payways(name='visamc', is_active=False, is_public=True)
         user1.merchant1.payin_calc(payway='visamc', amount='50', in_curr='UAH', out_curr='UAH')
-        assert user1.merchant1.resp_payin_calc == {'code': -32060, 'message': 'InvalidPayway', 'data': {'reason': 'visamc'}}
+        assert user1.merchant1.resp_payin_calc == {'code': -32060, 'message': 'InvalidPayway', 'data': {'reason': 'visamc is inactive'}}
         admin.set_payways(name='visamc', is_active=True, is_public=True)
 
     def test_wrong_payin_calc_8(self):
@@ -263,13 +258,13 @@ class TestWrongPayinCalc:
                                                    'data': {'reason': 'Payway visamc is inactive for merchant'}}
         admin.set_pwmerchactive(merch_id=user1.merchant1.id, payway_id=admin.payway['visamc']['id'], is_active=True)
 
-    # @pytest.mark.skip(reason='Not inactive currency')
+    @pytest.mark.skip(reason='Not inactive currency')
     def test_wrong_payin_calc_9(self):
         """ Payin with convert in to not active currency. """
         user1.merchant1.payin_calc(payway='visamc', amount='50', in_curr='UAH', out_curr='BCHABC')
         assert user1.merchant1.resp_payin_calc == {'code': -32077, 'message': 'InactiveCurrency', 'data': {'reason': 'BCHABC'}}
 
-    # @pytest.mark.skip(reason='Not inactive currency')
+    @pytest.mark.skip(reason='Not inactive currency')
     def test_wrong_payin_calc_10(self):
         """ Payin with convert from not active currency. """
         admin.set_pwc(pw_id=admin.payway['bchabc']['id'], currency='BCHABC', is_out=False, is_active=True,
@@ -304,8 +299,8 @@ class TestWrongPayinCalc:
                                    'x-signature': create_sign(user1.merchant1.akey, data['params'], time_sent),
                                    'x-utc-now-ms': time_sent}, verify=False)
         print(r.text)
-        assert loads(r.text)['error'] == {'code': -32602, 'message': 'InvalidInputParams',
-                                          'data': {'reason': "method 'payin.create' missing 1 argument: 'in_curr'"}}
+        assert loads(r.text)['error'] == {'code': -32602, 'data': {'reason': "method payin.calc' missing 1 argument: 'in_curr'"},
+                                          'message': 'InvalidInputParams'}
 
     def test_wrong_payin_calc_14(self):
         """ Payin without payway parameter. """
@@ -319,7 +314,7 @@ class TestWrongPayinCalc:
                                    'x-utc-now-ms': time_sent}, verify=False)
         print(r.text)
         assert loads(r.text)['error'] == {'code': -32602, 'message': 'InvalidInputParams',
-                                          'data': {'reason': "method 'payin.create' missing 1 argument: 'payway'"}}
+                                          'data': {'reason': "method 'payin.calc' missing 1 argument: 'payway'"}}
 
     def test_wrong_payin_calc_15(self):
         """ Payin without amount parameter. """
@@ -333,25 +328,25 @@ class TestWrongPayinCalc:
                                    'x-utc-now-ms': time_sent}, verify=False)
         print(r.text)
         assert loads(r.text)['error'] == {'code': -32602, 'message': 'InvalidInputParams',
-                                          'data': {'reason': "method 'payin.create' missing 1 argument: 'amount'"}}
+                                          'data': {'reason': "method 'payin.calc' missing 1 argument: 'amount'"}}
 
     def test_wrong_payin_calc_16(self):
         """ Payin with wrong format amount. """
         user1.merchant1.payin_calc(payway='visamc', amount='10.999', in_curr='UAH', out_curr='UAH')
         assert user1.merchant1.resp_payin_calc == {'code': -32071, 'message': 'InvalidAmountFormat',
-                                                     'data': {'reason': 'Invalid format 10.999 for UAH'}}
+                                                   'data': {'reason': 'Invalid format 10.999 for UAH'}}
         user1.merchant1.payin_calc(payway='visamc', amount='String', in_curr='UAH', out_curr='UAH')
         assert user1.merchant1.resp_payin_calc == {'code': -32071, 'message': 'InvalidAmountFormat',
-                                                     'data': {'reason': 'Invalid format String for UAH'}}
+                                                   'data': {'reason': 'Invalid format String for UAH'}}
         user1.merchant1.payin_calc(payway='visamc', amount=10, in_curr='UAH', out_curr='UAH')
         assert user1.merchant1.resp_payin_calc == {'code': -32070, 'message': 'InvalidParam',
-                                                     'data': {'reason': "Key 'amount' must not be of 'int' type"}}
+                                                   'data': {'reason': "Key 'amount' must not be of 'int' type"}}
         user1.merchant1.payin_calc(payway='visamc', amount=[1, 2], in_curr='UAH', out_curr='UAH')
         assert user1.merchant1.resp_payin_calc == {'code': -32070, 'message': 'InvalidParam',
-                                                     'data': {'reason': "Key 'amount' must not be of 'list' type"}}
+                                                   'data': {'reason': "Key 'amount' must not be of 'list' type"}}
         user1.merchant1.payin_calc(payway='visamc', amount={'1': 1}, in_curr='UAH', out_curr='UAH')
         assert user1.merchant1.resp_payin_calc == {'code': -32070, 'message': 'InvalidParam',
-                                                     'data': {'reason': "Key 'amount' must not be of 'dict' type"}}
+                                                   'data': {'reason': "Key 'amount' must not be of 'dict' type"}}
         user1.merchant1.payin_calc(payway='visamc', amount='-10', in_curr='UAH', out_curr='UAH')
         assert user1.merchant1.resp_payin_calc == {'code': -32075, 'message': 'AmountTooSmall', 'data': {'reason': '-10'}}
 
@@ -434,7 +429,7 @@ class TestWrongPayinCalc:
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': str(user1.merchant1.lid),
                                    'x-signature': create_sign(user1.merchant1.akey, data['params'], time_sent),
-                                   'x-utc-now-ms': None}, verify=False)
+                                   'x-utc-now-ms': time_sent}, verify=False)
         print(r.text)
         assert loads(r.text)['error'] == {'code': -32601, 'message': 'Method not found'}
 
@@ -707,7 +702,7 @@ class TestWrongPayinCreate:
     def test_wrong_payin_5(self):
         """ Payin with not real payway. """
         user1.merchant1.payin_create(payway='visam', amount='50', in_curr='UAH', out_curr='UAH')
-        assert user1.merchant1.resp_payin_create == {'code': -32060, 'message': 'InvalidPayway', 'data': {'reason': 'visam'}}
+        assert user1.merchant1.resp_payin_create == {'code': -32060, 'message': 'InvalidPayway', 'data': {'reason': 'visam is unknown'}}
 
     def test_wrong_payin_6(self):
         """ Payin with deactivated pair CURRENCY : PAYWAY by pw_carrency table. """
@@ -940,8 +935,185 @@ class TestPayinGet:
         global admin, user1, user2
         admin, user1, user2 = start_session
 
-    def test_1(self):
+    def test_payin_get_1(self):
         """ Getting last order by MERCHANT. """
+        order = admin.get_order({'merchant_id': user1.merchant1.id, 'tp': 0})[1]
+        user1.merchant1.payin_get(o_lid=str(order['lid']))
+        assert user1.merchant1.resp_payin_get['ctime'] == order['ctime']
+
+    def test_payin_get_2(self):
+        """ Getting order by OWNER. """
+        order = admin.get_order({'merchant_id': user1.merchant1.id, 'tp': 0})[3]
+        user1.delegate(params={'m_lid': user1.merchant1.lid, 'merch_model': 'payin', 'merch_method': 'get', 'o_lid': str(order['lid'])})
+        assert user1.resp_delegate['ctime'] == order['ctime']
+
+    def test_payin_get_3(self):
+        """ Checking all keys first level in response. """
+        ls_key = ['account_amount', 'ctime', 'externalid', 'ftime', 'in_amount', 'in_curr', 'in_fee_amount', 'lid', 'orig_amount',
+                  'out_amount', 'out_curr', 'out_fee_amount', 'owner', 'payway_name', 'rate', 'ref', 'renumeration', 'reqdata', 'status',
+                  'tgt', 'token', 'tp', 'userdata']
+        ls_key.sort()
+        order = admin.get_order({'merchant_id': user1.merchant1.id, 'tp': 0, 'address_id': None})[2]
+        user1.merchant1.payin_get(o_lid=str(order['lid']))
+        us_ls = [dct for dct in user1.merchant1.resp_payin_get]
+        us_ls.sort()
+        print(ls_key, us_ls)
+        assert us_ls == ls_key
+
+
+@pytest.mark.usefixtures('_create_other_type_order')
+class TestWrongPayinGet:
+    """ Checking wrong requests for payin get method. """
+
+    def test_0(self, start_session):
+        """ Warm. """
+        global admin, user1, user2
+        admin, user1, user2 = start_session
+
+    def test_wrong_payin_get_1(self):
+        """ Getting order for not payin type. """
+        order = admin.get_order({'merchant_id': user1.merchant1.id, 'tp': 20})[1]
+        user1.merchant1.payin_get(o_lid=str(order['lid']))
+        assert user1.merchant1.resp_payin_get == {'code': -32090, 'data': {'reason': 'Not found order with params'}, 'message': 'NotFound'}
+
+    def test_wrong_payin_get_2(self):
+        """ Getting order by not own merchant. """
+        order = admin.get_order({'merchant_id': user1.merchant2.id, 'tp': 0})[1]
+        user1.merchant1.payin_get(o_lid=str(order['lid']))
+        assert user1.merchant1.resp_payin_get == {'code': -32090, 'data': {'reason': 'Not found order with params'}, 'message': 'NotFound'}
+
+    def test_wrong_payin_get_3(self, _merchant_activate):
+        """ Getting order for not active merchant. """
+        order = admin.get_order({'merchant_id': user1.merchant1.id, 'tp': 0})[1]
+        user1.merchant1.payin_get(o_lid=str(order['lid']))
+        assert user1.merchant1.resp_payin_get == {'code': -32010, 'data': {'reason': 'Merchant Is Not Active'}, 'message': 'InvalidMerchant'}
+
+    def test_wrong_payin_get_4(self):
+        """ Getting order with None lid. """
+        user1.merchant1.payin_get(o_lid=None)
+        assert user1.merchant1.resp_payin_get == {'code': -32070, 'data': {'reason': None}, 'message': 'InvalidParam'}
+
+    def test_wrong_payin_get_5(self):
+        """ Getting order without lid parameter. """
+        data = {'method': 'payin.get',
+                'params': {},
+                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+        time_sent = user1.merchant1.time_sent()
+        r = requests.post(url=user1.merchant1.japi_url, json=data,
+                          headers={'x-merchant': str(user1.merchant1.lid),
+                                   'x-signature': create_sign(user1.merchant1.akey, data['params'], time_sent),
+                                   'x-utc-now-ms': time_sent}, verify=False)
+        print(r.text)
+        assert loads(r.text)['error'] == {'code': -32602, 'message': 'InvalidInputParams',
+                                          'data': {'reason': "method 'payin.get' missing 1 argument: 'o_lid'"}}
+
+    def test_wrong_payin_get_6(self):
+        """ Getting order with excess parameter 'par'. """
+        data = {'method': 'payin.get',
+                'params': {'o_lid': None, 'par': '123'},
+                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+        time_sent = user1.merchant1.time_sent()
+        r = requests.post(url=user1.merchant1.japi_url, json=data,
+                          headers={'x-merchant': str(user1.merchant1.lid),
+                                   'x-signature': create_sign(user1.merchant1.akey, data['params'], time_sent),
+                                   'x-utc-now-ms': time_sent}, verify=False)
+        assert loads(r.text)['error'] == {'code': -32602, 'data': {'reason': "method 'payin.get' received a redundant argument 'par'"},
+                                          'message': 'InvalidInputParams'}
+
+    def test_wrong_payin_get_7(self):
+        """ Getting order with not real merchant. """
+        data = {'method': 'payin.get',
+                'params': {'o_lid': None},
+                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+        time_sent = user1.merchant1.time_sent()
+        r = requests.post(url=user1.merchant1.japi_url, json=data,
+                          headers={'x-merchant': '01',
+                                   'x-signature': create_sign(user1.merchant1.akey, data['params'], time_sent),
+                                   'x-utc-now-ms': time_sent}, verify=False)
+        assert loads(r.text)['error'] == {'code': -32010, 'data': {'reason': 'Merchant Is Not Active'}, 'message': 'InvalidMerchant'}
+
+
+    def test_wrong_payin_get_8(self):
+        """ Getting order with NONE merchant. """
+        data = {'method': 'payin.get',
+                'params': {'o_lid': None},
+                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+        time_sent = user1.merchant1.time_sent()
+        r = requests.post(url=user1.merchant1.japi_url, json=data,
+                          headers={'x-merchant': None,
+                                   'x-signature': create_sign(user1.merchant1.akey, data['params'], time_sent),
+                                   'x-utc-now-ms': time_sent}, verify=False)
+        assert loads(r.text)['error'] == {'code': -32003, 'data': {'reason': 'Add x-merchant to headers'}, 'message': 'InvalidHeaders'}
+
+    def test_wrong_payin_get_9(self):
+        """ Getting order without merchant in headers. """
+        data = {'method': 'payin.get',
+                'params': {'o_lid': '15'},
+                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+        time_sent = user1.merchant1.time_sent()
+        r = requests.post(url=user1.merchant1.japi_url, json=data,
+                          headers={'x-signature': create_sign(user1.merchant1.akey, data['params'], time_sent),
+                                   'x-utc-now-ms': time_sent}, verify=False)
+        assert loads(r.text)['error'] == {'code': -32003, 'data': {'reason': 'Add x-merchant to headers'}, 'message': 'InvalidHeaders'}
+
+
+    def test_wrong_payin_get_10(self):
+        """ Getting order with wrong signature. """
+        data = {'method': 'payin.get',
+                'params': {'o_lid': '15'},
+                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+        time_sent = user1.merchant1.time_sent()
+        r = requests.post(url=user1.merchant1.japi_url, json=data,
+                          headers={'x-merchant': str(user1.merchant1.lid),
+                                   'x-signature': 'wrong sign',
+                                   'x-utc-now-ms': time_sent}, verify=False)
+        assert loads(r.text)['error'] == {'code': -32002, 'data': {'reason': 'Invalid signature'}, 'message': 'InvalidSign'}
+
+    def test_wrong_payin_get_11(self):
+        """ Getting order with NONE signature. """
+        data = {'method': 'payin.get',
+                'params': {'o_lid': '15'},
+                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+        time_sent = user1.merchant1.time_sent()
+        r = requests.post(url=user1.merchant1.japi_url, json=data,
+                          headers={'x-merchant': str(user1.merchant1.lid),
+                                   'x-signature': None,
+                                   'x-utc-now-ms': time_sent}, verify=False)
+        assert loads(r.text)['error'] == {'code': -32003, 'data': {'reason': 'Add x-signature to headers'}, 'message': 'InvalidHeaders'}
+
+    def test_wrong_payin_get_12(self):
+        """ Getting order without x-signature parameter. """
+        data = {'method': 'payin.get',
+                'params': {'o_lid': '15'},
+                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+        time_sent = user1.merchant1.time_sent()
+        r = requests.post(url=user1.merchant1.japi_url, json=data,
+                          headers={'x-merchant': str(user1.merchant1.lid),
+                                   'x-utc-now-ms': time_sent}, verify=False)
+        assert loads(r.text)['error'] == {'code': -32003, 'data': {'reason': 'Add x-signature to headers'}, 'message': 'InvalidHeaders'}
+
+    def test_wrong_payin_get_13(self):
+        """ Getting order without x-utc-now-ms parameter. """
+        data = {'method': 'payin.get',
+                'params': {'o_lid': '15'},
+                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+        time_sent = user1.merchant1.time_sent()
+        r = requests.post(url=user1.merchant1.japi_url, json=data,
+                          headers={'x-merchant': str(user1.merchant1.lid),
+                                   'x-signature': create_sign(user1.merchant1.akey, data['params'], time_sent)}, verify=False)
+        assert loads(r.text)['error'] == {'code': -32003, 'data': {'reason': 'Add x-utc-now-ms to headers'}, 'message': 'InvalidHeaders'}
+
+    def test_wrong_payin_get_14(self):
+        """ Getting order with request for wrong method. """
+        data = {'method': 'payin.gett',
+                'params': {'o_lid': '15'},
+                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+        time_sent = user1.merchant1.time_sent()
+        r = requests.post(url=user1.merchant1.japi_url, json=data,
+                          headers={'x-merchant': str(user1.merchant1.lid),
+                                   'x-signature': create_sign(user1.merchant1.akey, data['params'], time_sent),
+                                   'x-utc-now-ms': time_sent}, verify=False)
+        assert loads(r.text)['error'] == {'code': -32601, 'message': 'Method not found'}
 
 
 @pytest.mark.usefixtures('_personal_operation_fee', '_personal_exchange_fee')
@@ -1053,7 +1225,7 @@ class TestPayinParams:
         assert user1.merchant1.resp_payin_params['max'] == '200'
         assert user1.merchant1.resp_payin_params['in_fee'] == {'add': '1', 'max': '0', 'method': 'ceil', 'min': '0',
                                                                'mult': '0.03'}
-        assert user1.merchant1.resp_payin_params['out_fee'] == {'add': '27.78', 'mult': '0.03'}
+        assert user1.merchant1.resp_payin_params['out_fee'] == {'add': '27.78', 'max': '0', 'method': 'ceil', 'min': '0', 'mult': '0.03'}
         assert user1.merchant1.resp_payin_params['rate'] == ['1', '27.7769']
 
 
@@ -1418,3 +1590,119 @@ class TestWrongVerifyCheque:
         print(r.text)
         assert loads(r.text)['error'] == {'code': -32003, 'message': 'InvalidHeaders',
                                           'data': {'reason': 'Add x-utc-now-ms to headers'}}
+
+
+class TestPayinList:
+    """ Test payin list for merchant. """
+
+    def test_0(self, start_session):
+        """ Warm. """
+        global admin, user1, user2
+        admin, user1, user2 = start_session
+
+    def test_payin_list_1(self):
+        """ Getting full list for payin by MERCHANT. """
+        adm_ls = [dct['lid'] for dct in admin.get_order({'merchant_id': user1.merchant1.id, 'tp': 0})[1:]]
+        user1.merchant1.payin_list(in_curr=None, out_curr=None, payway=None, first=None, count=None)
+        us_ls = [dct['lid'] for dct in user1.merchant1.resp_payin_list['data']]
+        assert us_ls == adm_ls
+
+    def test_payin_list_2(self):
+        """ Getting lists from first 5 elements by OWNER. """
+        adm_ls = [dct['lid'] for dct in admin.get_order({'merchant_id': user1.merchant1.id, 'tp': 0})[1:]]
+        adm_ls = adm_ls[:5]
+        user1.delegate(params={'m_lid': user1.merchant1.lid, 'merch_model': 'payin', 'merch_method': 'list', 'in_curr': None, 'out_curr': None,
+                               'payway': None, 'first': None, 'count': '5'})
+        us_ls = [dct['lid'] for dct in user1.resp_delegate['data']]
+        assert us_ls == adm_ls
+
+    @pytest.mark.skip
+    def test_payin_list_3(self):
+        """ Getting list from second element by MERCHANT to default end element - first 20 elements from second. """
+        user1.merchant1.payin_list(in_curr=None, out_curr=None, payway=None, first='1', count=None)
+        us_ls = [dct['lid'] for dct in user1.merchant1.resp_payin_list['data']]
+        adm_ls = [dct['lid'] for dct in admin.get_order({'merchant_id': user1.merchant1.id, 'tp': 0})[1:]]
+        adm_ls = adm_ls[1:len(user1.merchant1.resp_payin_list['data'])+2]
+        print(us_ls, adm_ls)
+        assert us_ls == adm_ls
+        assert len(us_ls) <= 20
+
+    def test_payin_list_4(self):
+        """ Getting 4 elements from second to 5 by OWNER. """
+        adm_ls = [dct['lid'] for dct in admin.get_order({'merchant_id': user1.merchant1.id, 'tp': 0})[1:]]
+        adm_ls = adm_ls[1:5]
+        user1.delegate(params={'m_lid': user1.merchant1.lid, 'merch_model': 'payin', 'merch_method': 'list', 'in_curr': None, 'out_curr': None,
+                               'payway': None, 'first': '1', 'count': '4'})
+        us_ls = [dct['lid'] for dct in user1.resp_delegate['data']]
+        assert adm_ls == us_ls
+
+    def test_payin_list_5(self):
+        """ Getting 4 elements from second to 5 by MERCHANT with payway filter. """
+        adm_ls = [{dct['lid']: dct['payway_id']} for dct in admin.get_order({'merchant_id': user1.merchant1.id, 'tp': 0})[1:]]
+        adm_ls = [dct['lid'] for dct in adm_ls[1:5] if dct['payway_id'] == admin.payway['visamc']['id']]
+        user1.merchant1.payin_list(in_curr=None, out_curr=None, payway='visamc', first='1', count='4')
+        us_ls = [dct['lid'] for dct in user1.merchant1.resp_payin_list['data']]
+        assert adm_ls == us_ls
+
+    def test_payin_list_6(self):
+        """ Getting 4 elements from second to 5 by OWNER with payway and IN_CURR filter. """
+        adm_ls = [dct['lid'] for dct in admin.get_order({'merchant_id': user1.merchant1.id, 'tp': 0})[1:]
+                  if dct['payway_id'] == admin.payway['visamc']['id'] and dct['in_currency_id'] == admin.currency['UAH']]
+        adm_ls = adm_ls[1:5]
+        user1.delegate(params={'m_lid': user1.merchant1.lid, 'merch_model': 'payin', 'merch_method': 'list', 'in_curr': 'UAH', 'out_curr': None,
+                               'payway': 'visamc', 'first': '1', 'count': '4'})
+        us_ls = [dct['lid'] for dct in user1.resp_delegate['data']]
+        assert adm_ls == us_ls
+
+    def test_payin_list_7(self):
+        """ Getting 4 elements from second to 5 by MERCHANT with PAYWAY and IN_CURR filter and OUT_CURR filter. """
+        adm_ls = [dct['lid'] for dct in admin.get_order({'merchant_id': user1.merchant1.id, 'tp': 0})[1:]
+                  if dct['payway_id'] == admin.payway['visamc']['id'] and dct['in_currency_id'] == admin.currecy['UAH']
+                  and dct['out_currency_id'] == admin.currency['USD']]
+        adm_ls = adm_ls[1:5]
+        user1.merchant1.payin_list(in_curr='UAH', out_curr='USD', payway='visamc', first='1', count='4')
+        us_ls = [dct['lid'] for dct in user1.merchant1.resp_payin_list['data']]
+        assert adm_ls == us_ls
+
+
+
+class TestWrongPayinList:
+    """ Wrong payin list requests testing. """
+
+    def test_0(self, start_session):
+        """ Warm. """
+        global admin, user1, user2
+        admin, user1, user2 = start_session
+
+    def test_wrong_payin_list_1(self):
+        """ Request with not str in first parameter. """
+        user1.merchant1.payin_list(in_curr='UAH', out_curr='USD', payway='visamc', first=1, count='4')
+        assert user1.merchant1.resp_payin_list == {'code': -32070, 'data': {'reason': "Key 'first' must not be of 'int' type"},
+                                                   'message': 'InvalidParam'}
+
+    def test_wrong_payin_list_2(self):
+        """ Request with not str in count parameter. """
+        user1.merchant1.payin_list(in_curr='UAH', out_curr='USD', payway='visamc', first='1', count=4)
+        assert user1.merchant1.resp_payin_list == {'code': -32070, 'data': {'reason': "Key 'count' must not be of 'int' type"},
+                                                   'message': 'InvalidParam'}
+
+    def test_wrong_payin_list_3(self):
+        """ Request with negative number in first parameter. """
+        user1.merchant1.payin_list(in_curr='UAH', out_curr='USD', payway='visamc', first='-1', count='4')
+        assert user1.merchant1.resp_payin_list == {'code': -32070, 'message': 'InvalidParam'}
+
+    def test_wrong_payin_list_4(self):
+        """ Request with negative number in count parameter. """
+        user1.merchant1.payin_list(in_curr='UAH', out_curr='USD', payway='visamc', first='1', count='-4')
+        assert user1.merchant1.resp_payin_list == {'code': -32070, 'message': 'InvalidParam'}
+
+    def test_wrong_payin_list_5(self):
+        """ Request with not real currency in in_curr parameter. """
+        user1.merchant1.payin_list(in_curr='UHA', out_curr='USD', payway='visamc', first='1', count='4')
+        assert user1.merchant1.resp_payin_list == {'code': -32076, 'data': {'reason': 'UHA'}, 'message': 'InvalidCurrency'}
+
+    def test_wrong_payin_list_6(self):
+        """ Request with not real currency in out_curr parameter. """
+        user1.merchant1.payin_list(in_curr='UAH', out_curr='UDS', payway='visamc', first='1', count='4')
+        assert user1.merchant1.resp_payin_list == {'code': -32076, 'data': {'reason': 'UDS'}, 'message': 'InvalidCurrency'}
+

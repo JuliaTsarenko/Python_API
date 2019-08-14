@@ -154,11 +154,20 @@ class Merchant:
                 'jsonrpc': 2.0, 'id': self.req_id}
         time_sent = self.time_sent()
         r = requests.post(url=self.japi_url, json=data, headers=self.headers(data, time_sent), verify=False)
-        print('\n', r.text)
+        # print('\n', r.text)
         try:
             self.resp_convert_create = loads(r.text)['result']
         except KeyError:
             self.resp_convert_create = loads(r.text)['error']
+
+    def convert_get(self, o_lid):
+        self.req_id = self._id()
+        data = {'method': 'convert.get',
+                'params': {'o_lid': o_lid},
+                'jsonrpc': 2.0, 'id': self.req_id}
+        time_sent = self.time_sent()
+        r = requests.post(url=self.japi_url, json=data, headers=self.headers(data, time_sent), verify=False)
+        return loads(r.text)
 
     def convert_params(self, in_curr, out_curr):
         self.req_id = self._id()
@@ -167,15 +176,26 @@ class Merchant:
                 'jsonrpc': 2.0, 'id': self.req_id}
         time_sent = self.time_sent()
         r = requests.post(url=self.japi_url, json=data, headers=self.headers(data, time_sent), verify=False)
-        print('\n', r.text)
+        return loads(r.text)
+
+    def convert_calc(self, in_amount, out_amount, in_curr, out_curr, validate_balance=True):
+        self.req_id = self._id()
+        data = {'method': 'convert.calc',
+                'params': {'in_amount': in_amount, 'out_amount': out_amount,
+                           'in_curr': in_curr, 'out_curr': out_curr, 'validate_balance': validate_balance},
+                'jsonrpc': 2.0, 'id': self.req_id}
+        time_sent = self.time_sent()
+        # print('out_curr', out_curr)
+        r = requests.post(url=self.japi_url, json=data, headers=self.headers(data, time_sent), verify=False)
+        # pprint.pprint(loads(r.text))
         try:
-            self.resp_convert_params = loads(r.text)['result']
+            self.resp_convert_calc = loads(r.text)['result']
         except KeyError:
-            self.resp_convert_params = loads(r.text)['error']
+            self.resp_convert_calc = loads(r.text)['error']
 
     def payin_calc(self, payway, amount, in_curr, out_curr):
         self.req_id = self._id()
-        data = {'method': 'payin.create',
+        data = {'method': 'payin.calc',
                 'params': {'payway': payway, 'amount': amount, 'in_curr': in_curr, 'out_curr': out_curr},
                 'jsonrpc': 2.0, 'id': self._id()}
         time_sent = self.time_sent()
@@ -226,6 +246,19 @@ class Merchant:
             self.resp_payin_params = loads(r.text)['result']
         except KeyError:
             self.resp_payin_params = loads(r.text)['error']
+
+    def payin_list(self, in_curr, out_curr, payway, first, count):
+        self.req_id = self._id()
+        data = {'method': 'payin.list',
+                'params': {'payway': payway, 'in_curr': in_curr, 'out_curr': out_curr, 'first': first, 'count': count},
+                'jsonrpc': 2.0, 'id': self.req_id}
+        time_sent = self.time_sent()
+        r = requests.post(url=self.japi_url, json=data, headers=self.headers(data, time_sent), verify=False)
+        print('\n', r.text)
+        try:
+            self.resp_payin_list = loads(r.text)['result']
+        except KeyError:
+            self.resp_payin_list = loads(r.text)['error']
 
     def cheque_verify(self, cheque):
         self.req_id = self._id()
@@ -332,7 +365,6 @@ class Merchant:
             self.resp_payout_in_curr_list = loads(r.text)['result']
         except KeyError:
             self.resp_payout_in_curr_list = loads(r.text)
-
 
     def payout_get_cheque(self, lid):
         self.req_id = self._id()

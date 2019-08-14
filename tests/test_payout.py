@@ -31,7 +31,7 @@ class TestPayout:
                                      tech_min=bl(0.01), tech_max=bl(98))
         user1.delegate(params={'merch_model': 'payout', 'merch_method': 'create', 'externalid': user1.ex_id(),
                                'payway': 'visamc', 'amount': '0.01', 'out_curr': 'UAH',
-                               'm_lid': user1.merchant1.lid, 'payee': '4731185613244273'})
+                               'm_lid': str(user1.merchant1.lid), 'payee': '4731185613244273'})
         # print('lid', user1.merchant1.lid)
         # pprint.pprint(user1.resp_delegate)
         # assert user1.resp_delegate['status'] == 'done'
@@ -57,7 +57,7 @@ class TestPayout:
                                      tech_min=bl(0.01), tech_max=bl(98))
         user1.delegate(params={'merch_model': 'payout', 'merch_method': 'create', 'externalid': user1.ex_id(),
                                'payway': 'kuna', 'amount': '0.01', 'out_curr': 'UAH',
-                               'm_lid': user1.merchant1.lid, 'payee': '5363542305527674'})
+                               'm_lid': str(user1.merchant1.lid), 'payee': '5363542305527674'})
         # print('lid', user1.merchant1.lid)
         # pprint.pprint(user1.resp_delegate)
         # assert user1.resp_delegate['status'] == 'done'
@@ -127,7 +127,7 @@ class TestPayout:
                                      tech_min=bl(1), tech_max=bl(100))
         user1.delegate(params={'merch_model': 'payout', 'merch_method': 'create', 'externalid': user1.ex_id(),
                                'payway': 'privat24', 'amount': '10', 'out_curr': 'UAH',
-                               'm_lid': user1.merchant1.lid, 'payee': '4731185613244273'})
+                               'm_lid': str(user1.merchant1.lid), 'payee': '4731185613244273'})
         # pprint.pprint(user1.resp_delegate)
         # assert user1.resp_delegate['status'] == 'done'
         assert user1.resp_delegate['account_amount'] == '11.5'
@@ -181,7 +181,7 @@ class TestPayout:
                                      tech_min=bl(1), tech_max=bl(100))
         user1.delegate(params={'merch_model': 'payout', 'merch_method': 'create', 'externalid': user1.ex_id(),
                                'payway': 'qiwi', 'amount': '10', 'out_curr': 'RUB',
-                               'm_lid': user1.merchant1.lid, 'payee': '380965781066'})
+                               'm_lid': str(user1.merchant1.lid), 'payee': '380965781066'})
         # pprint.pprint(user1.resp_delegate)
         assert user1.resp_delegate['account_amount'] == '11.55'
         assert user1.resp_delegate['in_amount'] == '10'
@@ -239,7 +239,7 @@ class TestPayout:
                                      is_active=True, tech_min=bl(1), tech_max=bl(15))
         user1.delegate(params={'merch_model': 'payout', 'merch_method': 'create', 'externalid': user1.ex_id(),
                                'payway': 'cash_kiev', 'amount': '10', 'out_curr': 'USD',
-                               'm_lid': user1.merchant1.lid, 'contact': '380965781066'})
+                               'm_lid': str(user1.merchant1.lid), 'contact': '380965781066'})
         # pprint.pprint(user1.resp_delegate)
         # assert user1.resp_delegate['status'] == 'done'
         assert user1.resp_delegate['account_amount'] == '11.55'
@@ -269,7 +269,7 @@ class TestPayout:
                                      is_active=True, tech_min=bl(0.01), tech_max=bl(50))
         user1.delegate(params={'merch_model': 'payout', 'merch_method': 'create', 'externalid': user1.ex_id(),
                                'payway': 'paymer', 'amount': '50', 'out_curr': 'RUB', 'in_curr': 'UAH',
-                               'm_lid': user1.merchant1.lid, 'contact': '380965781066'})
+                               'm_lid': str(user1.merchant1.lid), 'contact': '380965781066'})
         # pprint.pprint(user1.resp_delegate)
         # assert user1.resp_delegate['status'] == 'done'
         assert user1.resp_delegate['account_amount'] == '18.76'
@@ -372,7 +372,7 @@ class TestWrongPayout:
     #     admin.set_st_value(name='out_is_blocked', value=True)
     #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'create', 'externalid': user1.ex_id(),
     #                            'payway': 'visamc', 'amount': '0.01', 'out_curr': 'UAH',
-    #                            'm_lid': user1.merchant1.lid, 'payee': '5363542305527674'})
+    #                            'm_lid': str(user1.merchant1.lid), 'payee': '5363542305527674'})
     #     # pprint.pprint(user1.resp_delegate)
     #     assert user1.resp_delegate['message'] == 'UnavailableOutPay'
     #     assert user1.resp_delegate['data']['reason'] == 'Out pay is blocked for system'
@@ -411,7 +411,7 @@ class TestWrongPayout:
     #     admin.set_merchant(lid=user1.merchant1.lid, payout_allowed=False)
     #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'create', 'externalid': user1.ex_id(),
     #                            'payway': 'visamc', 'amount': '0.01', 'out_curr': 'UAH',
-    #                            'm_lid': user1.merchant1.lid, 'payee': '5363542305527674'})
+    #                            'm_lid': str(user1.merchant1.lid), 'payee': '5363542305527674'})
     #     # pprint.pprint(user1.resp_delegate)
     #     assert user1.resp_delegate['message'] == 'UnavailableOutPay'
     #     assert user1.resp_delegate['data']['reason'] == f'Out pay is blocked for merchant {user1.merchant1.lid}'
@@ -452,7 +452,7 @@ class TestWrongPayout:
     #                                  is_active=True, tech_min=bl(0.01), tech_max=bl(98))
     #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'create', 'externalid': user1.ex_id(),
     #                            'payway': 'visamc', 'amount': '0.02', 'out_curr': 'UAH',
-    #                            'm_lid': user1.merchant1.lid, 'payee': '5363542305527674'})
+    #                            'm_lid': str(user1.merchant1.lid), 'payee': '5363542305527674'})
     #     # pprint.pprint(user1.resp_delegate)
     #     assert user1.resp_delegate['message'] == 'InsufficientFunds'
     #     assert user1.resp_delegate['data']['reason'] == 'Amount 0.02 less then balance 0.01 in UAH'
@@ -494,10 +494,7 @@ class TestWrongPayout:
     #                            'm_lid': '1234567890', 'payee': '5363542305527674'})
     #     # pprint.pprint(user1.resp_delegate)
     #     assert user1.resp_delegate['message'] == 'NotFound'
-    #     assert user1.resp_delegate['data']['reason'] == \
-    #            f'Merchant with lid 1234567890 was not found for user with id {user1.id}'
-    #     assert user1.resp_delegate['data']['reason'] == \
-    #            'Merchant with lid 1234567890 was not found for user with id {}'.format(user1.id)
+    #     assert user1.resp_delegate['data']['reason'] == 'Merchant with lid 1234567890 was not found'
     #     admin.set_pwcurrency_min_max(payway=admin.payway['visamc']['id'], is_out=True, currency='UAH',
     #                                  is_active=True, tech_min=bl(1), tech_max=bl(98))
     #
@@ -516,13 +513,12 @@ class TestWrongPayout:
     #     admin.set_merchant(lid=user1.merchant1.lid, is_active=False)
     #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'create', 'externalid': user1.ex_id(),
     #                            'payway': 'visamc', 'amount': '0.01', 'out_curr': 'UAH',
-    #                            'm_lid': user1.merchant1.lid, 'payee': '5363542305527674'})
+    #                            'm_lid': str(user1.merchant1.lid), 'payee': '5363542305527674'})
     #     # pprint.pprint(user1.resp_delegate)
     #     assert user1.resp_delegate['message'] == 'InvalidMerchant'
+    #     assert user1.resp_delegate['data']['reason'] == f'Active merchant with lid {user1.merchant1.lid} was not found'
     #     assert user1.resp_delegate['data']['reason'] == \
-    #            f'Active merchant with lid {user1.merchant1.lid} was not found for user with id {user1.id}'
-    #     assert user1.resp_delegate['data']['reason'] == \
-    #            'Active merchant with lid {} was not found for user with id {}'.format(user1.merchant1.lid, user1.id)
+    #            'Active merchant with lid {} was not found'.format(user1.merchant1.lid)
     #     admin.set_pwcurrency_min_max(payway=admin.payway['visamc']['id'], is_out=True, currency='UAH',
     #                                  is_active=True, tech_min=bl(1), tech_max=bl(98))
     #
@@ -540,10 +536,10 @@ class TestWrongPayout:
     #                                  is_active=True, tech_min=bl(0.01), tech_max=bl(98))
     #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'create', 'externalid': user1.ex_id(),
     #                            'payway': 'visamc', 'amount': None, 'out_curr': 'UAH',
-    #                            'm_lid': user1.merchant1.lid, 'payee': '5363542305527674'})
+    #                            'm_lid': str(user1.merchant1.lid), 'payee': '5363542305527674'})
     #     # pprint.pprint(user1.resp_delegate)
-    #     assert user1.resp_delegate['message'] == 'InvalidAmountFormat'
-    #     assert user1.resp_delegate['data']['reason'] == 'Invalid amount None for currency UAH'
+    #     assert user1.resp_delegate['message'] == 'InvalidInputParams'
+    #     assert user1.resp_delegate['data']['reason'] == "method payout.calc' missing 1 argument: 'amount'"
     #     admin.set_pwcurrency_min_max(payway=admin.payway['visamc']['id'], is_out=True, currency='UAH',
     #                                  is_active=True, tech_min=bl(1), tech_max=bl(98))
     #
@@ -561,8 +557,9 @@ class TestWrongPayout:
     #                                  is_active=True,  tech_min=bl(1), tech_max=bl(3.36))
     #     user1.merchant1.payout_create(payway='payeer', amount=None, out_curr='RUB', payee='P1007817628')
     #     # pprint.pprint(user1.merchant1.resp_payout_create)
-    #     assert user1.merchant1.resp_payout_create['error']['message'] == 'InvalidAmountFormat'
-    #     assert user1.merchant1.resp_payout_create['error']['data']['reason'] == 'Invalid amount None for currency RUB'
+    #     assert user1.merchant1.resp_payout_create['error']['message'] == 'InvalidInputParams'
+    #     assert user1.merchant1.resp_payout_create['error']['data']['reason'] == \
+    #            "method payout.calc' missing 1 argument: 'amount'"
     #
     # def test_wrong_payout_11(self):# Вывод без суммы (amount не передан)
     #     """ Payout without amount (amount not transferred)
@@ -578,7 +575,7 @@ class TestWrongPayout:
     #                                  is_active=True, tech_min=bl(0.01), tech_max=bl(98))
     #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'create', 'externalid': user1.ex_id(),
     #                            'payway': 'visamc', 'out_curr': 'UAH',
-    #                            'm_lid': user1.merchant1.lid, 'payee': '5363542305527674'})
+    #                            'm_lid': str(user1.merchant1.lid), 'payee': '5363542305527674'})
     #     # pprint.pprint(user1.resp_delegate)
     #     assert user1.resp_delegate['message'] == 'InvalidInputParams'
     #     assert user1.resp_delegate['data']['reason'] == "method 'merchant.delegate' missing 1 argument: 'amount'"
@@ -626,7 +623,7 @@ class TestWrongPayout:
     #                                  is_active=True,  tech_min=bl(0.01), tech_max=bl(98))
     #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'create', 'externalid': user1.ex_id(),
     #                            'payway': 'visamc', 'amount': 'Test', 'out_curr': 'UAH',
-    #                            'm_lid': user1.merchant1.lid, 'payee': '5363542305527674'})
+    #                            'm_lid': str(user1.merchant1.lid), 'payee': '5363542305527674'})
     #     # pprint.pprint(user1.resp_delegate)
     #     assert user1.resp_delegate['message']== 'InvalidAmountFormat'
     #     assert user1.resp_delegate['data']['reason']== 'Invalid format Test for UAH'
@@ -664,7 +661,7 @@ class TestWrongPayout:
     #                                  is_active=True, tech_min=bl(0.01), tech_max=bl(98))
     #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'create', 'externalid': user1.ex_id(),
     #                            'payway': 'visamc', 'amount': '0.111', 'out_curr': 'UAH',
-    #                            'm_lid': user1.merchant1.lid, 'payee': '5363542305527674'})
+    #                            'm_lid': str(user1.merchant1.lid), 'payee': '5363542305527674'})
     #     # pprint.pprint(user1.resp_delegate)
     #     assert user1.resp_delegate['message'] == 'InvalidAmountFormat'
     #     assert user1.resp_delegate['data']['reason'] == 'Invalid format 0.111 for UAH'
@@ -702,7 +699,7 @@ class TestWrongPayout:
     #                                  is_active=True, tech_min=bl(0.01), tech_max=bl(98))
     #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'create', 'externalid': user1.ex_id(),
     #                            'payway': 'visamc', 'amount': '0.01', 'out_curr': 'TST',
-    #                            'm_lid': user1.merchant1.lid, 'payee': '5363542305527674'})
+    #                            'm_lid': str(user1.merchant1.lid), 'payee': '5363542305527674'})
     #     # print(user1.resp_delegate)
     #     assert user1.resp_delegate['message'] == 'InvalidCurrency'
     #     assert user1.resp_delegate['data']['reason'] == 'TST'
@@ -741,7 +738,7 @@ class TestWrongPayout:
     #     admin.set_currency_activity(name='UAH', is_disabled=False, is_active=False)
     #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'create', 'externalid': user1.ex_id(),
     #                            'payway': 'visamc', 'amount': '0.01', 'out_curr': 'UAH',
-    #                            'm_lid': user1.merchant1.lid, 'payee': '5363542305527674'})
+    #                            'm_lid': str(user1.merchant1.lid), 'payee': '5363542305527674'})
     #     # print(user1.resp_delegate)
     #     assert user1.resp_delegate['message'] == 'InactiveCurrency'
     #     assert user1.resp_delegate['data']['reason'] == 'UAH'
@@ -782,7 +779,7 @@ class TestWrongPayout:
     #                                  is_active=True, tech_min=bl(0.01), tech_max=bl(50))
     #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'create', 'externalid': user1.ex_id(),
     #                            'payway': 'paymer', 'amount': '50', 'out_curr': 'RUB', 'in_curr': 'TST',
-    #                            'm_lid': user1.merchant1.lid, 'contact': '380965781066'})
+    #                            'm_lid': str(user1.merchant1.lid), 'contact': '380965781066'})
     #     # pprint.pprint(user1.resp_delegate)
     #     assert user1.resp_delegate['message'] == 'InvalidCurrency'
     #     assert user1.resp_delegate['data']['reason'] == 'TST'
@@ -834,7 +831,7 @@ class TestWrongPayout:
     #     admin.set_currency_activity(name='UAH', is_disabled=False, is_active=False)
     #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'create', 'externalid': user1.ex_id(),
     #                            'payway': 'paymer', 'amount': '50', 'out_curr': 'RUB', 'in_curr': 'UAH',
-    #                            'm_lid': user1.merchant1.lid, 'contact': '380965781066'})
+    #                            'm_lid': str(user1.merchant1.lid), 'contact': '380965781066'})
     #     # pprint.pprint(user1.resp_delegate)
     #     assert user1.resp_delegate['message'] == 'InactiveCurrency'
     #     assert user1.resp_delegate['data']['reason'] == 'UAH'
@@ -884,7 +881,7 @@ class TestWrongPayout:
     #     admin.set_currency_activity(name='UAH', is_disabled=True, is_active=True)
     #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'create', 'externalid': user1.ex_id(),
     #                            'payway': 'visamc', 'amount': '0.01', 'out_curr': 'UAH',
-    #                            'm_lid': user1.merchant1.lid, 'payee': '5363542305527674'})
+    #                            'm_lid': str(user1.merchant1.lid), 'payee': '5363542305527674'})
     #     # print(user1.resp_delegate)
     #     assert user1.resp_delegate['message'] == 'InactiveCurrency'
     #     assert user1.resp_delegate['data']['reason'] == 'UAH'
@@ -926,7 +923,7 @@ class TestWrongPayout:
     #     admin.set_currency_activity(name='UAH', is_disabled=True, is_active=True)
     #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'create', 'externalid': user1.ex_id(),
     #                            'payway': 'paymer', 'amount': '50', 'out_curr': 'RUB', 'in_curr': 'UAH',
-    #                            'm_lid': user1.merchant1.lid, 'contact': '380965781066'})
+    #                            'm_lid': str(user1.merchant1.lid), 'contact': '380965781066'})
     #     # print(user1.resp_delegate)
     #     assert user1.resp_delegate['message'] == 'InactiveCurrency'
     #     assert user1.resp_delegate['data']['reason'] == 'UAH'
@@ -974,7 +971,7 @@ class TestWrongPayout:
     #                                  is_active=True, tech_min=bl(0.02), tech_max=bl(98))
     #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'create', 'externalid': user1.ex_id(),
     #                            'payway': 'kuna', 'amount': '0.01', 'out_curr': 'UAH',
-    #                            'm_lid': user1.merchant1.lid, 'payee': '5363542305527674'})
+    #                            'm_lid': str(user1.merchant1.lid), 'payee': '5363542305527674'})
     #     # print(user1.resp_delegate)
     #     assert user1.resp_delegate['message'] == 'AmountTooSmall'
     #     assert user1.resp_delegate['data']['reason'] == '0.01'
@@ -1057,7 +1054,7 @@ class TestWrongPayout:
     #                                  is_active=True, tech_min=bl(1), tech_max=bl(1))
     #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'create', 'externalid': user1.ex_id(),
     #                            'payway': 'cash_kiev', 'amount': '10', 'out_curr': 'USD',
-    #                            'm_lid': user1.merchant1.lid, 'contact': '380965781066'})
+    #                            'm_lid': str(user1.merchant1.lid), 'contact': '380965781066'})
     #     # print(user1.resp_delegate)
     #     assert user1.resp_delegate['message'] == 'AmountTooBig'
     #     assert user1.resp_delegate['data']['reason'] == '10'
@@ -1082,7 +1079,7 @@ class TestWrongPayout:
     #                                  is_active=True, tech_min=bl(1), tech_max=bl(10))
     #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'create', 'externalid': user1.ex_id(),
     #                            'payway': 'cash_kiev', 'amount': '10', 'out_curr': 'USD',
-    #                            'm_lid': user1.merchant1.lid, 'contact': '380965781066'})
+    #                            'm_lid': str(user1.merchant1.lid), 'contact': '380965781066'})
     #     # pprint.pprint(user1.resp_delegate)
     #     # assert user1.resp_delegate['status'] == 'done'
     #     assert user1.resp_delegate['account_amount'] == '11.55'
@@ -1113,7 +1110,7 @@ class TestWrongPayout:
     #                                  is_active=True, tech_min=bl(0.01), tech_max=bl(50))
     #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'create', 'externalid': user1.ex_id(),
     #                            'payway': 'paymer', 'amount': '50', 'out_curr': 'RUB', 'in_curr': 'UAH',
-    #                            'm_lid': user1.merchant1.lid, 'contact': '380965781066'})
+    #                            'm_lid': str(user1.merchant1.lid), 'contact': '380965781066'})
     #     # pprint.pprint(user1.resp_delegate)
     #     assert user1.resp_delegate['message'] == 'AmountTooSmall'
     #     assert user1.resp_delegate['data']['reason'] == '18.76'
@@ -1168,7 +1165,7 @@ class TestWrongPayout:
     #                                  is_active=True, tech_min=bl(0.01), tech_max=bl(50))
     #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'create', 'externalid': user1.ex_id(),
     #                            'payway': 'paymer', 'amount': '50', 'out_curr': 'RUB', 'in_curr': 'UAH',
-    #                            'm_lid': user1.merchant1.lid, 'contact': '380965781066'})
+    #                            'm_lid': str(user1.merchant1.lid), 'contact': '380965781066'})
     #     # pprint.pprint(user1.resp_delegate)
     #     # assert user1.resp_delegate['status'] == 'done'
     #     assert user1.resp_delegate['account_amount'] == '18.76'
@@ -1237,7 +1234,7 @@ class TestWrongPayout:
     #                                  is_active=True, tech_min=bl(0.01), tech_max=bl(50))
     #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'create', 'externalid': user1.ex_id(),
     #                            'payway': 'paymer', 'amount': '50', 'out_curr': 'RUB', 'in_curr': 'UAH',
-    #                            'm_lid': user1.merchant1.lid, 'contact': '380965781066'})
+    #                            'm_lid': str(user1.merchant1.lid), 'contact': '380965781066'})
     #     # pprint.pprint(user1.resp_delegate)
     #     assert user1.resp_delegate['message'] == 'AmountTooBig'
     #     assert user1.resp_delegate['data']['reason'] == '18.76'
@@ -1292,7 +1289,7 @@ class TestWrongPayout:
     #                                  is_active=True, tech_min=bl(0.01), tech_max=bl(50))
     #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'create', 'externalid': user1.ex_id(),
     #                            'payway': 'paymer', 'amount': '50', 'out_curr': 'RUB', 'in_curr': 'UAH',
-    #                            'm_lid': user1.merchant1.lid, 'contact': '380965781066'})
+    #                            'm_lid': str(user1.merchant1.lid), 'contact': '380965781066'})
     #     # pprint.pprint(user1.resp_delegate)
     #     # assert user1.resp_delegate['status'] == 'done'
     #     assert user1.resp_delegate['account_amount'] == '18.76'
@@ -1357,7 +1354,7 @@ class TestWrongPayout:
     #                                  is_active=True, tech_min=bl(0.01), tech_max=bl(98))
     #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'create', 'externalid': user1.ex_id(),
     #                            'payway': 'visamc', 'amount': '0.009', 'out_curr': 'UAH',
-    #                            'm_lid': user1.merchant1.lid, 'payee': '5363542305527674'})
+    #                            'm_lid': str(user1.merchant1.lid), 'payee': '5363542305527674'})
     #     # pprint.pprint(user1.resp_delegate)
     #     assert user1.resp_delegate['message'] == 'InvalidAmountFormat'
     #     assert user1.resp_delegate['data']['reason'] == 'Invalid format 0.009 for UAH'
@@ -1390,7 +1387,7 @@ class TestWrongPayout:
     #     admin.set_pwcurrency_min_max(payway=admin.payway['visamc']['id'], is_out=True, currency='UAH',
     #                                  is_active=True, tech_min=bl(0.01), tech_max=bl(98))
     #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'create', 'externalid': user1.ex_id(),
-    #                            'payway': 'visamc', 'amount': '0.01', 'm_lid': user1.merchant1.lid,
+    #                            'payway': 'visamc', 'amount': '0.01', 'm_lid': str(user1.merchant1.lid),
     #                            'payee': '4731185613244273'})
     #     # pprint.pprint(user1.resp_delegate)
     #     assert user1.resp_delegate['message'] == 'InvalidInputParams'
@@ -1435,10 +1432,10 @@ class TestWrongPayout:
     #                                  is_active=True, tech_min=bl(0.01), tech_max=bl(98))
     #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'create', 'externalid': user1.ex_id(),
     #                            'payway': 'visamc', 'amount': '0.01', 'out_curr': None,
-    #                            'm_lid': user1.merchant1.lid, 'payee': '5363542305527674'})
+    #                            'm_lid': str(user1.merchant1.lid), 'payee': '5363542305527674'})
     #     # pprint.pprint(user1.resp_delegate)
-    #     assert user1.resp_delegate['message'] == 'InvalidCurrency'
-    #     assert user1.resp_delegate['data']['reason'] == None
+    #     assert user1.resp_delegate['message'] == 'InvalidInputParams'
+    #     assert user1.resp_delegate['data']['reason'] == "method 'payout.calc' missing 1 argument: 'out_curr'"
     #     admin.set_pwcurrency_min_max(payway=admin.payway['visamc']['id'], is_out=True, currency='UAH',
     #                                  is_active=True, tech_min=bl(1), tech_max=bl(98))
     #
@@ -1454,8 +1451,9 @@ class TestWrongPayout:
     #                             is_active=True)
     #     user1.merchant1.payout_create(payway='payeer', amount='1.02', out_curr=None, payee='P1007817628')
     #     # pprint.pprint(user1.merchant1.resp_payout_create)
-    #     assert user1.merchant1.resp_payout_create['error']['message'] == 'InvalidCurrency'
-    #     assert user1.merchant1.resp_payout_create['error']['data']['reason'] == None
+    #     assert user1.merchant1.resp_payout_create['error']['message'] == 'InvalidInputParams'
+    #     assert user1.merchant1.resp_payout_create['error']['data']['reason'] == \
+    #            "method 'payout.calc' missing 1 argument: 'out_curr'"
     #
     # def test_wrong_payout_49(self): # Запрос с лишним параметром 'par': '123'
     #     """ Request with extra parameter 'par': '123' delegate
@@ -1470,7 +1468,7 @@ class TestWrongPayout:
     #                                  is_active=True, tech_min=bl(0.01), tech_max=bl(98))
     #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'create', 'externalid': user1.ex_id(),
     #                            'payway': 'visamc', 'amount': '0.01', 'out_curr': 'UAH',
-    #                            'm_lid': user1.merchant1.lid, 'payee': '4731185613244273', 'par': '123'})
+    #                            'm_lid': str(user1.merchant1.lid), 'payee': '4731185613244273', 'par': '123'})
     #     # pprint.pprint(user1.resp_delegate)
     #     assert user1.resp_delegate['message'] == 'InvalidInputParams'
     #     assert user1.resp_delegate['data']['reason'] == "method 'merchant.delegate' received a redundant argument 'par'"
@@ -1513,7 +1511,7 @@ class TestWrongPayout:
     #     admin.set_pwcurrency_min_max(payway=admin.payway['visamc']['id'], is_out=True, currency='UAH',
     #                                  is_active=True, tech_min=bl(0.01), tech_max=bl(98))
     #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'create', 'payway': 'visamc', 'amount': '0.01',
-    #                            'out_curr': 'UAH', 'm_lid': user1.merchant1.lid, 'payee': '4731185613244273'})
+    #                            'out_curr': 'UAH', 'm_lid': str(user1.merchant1.lid), 'payee': '4731185613244273'})
     #     # pprint.pprint(user1.resp_delegate)
     #     assert user1.resp_delegate['message'] == 'InvalidInputParams'
     #     assert user1.resp_delegate['data']['reason'] == "method 'merchant.delegate' missing 1 argument: 'externalid'"
@@ -1557,10 +1555,10 @@ class TestWrongPayout:
     #     tmp_ex_id = user1.ex_id()
     #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'create', 'externalid': tmp_ex_id,
     #                            'payway': 'visamc', 'amount': '0.01', 'out_curr': 'UAH',
-    #                            'm_lid': user1.merchant1.lid, 'payee': '4731185613244273'})
+    #                            'm_lid': str(user1.merchant1.lid), 'payee': '4731185613244273'})
     #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'create', 'externalid': tmp_ex_id,
     #                            'payway': 'visamc', 'amount': '0.01', 'out_curr': 'UAH',
-    #                            'm_lid': user1.merchant1.lid, 'payee': '4731185613244273'})
+    #                            'm_lid': str(user1.merchant1.lid), 'payee': '4731185613244273'})
     #     # pprint.pprint(user1.resp_delegate)
     #     assert user1.resp_delegate['message'] == 'Unique'
     #     assert user1.resp_delegate['data']['reason'] == 'Duplicated key for externalid'
@@ -1656,10 +1654,10 @@ class TestWrongPayout:
     #                                  is_active=True, tech_min=bl(0.01), tech_max=bl(50))
     #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'create', 'externalid': user1.ex_id(),
     #                            'payway': 'paymer', 'amount': '50', 'out_curr': 'RUB', 'in_curr': 'UAH',
-    #                            'm_lid': user1.merchant1.lid, 'contact': 'R378259361317'})
+    #                            'm_lid': str(user1.merchant1.lid), 'contact': 'R378259361317'})
     #     # pprint.pprint(user1.resp_delegate)
     #     assert user1.resp_delegate['message'] == 'UnavailExchange'
-    #     assert user1.resp_delegate['data']['reason'] == 'Unavailable excange for UAH to RUB'
+    #     assert user1.resp_delegate['data']['reason'] == 'Unavailable exchange for UAH to RUB'
     #     admin.set_pwcurrency_min_max(payway=admin.payway['paymer']['id'], is_out=True, currency='RUB',
     #                                  is_active=True, tech_min=bl(0.01), tech_max=bl(39.99))
     #
@@ -1678,10 +1676,10 @@ class TestWrongPayout:
     #                                  is_active=True, tech_min=bl(0.01), tech_max=bl(50))
     #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'create', 'externalid': user1.ex_id(),
     #                            'payway': 'paymer', 'amount': '50', 'out_curr': 'RUB', 'in_curr': 'USD',
-    #                            'm_lid': user1.merchant1.lid, 'contact': 'R378259361317'})
+    #                            'm_lid': str(user1.merchant1.lid), 'contact': 'R378259361317'})
     #     # pprint.pprint(user1.resp_delegate)
     #     assert user1.resp_delegate['message'] == 'UnavailExchange'
-    #     assert user1.resp_delegate['data']['reason'] == 'Unavailable excange for USD to RUB'
+    #     assert user1.resp_delegate['data']['reason'] == 'Unavailable exchange for USD to RUB'
     #     admin.set_pwcurrency_min_max(payway=admin.payway['paymer']['id'], is_out=True, currency='RUB',
     #                                  is_active=True, tech_min=bl(0.01), tech_max=bl(39.99))
     #
@@ -1708,7 +1706,7 @@ class TestWrongPayout:
     #                                   in_curr='UAH', payee='Z123456789012')
     #     # pprint.pprint(user1.merchant1.resp_payout_create)
     #     assert user1.merchant1.resp_payout_create['error']['message'] == 'UnavailExchange'
-    #     assert user1.merchant1.resp_payout_create['error']['data']['reason'] == 'Unavailable excange for UAH to USD'
+    #     assert user1.merchant1.resp_payout_create['error']['data']['reason'] == 'Unavailable exchange for UAH to USD'
     #     admin.set_pwcurrency_min_max(payway=admin.payway['webmoney']['id'], is_out=True, currency='USD',
     #                                  is_active=False, tech_min=bl(1), tech_max=bl(0.97))
     #     admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=10, currency_id=admin.currency['USD'],
@@ -1737,7 +1735,7 @@ class TestWrongPayout:
     #     # pprint.pprint(user1.merchant1.resp_payout_create)
     #     assert user1.merchant1.resp_payout_create['error']['message'] == 'UnavailExchange'
     #     assert user1.merchant1.resp_payout_create['error']['data']['reason'] == \
-    #            'Unavailable excange for BCHABC to USD'
+    #            'Unavailable exchange for BCHABC to USD'
     #     admin.set_pwcurrency_min_max(payway=admin.payway['webmoney']['id'], is_out=True, currency='USD',
     #                                  is_active=False, tech_min=bl(1), tech_max=bl(0.97))
     #     admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=10, currency_id=admin.currency['USD'],
@@ -1756,7 +1754,7 @@ class TestWrongPayout:
     #                                  is_active=True, tech_min=bl(0.01), tech_max=bl(98))
     #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'create', 'externalid': user1.ex_id(),
     #                            'payway': 'test', 'amount': '0.01', 'out_curr': 'UAH',
-    #                            'm_lid': user1.merchant1.lid, 'payee': '5363542305527674'})
+    #                            'm_lid': str(user1.merchant1.lid), 'payee': '5363542305527674'})
     #     # pprint.pprint(user1.resp_delegate)
     #     assert user1.resp_delegate['message'] == 'InvalidPayway'
     #     assert user1.resp_delegate['data']['reason'] == 'test is unknown'
@@ -1793,7 +1791,7 @@ class TestWrongPayout:
     #     admin.set_payways(name='kuna', is_active=False)
     #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'create', 'externalid': user1.ex_id(),
     #                            'payway': 'kuna', 'amount': '0.01', 'out_curr': 'UAH',
-    #                            'm_lid': user1.merchant1.lid, 'payee': '4731185613244273'})
+    #                            'm_lid': str(user1.merchant1.lid), 'payee': '4731185613244273'})
     #     # pprint.pprint(user1.resp_delegate)
     #     assert user1.resp_delegate['message'] == 'InvalidPayway'
     #     assert user1.resp_delegate['data']['reason'] == 'kuna is inactive'
@@ -1831,7 +1829,7 @@ class TestWrongPayout:
     #     admin.set_payways(name='kuna', is_disabled=True)
     #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'create', 'externalid': user1.ex_id(),
     #                            'payway': 'kuna', 'amount': '0.01', 'out_curr': 'UAH',
-    #                            'm_lid': user1.merchant1.lid, 'payee': '4731185613244273'})
+    #                            'm_lid': str(user1.merchant1.lid), 'payee': '4731185613244273'})
     #     # pprint.pprint(user1.resp_delegate)
     #     assert user1.resp_delegate['message'] == 'InvalidPayway'
     #     assert user1.resp_delegate['data']['reason'] == 'kuna is disabled'
@@ -1870,7 +1868,8 @@ class TestWrongPayout:
         user1.merchant1.payout_create(payway='payeer', amount='1.02', out_curr='RUB', payee='TEST')
         # pprint.pprint(user1.merchant1.resp_payout_create)
         assert user1.merchant1.resp_payout_create['error']['message'] == 'InvalidField'
-        assert user1.merchant1.resp_payout_create['error']['data']['reason'] == {'payee': 'TEST'}
+        assert user1.merchant1.resp_payout_create['error']['data']['reason'] == \
+               'Check arguments required for payeer payway'
 
     def test_wrong_payout_68(self):
         # отсутствие контактных данных [cash: phone либо telegram, неверный payee для карты - номер буквами]
@@ -1886,10 +1885,10 @@ class TestWrongPayout:
                                      is_active=True, tech_min=bl(0.01), tech_max=bl(98))
         user1.delegate(params={'merch_model': 'payout', 'merch_method': 'create', 'externalid': user1.ex_id(),
                                'payway': 'visamc', 'amount': '0.01', 'out_curr': 'UAH',
-                               'm_lid': user1.merchant1.lid, 'payee': 'TEST'})
+                               'm_lid': str(user1.merchant1.lid), 'payee': 'TEST'})
         # pprint.pprint(user1.resp_delegate)
         assert user1.resp_delegate['message'] == 'InvalidField'
-        assert user1.resp_delegate['data']['reason'] == {'payee': 'TEST'}
+        assert user1.resp_delegate['data']['reason'] == 'Check arguments required for visamc payway'
 
     def test_wrong_payout_69(self):
         # отсутствие контактных данных [cash: phone либо telegram, неверный payee для карты - номер буквами]
@@ -1905,13 +1904,13 @@ class TestWrongPayout:
                                      is_active=True, tech_min=bl(1), tech_max=bl(100))
         user1.delegate(params={'merch_model': 'payout', 'merch_method': 'create', 'externalid': user1.ex_id(),
                                'payway': 'privat24', 'amount': '10', 'out_curr': 'UAH',
-                               'm_lid': user1.merchant1.lid})
+                               'm_lid': str(user1.merchant1.lid)})
         pprint.pprint(user1.resp_delegate)
         assert user1.resp_delegate['message'] == 'InvalidField'
-        assert user1.resp_delegate['data']['reason'] == {'payee': 'TEST'}
-        assert 0 == 1
+        assert user1.resp_delegate['data']['reason'] == 'Check arguments required for privat24 payway'
 
-    def test_wrong_payout_70(self, _activate_payeer): # отсутствие контактных данных [cash: phone либо telegram, неверный payee для карты - номер буквами]
+    def test_wrong_payout_70(self, _activate_payeer):
+        # отсутствие контактных данных [cash: phone либо telegram, неверный payee для карты - номер буквами]
         """ lack of contact details [cash: phone or telegram, wrong payee for the card - number by letters]
         Payout to cash_kiev  10 USD: USD to USD by OWNER with common percent fee 10% for payout
         and with common absolute fee 2 USD for payout with personal percent fee 5.5% for payout
@@ -1928,15 +1927,18 @@ class TestWrongPayout:
                                      is_active=True, tech_min=bl(1), tech_max=bl(15))
         user1.delegate(params={'merch_model': 'payout', 'merch_method': 'create', 'externalid': user1.ex_id(),
                                'payway': 'cash_kiev', 'amount': '10', 'out_curr': 'USD',
-                               'm_lid': user1.merchant1.lid, 'contact': 'TEST'})
+                               'm_lid': str(user1.merchant1.lid), 'contact': 'TEST'})
+        pprint.pprint(user1.resp_delegate)
         assert user1.resp_delegate['message'] == 'InvalidField'
+        assert user1.resp_delegate['data']['reason'] == 'Check arguments required for cash_kiev payway'
         admin.set_pwcurrency_min_max(payway=admin.payway['cash_kiev']['id'], is_out=True, currency='USD',
                                      is_active=False, tech_min=bl(1), tech_max=bl(1))
         admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=10, currency_id=admin.currency['USD'],
                       payway_id=admin.payway['cash_kiev']['id'], is_active=False)
 
     # @pytest.mark.skip
-    def test_wrong_payout_71(self, _activate_payeer): # отсутствие контактных данных [cash: phone либо telegram, неверный payee для карты - номер буквами]
+    def test_wrong_payout_71(self, _activate_payeer):
+        # отсутствие контактных данных [cash: phone либо telegram, неверный payee для карты - номер буквами]
         """ lack of contact details [cash: phone or telegram, wrong payee for the card - number by letters]
         Payout to cash_kiev  10 USD: USD to USD by OWNER with common percent fee 10% for payout
         and with common absolute fee 2 USD for payout with personal percent fee 5.5% for payout
@@ -1953,9 +1955,10 @@ class TestWrongPayout:
                                      is_active=True, tech_min=bl(1), tech_max=bl(15))
         user1.delegate(params={'merch_model': 'payout', 'merch_method': 'create', 'externalid': user1.ex_id(),
                                'payway': 'cash_kiev', 'amount': '10', 'out_curr': 'USD',
-                               'm_lid': user1.merchant1.lid})
-        # pprint.pprint(user1.resp_delegate)
+                               'm_lid': str(user1.merchant1.lid)})
+        pprint.pprint(user1.resp_delegate)
         assert user1.resp_delegate['message'] == 'InvalidField'
+        assert user1.resp_delegate['data']['reason'] == 'Check arguments required for cash_kiev payway'
         admin.set_pwcurrency_min_max(payway=admin.payway['cash_kiev']['id'], is_out=True, currency='USD',
                                      is_active=False, tech_min=bl(1), tech_max=bl(1))
         admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=10, currency_id=admin.currency['USD'],
@@ -1983,7 +1986,7 @@ class TestParams:
     #     admin.set_pwcurrency_min_max(payway=admin.payway['visamc']['id'], is_out=True, currency='UAH', is_active=True,
     #                                  tech_min=bl(0.01), tech_max=bl(98))
     #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'params', 'payway': 'visamc', 'out_curr': 'UAH',
-    #                            'm_lid': user1.merchant1.lid})
+    #                            'm_lid': str(user1.merchant1.lid)})
     #     # pprint.pprint(user1.resp_delegate)
     #     assert user1.resp_delegate['in_curr'] == 'UAH'
     #     assert user1.resp_delegate['in_curr_balance'] == '0.01'
@@ -1998,9 +2001,8 @@ class TestParams:
     #     assert user1.resp_delegate['pwtp'] == 'sci'
     #     assert user1.resp_delegate['rate'] == ['1', '1']
     #     assert user1.resp_delegate['uaccount'] == None
-    # admin.set_pwcurrency_min_max(payway=admin.payway['visamc']['id'], is_out=True, currency='UAH', is_active=True,
-    #                              tech_min=bl(1), tech_max=bl(98))
-    #
+    #     admin.set_pwcurrency_min_max(payway=admin.payway['visamc']['id'], is_out=True, currency='UAH', is_active=True,
+    #                                  tech_min=bl(1), tech_max=bl(98))
     #
     # def test_params_2(self):
     #     """ Getting params for payout to kuna UAH: UAH to UAN by OWNER without fee for payout. """
@@ -2013,7 +2015,7 @@ class TestParams:
     #     admin.set_pwcurrency_min_max(payway=admin.payway['kuna']['id'], is_out=True, currency='UAH', is_active=True,
     #                                  tech_min=bl(0.01), tech_max=bl(98))
     #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'params', 'payway': 'kuna', 'out_curr': 'UAH',
-    #                            'm_lid': user1.merchant1.lid})
+    #                            'm_lid': str(user1.merchant1.lid)})
     #     # pprint.pprint(user1.resp_delegate)
     #     assert user1.resp_delegate['in_curr'] == 'UAH'
     #     assert user1.resp_delegate['in_curr_balance'] == '0.01'
@@ -2028,9 +2030,8 @@ class TestParams:
     #     assert user1.resp_delegate['pwtp'] == 'cheque'
     #     assert user1.resp_delegate['rate'] == ['1', '1']
     #     assert user1.resp_delegate['uaccount'] == None
-    # admin.set_pwcurrency_min_max(payway=admin.payway['kuna']['id'], is_out=True, currency='UAH', is_active=True,
-    #                              tech_min=bl(1), tech_max=bl(98))
-    #
+    #     admin.set_pwcurrency_min_max(payway=admin.payway['kuna']['id'], is_out=True, currency='UAH', is_active=True,
+    #                                  tech_min=bl(1), tech_max=bl(98))
     #
     # def test_params_3(self):
     #     """ Getting params for payout to payeer RUB: RUB to RUB by MERCHANT without fee for payout. """
@@ -2095,7 +2096,7 @@ class TestParams:
     #     admin.set_pwcurrency_min_max(payway=admin.payway['privat24']['id'], is_out=True, currency='UAH', is_active=True,
     #                                  tech_min=bl(10), tech_max=bl(100))
     #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'params', 'payway': 'privat24', 'out_curr': 'UAH',
-    #                            'm_lid': user1.merchant1.lid})
+    #                            'm_lid': str(user1.merchant1.lid)})
     #     # pprint.pprint(user1.resp_delegate)
     #     assert user1.resp_delegate['in_curr'] == 'UAH'
     #     assert user1.resp_delegate['in_curr_balance'] == '11.5'
@@ -2110,10 +2111,10 @@ class TestParams:
     #     assert user1.resp_delegate['pwtp'] == 'sci'
     #     assert user1.resp_delegate['rate'] == ['1', '1']
     #     assert user1.resp_delegate['uaccount'] == None
-    # admin.set_pwcurrency_min_max(payway=admin.payway['privat24']['id'], is_out=True, currency='UAH', is_active=False,
-    #                              tech_min=bl(1), tech_max=bl(10))
-    # admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=10, currency_id=admin.currency['UAH'],
-    #               payway_id=admin.payway['privat24']['id'], is_active=False)
+    #     admin.set_pwcurrency_min_max(payway=admin.payway['privat24']['id'], is_out=True, currency='UAH', is_active=False,
+    #                                  tech_min=bl(1), tech_max=bl(10))
+    #     admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=10, currency_id=admin.currency['UAH'],
+    #                   payway_id=admin.payway['privat24']['id'], is_active=False)
     #
     # def test_params_6(self):
     #     """ Getting params for payout to LTC: LTC to LTC by MERCHANT with common absolute fee 0.001 LTC for payout. """
@@ -2158,7 +2159,7 @@ class TestParams:
     #     admin.set_pwcurrency_min_max(payway=admin.payway['qiwi']['id'], is_out=True, currency='RUB', is_active=True,
     #                                  tech_min=bl(10), tech_max=bl(100))
     #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'params', 'payway': 'qiwi', 'out_curr': 'RUB',
-    #                            'm_lid': user1.merchant1.lid})
+    #                            'm_lid': str(user1.merchant1.lid)})
     #     # pprint.pprint(user1.resp_delegate)
     #     assert user1.resp_delegate['in_curr'] == 'RUB'
     #     assert user1.resp_delegate['in_curr_balance'] == '15'
@@ -2227,7 +2228,7 @@ class TestParams:
     #     admin.set_pwcurrency_min_max(payway=admin.payway['cash_kiev']['id'], is_out=True, currency='USD',
     #                                  is_active=True, tech_min=bl(10), tech_max=bl(15))
     #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'params', 'payway': 'cash_kiev', 'out_curr': 'USD',
-    #                            'm_lid': user1.merchant1.lid})
+    #                            'm_lid': str(user1.merchant1.lid)})
     #     # pprint.pprint(user1.resp_delegate)
     #     assert user1.resp_delegate['in_curr'] == 'USD'
     #     assert user1.resp_delegate['in_curr_balance'] == '15'
@@ -2261,7 +2262,7 @@ class TestParams:
     #     admin.set_pwcurrency_min_max(payway=admin.payway['paymer']['id'], is_out=True, currency='RUB',
     #                                  is_active=True, tech_min=bl(10), tech_max=bl(50))
     #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'params', 'payway': 'paymer', 'out_curr': 'RUB',
-    #                            'in_curr': 'UAH', 'm_lid': user1.merchant1.lid})
+    #                            'in_curr': 'UAH', 'm_lid': str(user1.merchant1.lid)})
     #     # pprint.pprint(user1.resp_delegate)
     #     assert user1.resp_delegate['from_in_curr_balance'] == '53.33'
     #     assert user1.resp_delegate['in_curr'] == 'UAH'
@@ -2378,7 +2379,7 @@ class TestParams:
     #                                  is_active=True, tech_min=bl(0.01), tech_max=bl(98))
     #     admin.set_st_value(name='out_is_blocked', value=True)
     #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'params', 'payway': 'visamc', 'out_curr': 'UAH',
-    #                            'm_lid': user1.merchant1.lid})
+    #                            'm_lid': str(user1.merchant1.lid)})
     #     # pprint.pprint(user1.resp_delegate)
     #     assert user1.resp_delegate['in_curr'] == 'UAH'
     #     assert user1.resp_delegate['in_curr_balance'] == '0.01'
@@ -2444,7 +2445,7 @@ class TestParams:
     #                                  is_active=True, tech_min=bl(0.01), tech_max=bl(98))
     #     admin.set_merchant(lid=user1.merchant1.lid, payout_allowed=False)
     #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'params', 'payway': 'visamc', 'out_curr': 'UAH',
-    #                            'm_lid': user1.merchant1.lid})
+    #                            'm_lid': str(user1.merchant1.lid)})
     #     # pprint.pprint(user1.resp_delegate)
     #     assert user1.resp_delegate['in_curr'] == 'UAH'
     #     assert user1.resp_delegate['in_curr_balance'] == '0.01'
@@ -2512,10 +2513,7 @@ class TestParams:
     #                            'm_lid': '1234567890'})
     #     # pprint.pprint(user1.resp_delegate)
     #     assert user1.resp_delegate['message'] == 'NotFound'
-    #     assert user1.resp_delegate['data']['reason'] == \
-    #            f'Active merchant with lid 1234567890 was not found for user with id {user1.id}'
-    #     assert user1.resp_delegate['data']['reason'] == \
-    #            'Active merchant with lid 1234567890 was not found for user with id {}'.format(user1.id)
+    #     assert user1.resp_delegate['data']['reason'] == 'Merchant with lid 1234567890 was not found'
     #     admin.set_pwcurrency_min_max(payway=admin.payway['visamc']['id'], is_out=True, currency='UAH',
     #                                  is_active=True, tech_min=bl(1), tech_max=bl(98))
     #
@@ -2534,13 +2532,12 @@ class TestParams:
     #                                  is_active=True, tech_min=bl(0.01), tech_max=bl(98))
     #     admin.set_merchant(lid=user1.merchant1.lid, is_active=False)
     #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'params', 'payway': 'visamc', 'out_curr': 'UAH',
-    #                            'm_lid': user1.merchant1.lid})
+    #                            'm_lid': str(user1.merchant1.lid)})
     #     # pprint.pprint(user1.resp_delegate)
-    #     assert user1.resp_delegate['message'] == 'NotFound'
+    #     assert user1.resp_delegate['message'] == 'InvalidMerchant'
+    #     assert user1.resp_delegate['data']['reason'] == f'Active merchant with lid {user1.merchant1.lid} was not found'
     #     assert user1.resp_delegate['data']['reason'] == \
-    #            f'Active merchant with lid {user1.merchant1.lid} was not found for user with id {user1.id}'
-    #     assert user1.resp_delegate['data']['reason'] == \
-    #            'Active merchant with lid {} was not found for user with id {}'.format(user1.merchant1.lid, user1.id)
+    #            'Active merchant with lid {} was not found'.format(user1.merchant1.lid)
     #     admin.set_pwcurrency_min_max(payway=admin.payway['visamc']['id'], is_out=True, currency='UAH',
     #                                  is_active=True, tech_min=bl(1), tech_max=bl(98))
     #
@@ -2558,7 +2555,7 @@ class TestParams:
     #     admin.set_pwcurrency_min_max(payway=admin.payway['visamc']['id'], is_out=True, currency='UAH',
     #                                  is_active=True, tech_min=bl(0.01), tech_max=bl(98))
     #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'params', 'payway': 'visamc', 'out_curr': 'TST',
-    #                            'm_lid': user1.merchant1.lid})
+    #                            'm_lid': str(user1.merchant1.lid)})
     #     # pprint.pprint(user1.resp_delegate)
     #     assert user1.resp_delegate['message'] == 'InvalidCurrency'
     #     assert user1.resp_delegate['data']['reason'] == 'TST'
@@ -2600,7 +2597,7 @@ class TestParams:
     #                                  is_active=True, tech_min=bl(0.01), tech_max=bl(98))
     #     admin.set_currency_activity(name='UAH', is_disabled=False, is_active=False)
     #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'params', 'payway': 'visamc', 'out_curr': 'UAH',
-    #                            'm_lid': user1.merchant1.lid})
+    #                            'm_lid': str(user1.merchant1.lid)})
     #     # pprint.pprint(user1.resp_delegate)
     #     assert user1.resp_delegate['message'] == 'InactiveCurrency'
     #     assert user1.resp_delegate['data']['reason'] == 'UAH'
@@ -2644,7 +2641,7 @@ class TestParams:
     #     admin.set_pwcurrency_min_max(payway=admin.payway['paymer']['id'], is_out=True, currency='RUB',
     #                                  is_active=True, tech_min=bl(0.01), tech_max=bl(50))
     #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'params', 'payway': 'paymer', 'out_curr': 'RUB',
-    #                            'in_curr': 'TST', 'm_lid': user1.merchant1.lid})
+    #                            'in_curr': 'TST', 'm_lid': str(user1.merchant1.lid)})
     #     # pprint.pprint(user1.resp_delegate)
     #     assert user1.resp_delegate['message'] == 'InvalidCurrency'
     #     assert user1.resp_delegate['data']['reason'] == 'TST'
@@ -2695,13 +2692,13 @@ class TestParams:
     #                                  is_active=True, tech_min=bl(0.01), tech_max=bl(50))
     #     admin.set_currency_activity(name='UAH', is_disabled=False, is_active=False)
     #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'params', 'payway': 'paymer', 'out_curr': 'RUB',
-    #                            'in_curr': 'UAH', 'm_lid': user1.merchant1.lid})
+    #                            'in_curr': 'UAH', 'm_lid': str(user1.merchant1.lid)})
     #     # pprint.pprint(user1.resp_delegate)
     #     assert user1.resp_delegate['message'] == 'InactiveCurrency'
     #     assert user1.resp_delegate['data']['reason'] == 'UAH'
     #     admin.set_pwcurrency_min_max(payway=admin.payway['paymer']['id'], is_out=True, currency='RUB',
     #                                  is_active=True, tech_min=bl(0.01), tech_max=bl(39.99))
-
+    #
     # def test_params_26(self, _custom_fee, _disable_personal_operation_fee_transfer_USD, _enable_currency):
     #     """ Getting params for payout
     #     Payout inactive currency in_curr payout_create
@@ -2745,7 +2742,7 @@ class TestParams:
     #                                  is_active=True, tech_min=bl(0.01), tech_max=bl(98))
     #     admin.set_currency_activity(name='UAH', is_disabled=True, is_active=True)
     #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'params', 'payway': 'paymer', 'out_curr': 'UAH',
-    #                            'm_lid': user1.merchant1.lid})
+    #                            'm_lid': str(user1.merchant1.lid)})
     #     # pprint.pprint(user1.resp_delegate)
     #     assert user1.resp_delegate['message'] == 'InactiveCurrency'
     #     assert user1.resp_delegate['data']['reason'] == 'UAH'
@@ -2788,7 +2785,7 @@ class TestParams:
     #                                  is_active=True, tech_min=bl(0.01), tech_max=bl(50))
     #     admin.set_currency_activity(name='UAH', is_disabled=True, is_active=True)
     #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'params', 'payway': 'paymer', 'out_curr': 'RUB',
-    #                            'in_curr': 'UAH', 'm_lid': user1.merchant1.lid})
+    #                            'in_curr': 'UAH', 'm_lid': str(user1.merchant1.lid)})
     #     # pprint.pprint(user1.resp_delegate)
     #     assert user1.resp_delegate['message'] == 'InactiveCurrency'
     #     assert user1.resp_delegate['data']['reason'] == 'UAH'
@@ -2822,91 +2819,280 @@ class TestParams:
     #     assert user1.merchant1.resp_payout_params['error']['data']['reason'] == 'UAH'
     #     admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=10, currency_id=admin.currency['USD'],
     #                   payway_id=admin.payway['exmo']['id'], is_active=False)
+    #
+    # def test_params_31(self):
+    #     """ Getting params for payout
+    #     Request without out_curr delegate
+    #     Payout to visamc 0.01 UAH: UAH to UAN by OWNER without fee for payout. """
+    #     admin.set_wallet_amount(balance=bl(0.01), currency='UAH', merch_lid=user1.merchant1.lid)
+    #     admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=10, currency_id=admin.currency['UAH'],
+    #                   payway_id=admin.payway['visamc']['id'], is_active=True, merchant_id=user1.merchant1.id)
+    #     admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=10, currency_id=admin.currency['UAH'],
+    #                   payway_id=admin.payway['visamc']['id'], is_active=True)
+    #     admin.set_pwmerchactive(merch_id=user1.merchant1.id, payway_id=admin.payway['visamc']['id'], is_active=True)
+    #     admin.set_pwcurrency_min_max(payway=admin.payway['visamc']['id'], is_out=True, currency='UAH',
+    #                                  is_active=True, tech_min=bl(0.01), tech_max=bl(98))
+    #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'params', 'payway': 'visamc',
+    #                            'm_lid': str(user1.merchant1.lid)})
+    #     # pprint.pprint(user1.resp_delegate)
+    #     assert user1.resp_delegate['message'] == 'InvalidInputParams'
+    #     assert user1.resp_delegate['data']['reason'] == "method 'merchant.delegate' missing 1 argument: 'out_curr'"
+    #     admin.set_pwcurrency_min_max(payway=admin.payway['visamc']['id'], is_out=True, currency='UAH',
+    #                                  is_active=True, tech_min=bl(1), tech_max=bl(98))
+    #
+    # def test_params_32(self): # Запрос без out_curr (не передан)
+    #     """ Getting params for payout
+    #     Request without out_curr payout.create
+    #     Payout to payeer 1.02 RUB: RUB to RUB by MERCHANT without fee for payout. """
+    #     admin.set_wallet_amount(balance=bl(1.02), currency='RUB', merch_lid=user1.merchant1.lid)
+    #     admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=10, currency_id=admin.currency['RUB'],
+    #                   payway_id=admin.payway['payeer']['id'], is_active=False, merchant_id=user1.merchant1.id)
+    #     admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=10, currency_id=admin.currency['RUB'],
+    #                   payway_id=admin.payway['payeer']['id'], is_active=False)
+    #     admin.set_pwmerchactive(merch_id=user1.merchant1.id, payway_id=admin.payway['payeer']['id'], is_active=True)
+    #     admin.set_pwcurrency_min_max(payway=admin.payway['payeer']['id'], is_out=True, currency='RUB',
+    #                                  is_active=True, tech_min=bl(1), tech_max=bl(3.36))
+    #     ex_id = user1.merchant1._id()
+    #     data = {'method': 'payout.params',
+    #             'params': {'payway': 'payeer'},
+    #             'jsonrpc': 2.0, 'id': ex_id}
+    #     time_sent = user1.merchant1.time_sent()
+    #     r = requests.post(url=user1.merchant1.japi_url, json=data,
+    #                       headers={'x-merchant': str(user1.merchant1.lid),
+    #                                'x-signature': create_sign(user1.merchant1.akey, data['params'], time_sent),
+    #                                'x-utc-now-ms': time_sent}, verify=False)
+    #     # print(r.text)
+    #     assert loads(r.text)['error']['message'] == 'InvalidInputParams'
+    #     assert loads(r.text)['error']['data']['reason'] == "method 'payout.params' missing 1 argument: 'out_curr'"
+    #
+    # def test_params_33(self):
+    #     """ Getting params for payout
+    #     Request without out_curr delegate
+    #     Payout to visamc 0.01 UAH: UAH to UAN by OWNER without fee for payout. """
+    #     admin.set_wallet_amount(balance=bl(0.01), currency='UAH', merch_lid=user1.merchant1.lid)
+    #     admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=10, currency_id=admin.currency['UAH'],
+    #                   payway_id=admin.payway['visamc']['id'], is_active=True, merchant_id=user1.merchant1.id)
+    #     admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=10, currency_id=admin.currency['UAH'],
+    #                   payway_id=admin.payway['visamc']['id'], is_active=True)
+    #     admin.set_pwmerchactive(merch_id=user1.merchant1.id, payway_id=admin.payway['visamc']['id'], is_active=True)
+    #     admin.set_pwcurrency_min_max(payway=admin.payway['visamc']['id'], is_out=True, currency='UAH',
+    #                                  is_active=True, tech_min=bl(0.01), tech_max=bl(98))
+    #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'params', 'payway': 'visamc', 'out_curr': None,
+    #                            'm_lid': str(user1.merchant1.lid)})
+    #     # pprint.pprint(user1.resp_delegate)
+    #     assert user1.resp_delegate['message'] == 'InvalidInputParams'
+    #     assert user1.resp_delegate['data']['reason'] == "method payout.calc' missing 1 argument: 'out_curr'"
+    #     admin.set_pwcurrency_min_max(payway=admin.payway['visamc']['id'], is_out=True, currency='UAH',
+    #                                  is_active=True, tech_min=bl(1), tech_max=bl(98))
+    #
+    # def test_params_34(self):
+    #     """ Getting params for payout
+    #     Request out_curr = None
+    #     Payout to payeer 1.02 RUB: RUB to RUB by MERCHANT without fee for payout. """
+    #     admin.set_wallet_amount(balance=bl(1.02), currency='RUB', merch_lid=user1.merchant1.lid)
+    #     admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=10, currency_id=admin.currency['RUB'],
+    #                   payway_id=admin.payway['payeer']['id'], is_active=False, merchant_id=user1.merchant1.id)
+    #     admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=10, currency_id=admin.currency['RUB'],
+    #                   payway_id=admin.payway['payeer']['id'], is_active=False)
+    #     admin.set_pwmerchactive(merch_id=user1.merchant1.id, payway_id=admin.payway['payeer']['id'],
+    #                             is_active=True)
+    #     user1.merchant1.payout_params(payway='payeer', out_curr=None)
+    #     # pprint.pprint(user1.merchant1.resp_payout_params)
+    #     assert user1.merchant1.resp_payout_params['error']['message'] == 'InvalidInputParams'
+    #     assert user1.merchant1.resp_payout_params['error']['data']['reason'] == \
+    #            "method payout.calc' missing 1 argument: 'out_curr'"
+    #
+    # def test_params_35(self):
+    #     """ Getting params for payout
+    #     Request with extra parameter 'par': '123' delegate
+    #     Payout to visamc 0.01 UAH: UAH to UAN by OWNER without fee for payout. """
+    #     admin.set_wallet_amount(balance=bl(0.01), currency='UAH', merch_lid=user1.merchant1.lid)
+    #     admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=10, currency_id=admin.currency['UAH'],
+    #                   payway_id=admin.payway['visamc']['id'], is_active=True, merchant_id=user1.merchant1.id)
+    #     admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=10, currency_id=admin.currency['UAH'],
+    #                   payway_id=admin.payway['visamc']['id'], is_active=True)
+    #     admin.set_pwmerchactive(merch_id=user1.merchant1.id, payway_id=admin.payway['visamc']['id'], is_active=True)
+    #     admin.set_pwcurrency_min_max(payway=admin.payway['visamc']['id'], is_out=True, currency='UAH',
+    #                                  is_active=True, tech_min=bl(0.01), tech_max=bl(98))
+    #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'params', 'payway': 'visamc', 'out_curr': 'UAH',
+    #                            'm_lid': str(user1.merchant1.lid), 'par': '123'})
+    #     # pprint.pprint(user1.resp_delegate)
+    #     assert user1.resp_delegate['message'] == 'InvalidInputParams'
+    #     assert user1.resp_delegate['data']['reason'] == "method 'merchant.delegate' received a redundant argument 'par'"
+    #     admin.set_pwcurrency_min_max(payway=admin.payway['visamc']['id'], is_out=True, currency='UAH',
+    #                                  is_active=True, tech_min=bl(1), tech_max=bl(98))
+    #
+    # def test_params_36(self): # Запрос с лишним параметром 'par': '123'
+    #     """ Getting params for payout
+    #     Request with extra parameter 'par': '123' payout_create
+    #     Payout to payeer 1.02 RUB: RUB to RUB by MERCHANT without fee for payout. """
+    #     admin.set_wallet_amount(balance=bl(1.02), currency='RUB', merch_lid=user1.merchant1.lid)
+    #     admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=10, currency_id=admin.currency['RUB'],
+    #                   payway_id=admin.payway['payeer']['id'], is_active=False, merchant_id=user1.merchant1.id)
+    #     admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=10, currency_id=admin.currency['RUB'],
+    #                   payway_id=admin.payway['payeer']['id'], is_active=False)
+    #     admin.set_pwmerchactive(merch_id=user1.merchant1.id, payway_id=admin.payway['payeer']['id'], is_active=True)
+    #     ex_id = user1.merchant1._id()
+    #     data = {'method': 'payout.params',
+    #             'params': {'payway': 'payeer', 'out_curr': 'UAH', 'par': '123'},
+    #             'jsonrpc': 2.0, 'id': ex_id}
+    #     time_sent = user1.merchant1.time_sent()
+    #     r = requests.post(url=user1.merchant1.japi_url, json=data,
+    #                       headers={'x-merchant': str(user1.merchant1.lid),
+    #                                'x-signature': create_sign(user1.merchant1.akey, data['params'], time_sent),
+    #                                'x-utc-now-ms': time_sent}, verify=False)
+    #     # print(r.text)
+    #     assert loads(r.text)['error']['message'] == 'InvalidInputParams'
+    #     assert loads(r.text)['error']['data']['reason'] == "method 'payout.params' received a redundant argument 'par'"
+    #
+    # def test_params_37(self): # Запрос без подписи
+    #     """ Getting params for payout
+    #     Unsigned request
+    #     Payout to payeer 1.02 RUB: RUB to RUB by MERCHANT without fee for payout. """
+    #     admin.set_wallet_amount(balance=bl(10), currency='RUB', merch_lid=user1.merchant1.lid)
+    #     admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=10, currency_id=admin.currency['RUB'],
+    #                   payway_id=admin.payway['payeer']['id'], is_active=False, merchant_id=user1.merchant1.id)
+    #     admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=10, currency_id=admin.currency['RUB'],
+    #                   payway_id=admin.payway['payeer']['id'], is_active=False)
+    #     admin.set_pwmerchactive(merch_id=user1.merchant1.id, payway_id=admin.payway['payeer']['id'], is_active=True)
+    #     ex_id = user1.merchant1._id()
+    #     data = {'method': 'payout.params',
+    #             'params': {'payway': 'payeer', 'out_curr': 'RUB'},
+    #             'jsonrpc': 2.0, 'id': ex_id}
+    #     time_sent = user1.merchant1.time_sent()
+    #     r = requests.post(url=user1.merchant1.japi_url, json=data,
+    #                       headers={'x-merchant': str(user1.merchant1.lid),
+    #                                'x-utc-now-ms': time_sent}, verify=False)
+    #     # print(r.text)
+    #     assert loads(r.text)['error']['message'] == 'InvalidHeaders'
+    #     assert loads(r.text)['error']['data']['reason'] == 'Add x-signature to headers'
 
-    def test_params_31(self):
+    def test_params_38(self): # Запрос с невалидной подписью
         """ Getting params for payout
-        Request without out_curr delegate
-        Payout to visamc 0.01 UAH: UAH to UAN by OWNER without fee for payout. """
-        admin.set_wallet_amount(balance=bl(0.01), currency='UAH', merch_lid=user1.merchant1.lid)
-        admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=10, currency_id=admin.currency['UAH'],
-                      payway_id=admin.payway['visamc']['id'], is_active=True, merchant_id=user1.merchant1.id)
-        admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=10, currency_id=admin.currency['UAH'],
-                      payway_id=admin.payway['visamc']['id'], is_active=True)
-        admin.set_pwmerchactive(merch_id=user1.merchant1.id, payway_id=admin.payway['visamc']['id'], is_active=True)
-        admin.set_pwcurrency_min_max(payway=admin.payway['visamc']['id'], is_out=True, currency='UAH',
-                                     is_active=True, tech_min=bl(0.01), tech_max=bl(98))
-        user1.delegate(params={'merch_model': 'payout', 'merch_method': 'params', 'payway': 'visamc',
-                               'm_lid': user1.merchant1.lid})
-        # pprint.pprint(user1.resp_delegate)
-        assert user1.resp_delegate['message'] == 'InvalidInputParams'
-        assert user1.resp_delegate['data']['reason'] == "method 'merchant.delegate' missing 1 argument: 'out_curr'"
-        admin.set_pwcurrency_min_max(payway=admin.payway['visamc']['id'], is_out=True, currency='UAH',
-                                     is_active=True, tech_min=bl(1), tech_max=bl(98))
-
-    def test_params_32(self): # Запрос без out_curr (не передан)
-        """ Getting params for payout
-        Request without out_curr payout.create
+        Request with invalid sign
         Payout to payeer 1.02 RUB: RUB to RUB by MERCHANT without fee for payout. """
-        admin.set_wallet_amount(balance=bl(1.02), currency='RUB', merch_lid=user1.merchant1.lid)
+        admin.set_wallet_amount(balance=bl(10), currency='RUB', merch_lid=user1.merchant1.lid)
         admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=10, currency_id=admin.currency['RUB'],
                       payway_id=admin.payway['payeer']['id'], is_active=False, merchant_id=user1.merchant1.id)
         admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=10, currency_id=admin.currency['RUB'],
                       payway_id=admin.payway['payeer']['id'], is_active=False)
         admin.set_pwmerchactive(merch_id=user1.merchant1.id, payway_id=admin.payway['payeer']['id'], is_active=True)
-        admin.set_pwcurrency_min_max(payway=admin.payway['payeer']['id'], is_out=True, currency='RUB',
-                                     is_active=True, tech_min=bl(1), tech_max=bl(3.36))
         ex_id = user1.merchant1._id()
         data = {'method': 'payout.params',
-                'params': {'payway': 'payeer'},
+                'params': {'payway': 'payeer', 'out_curr': 'RUB'},
                 'jsonrpc': 2.0, 'id': ex_id}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': str(user1.merchant1.lid),
-                                   'x-signature': create_sign(user1.merchant1.akey, data['params'], time_sent),
+                                   'x-signature': create_sign(user2.merchant1.akey, data['params'], time_sent),
                                    'x-utc-now-ms': time_sent}, verify=False)
         # print(r.text)
-        assert loads(r.text)['error']['message'] == 'InvalidInputParams'
-        assert loads(r.text)['error']['data']['reason'] == "method 'payout.params' missing 1 argument: 'out_curr'"
+        assert loads(r.text)['error']['message'] == 'InvalidSign'
+        assert loads(r.text)['error']['data']['reason'] == 'Invalid signature'
 
-    def test_wrong_payout_47(self):# Запрос без out_curr (out_curr = None)
-        """ Request out_curr = None
-        Payout to visamc 0.01 UAH: UAH to UAN by OWNER without fee for payout. """
-        admin.set_wallet_amount(balance=bl(0.01), currency='UAH', merch_lid=user1.merchant1.lid)
-        admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=10, currency_id=admin.currency['UAH'],
-                      payway_id=admin.payway['visamc']['id'], is_active=True, merchant_id=user1.merchant1.id)
-        admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=10, currency_id=admin.currency['UAH'],
-                      payway_id=admin.payway['visamc']['id'], is_active=True)
-        admin.set_pwmerchactive(merch_id=user1.merchant1.id, payway_id=admin.payway['visamc']['id'], is_active=True)
-        admin.set_pwcurrency_min_max(payway=admin.payway['visamc']['id'], is_out=True, currency='UAH',
-                                     is_active=True, tech_min=bl(0.01), tech_max=bl(98))
-        user1.delegate(params={'merch_model': 'payout', 'merch_method': 'create', 'externalid': user1.ex_id(),
-                               'payway': 'visamc', 'amount': '0.01', 'out_curr': None,
-                               'm_lid': user1.merchant1.lid, 'payee': '5363542305527674'})
-        pprint.pprint(user1.resp_delegate)
-        assert user1.resp_delegate['message'] == 'InvalidCurrency'
-        assert user1.resp_delegate['data']['reason'] == None
-        admin.set_pwcurrency_min_max(payway=admin.payway['visamc']['id'], is_out=True, currency='UAH',
-                                     is_active=True, tech_min=bl(1), tech_max=bl(98))
-
-    def test_params_33(self):
+    def test_params_39(self, _enable_exchange_operation_UAH_RUB):
+        # передан in_curr и неактивно направление конвертации из in_curr в out_curr
         """ Getting params for payout
-        Request without out_curr delegate
-        Payout to visamc 0.01 UAH: UAH to UAN by OWNER without fee for payout. """
-        admin.set_wallet_amount(balance=bl(0.01), currency='UAH', merch_lid=user1.merchant1.lid)
-        admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=10, currency_id=admin.currency['UAH'],
-                      payway_id=admin.payway['visamc']['id'], is_active=True, merchant_id=user1.merchant1.id)
-        admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=10, currency_id=admin.currency['UAH'],
-                      payway_id=admin.payway['visamc']['id'], is_active=True)
-        admin.set_pwmerchactive(merch_id=user1.merchant1.id, payway_id=admin.payway['visamc']['id'], is_active=True)
-        admin.set_pwcurrency_min_max(payway=admin.payway['visamc']['id'], is_out=True, currency='UAH',
-                                     is_active=True, tech_min=bl(0.01), tech_max=bl(98))
-        user1.delegate(params={'merch_model': 'payout', 'merch_method': 'params', 'payway': 'visamc', 'out_curr': None,
-                               'm_lid': user1.merchant1.lid})
-        pprint.pprint(user1.resp_delegate)
-        assert user1.resp_delegate['message'] == 'InvalidCurrency'
-        assert user1.resp_delegate['data']['reason'] == None
-        admin.set_pwcurrency_min_max(payway=admin.payway['visamc']['id'], is_out=True, currency='UAH',
-                                     is_active=True, tech_min=bl(1), tech_max=bl(98))
+        inactive exchange direction from in_curr to out_curr
+        Payout to paymer 50 RUB: UAH to RUB by OWNER with internal exchange
+        and without fee for exchange. """
+        admin.set_wallet_amount(balance=bl(20), currency='UAH', merch_lid=user1.merchant1.lid)
+        admin.set_rate_exchange(rate=2666600000, fee=0, in_currency='UAH', out_currency='RUB',
+                                tech_min=bl(0.1), tech_max=bl(10000), is_active=False)
+        admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=10, currency_id=admin.currency['RUB'],
+                      payway_id=admin.payway['paymer']['id'], is_active=True, merchant_id=user1.merchant1.id)
+        admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=10, currency_id=admin.currency['RUB'],
+                      payway_id=admin.payway['paymer']['id'], is_active=True)
+        admin.set_pwmerchactive(merch_id=user1.merchant1.id, payway_id=admin.payway['paymer']['id'], is_active=True)
+        admin.set_pwcurrency_min_max(payway=admin.payway['paymer']['id'], is_out=True, currency='RUB',
+                                     is_active=True, tech_min=bl(0.01), tech_max=bl(50))
+        user1.delegate(params={'merch_model': 'payout', 'merch_method': 'params', 'payway': 'paymer', 'out_curr': 'RUB',
+                               'in_curr': 'UAH', 'm_lid': str(user1.merchant1.lid)})
+        # pprint.pprint(user1.resp_delegate)
+        assert user1.resp_delegate['message'] == 'UnavailExchange'
+        assert user1.resp_delegate['data']['reason'] == 'Unavailable exchange for UAH to RUB'
+        admin.set_pwcurrency_min_max(payway=admin.payway['paymer']['id'], is_out=True, currency='RUB',
+                                     is_active=True, tech_min=bl(0.01), tech_max=bl(39.99))
+
+    def test_params_40(self): # передан in_curr и отсутствует направление конвертации из in_curr в out_curr
+        """ Getting params for payout
+        there is no conversion direction from in_curr to out_curr
+        Payout to paymer 50 RUB: USD to RUB by OWNER with internal exchange
+        and without fee for exchange. """
+        admin.set_wallet_amount(balance=bl(20), currency='USD', merch_lid=user1.merchant1.lid)
+        admin.set_rate_exchange(rate=2666600000, fee=0, in_currency='USD', out_currency='RUB')
+        admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=10, currency_id=admin.currency['RUB'],
+                      payway_id=admin.payway['paymer']['id'], is_active=True, merchant_id=user1.merchant1.id)
+        admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=10, currency_id=admin.currency['RUB'],
+                      payway_id=admin.payway['paymer']['id'], is_active=True)
+        admin.set_pwmerchactive(merch_id=user1.merchant1.id, payway_id=admin.payway['paymer']['id'], is_active=True)
+        admin.set_pwcurrency_min_max(payway=admin.payway['paymer']['id'], is_out=True, currency='RUB',
+                                     is_active=True, tech_min=bl(0.01), tech_max=bl(50))
+        user1.delegate(params={'merch_model': 'payout', 'merch_method': 'params', 'payway': 'paymer', 'out_curr': 'RUB',
+                               'in_curr': 'USD', 'm_lid': str(user1.merchant1.lid)})
+        # pprint.pprint(user1.resp_delegate)
+        assert user1.resp_delegate['message'] == 'UnavailExchange'
+        assert user1.resp_delegate['data']['reason'] == 'Unavailable exchange for USD to RUB'
+        admin.set_pwcurrency_min_max(payway=admin.payway['paymer']['id'], is_out=True, currency='RUB',
+                                     is_active=True, tech_min=bl(0.01), tech_max=bl(39.99))
+
+    def test_params_41(self, _custom_fee, _disable_personal_operation_fee_transfer_USD,
+                             _enable_exchange_operation_UAH_USD):
+        # передан in_curr и неактивно направление конвертации из in_curr в out_curr
+        """ Getting params for payout
+        there is no conversion direction from in_curr to out_curr
+        Payout to webmoney 8.33 USD: UAH to USD by MERCHANT with internal exchange
+        and with common fee 3% for exchange and with personal fee 1.55 % for exchange. """
+        admin.set_wallet_amount(balance=bl(250), currency='UAH', merch_lid=user1.merchant1.lid)
+        admin.set_rate_exchange(rate=28199900000, fee=30000000, in_currency='UAH', out_currency='USD',
+                                tech_min=bl(0.1), tech_max=bl(10000), is_active=False)
+        admin.set_personal_exchange_fee(in_curr=admin.currency['UAH'], out_curr=admin.currency['USD'],
+                                        is_active=True, merchant_id=user1.merchant1.id, fee=15500000)
+        admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=10, currency_id=admin.currency['USD'],
+                      payway_id=admin.payway['webmoney']['id'], is_active=True, merchant_id=user1.merchant1.id)
+        admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=10, currency_id=admin.currency['USD'],
+                      payway_id=admin.payway['webmoney']['id'], is_active=True)
+        admin.set_pwmerchactive(merch_id=user1.merchant1.id, payway_id=admin.payway['webmoney']['id'],
+                                is_active=True)
+        admin.set_pwcurrency_min_max(payway=admin.payway['webmoney']['id'], is_out=True, currency='USD',
+                                     is_active=True, tech_min=bl(0.01), tech_max=bl(10))
+        user1.merchant1.payout_params(payway='webmoney', out_curr='USD', in_curr='UAH')
+        # pprint.pprint(user1.merchant1.resp_payout_params)
+        assert user1.merchant1.resp_payout_params['error']['message'] == 'UnavailExchange'
+        assert user1.merchant1.resp_payout_params['error']['data']['reason'] == 'Unavailable exchange for UAH to USD'
+        admin.set_pwcurrency_min_max(payway=admin.payway['webmoney']['id'], is_out=True, currency='USD',
+                                     is_active=False, tech_min=bl(1), tech_max=bl(0.97))
+        admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=10, currency_id=admin.currency['USD'],
+                      payway_id=admin.payway['webmoney']['id'], is_active=False)
+
+    def test_params_42(self, _custom_fee, _disable_personal_operation_fee_transfer_USD):
+        # передан in_curr и отсутствует направление конвертации из in_curr в out_curr
+        """ Getting params for payout
+        there is no conversion direction from in_curr to out_curr
+        Payout to webmoney 8.33 USD: BCHABC to USD by MERCHANT with internal exchange
+        and with common fee 3% for exchange and with personal fee 1.55 % for exchange. """
+        admin.set_wallet_amount(balance=bl(250), currency='BCHABC', merch_lid=user1.merchant1.lid)
+        admin.set_rate_exchange(rate=28199900000, fee=30000000, in_currency='BCHABC', out_currency='USD',
+                                tech_min=bl(0.1), tech_max=bl(10000))
+        admin.set_personal_exchange_fee(in_curr=admin.currency['BCHABC'], out_curr=admin.currency['USD'],
+                                        is_active=True, merchant_id=user1.merchant1.id, fee=15500000)
+        admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=10, currency_id=admin.currency['USD'],
+                      payway_id=admin.payway['webmoney']['id'], is_active=True, merchant_id=user1.merchant1.id)
+        admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=10, currency_id=admin.currency['USD'],
+                      payway_id=admin.payway['webmoney']['id'], is_active=True)
+        admin.set_pwmerchactive(merch_id=user1.merchant1.id, payway_id=admin.payway['webmoney']['id'],
+                                is_active=True)
+        admin.set_pwcurrency_min_max(payway=admin.payway['webmoney']['id'], is_out=True, currency='USD',
+                                     is_active=True, tech_min=bl(0.01), tech_max=bl(10))
+        user1.merchant1.payout_params(payway='webmoney', out_curr='USD', in_curr='BCHABC')
+        # pprint.pprint(user1.merchant1.resp_payout_params)
+        assert user1.merchant1.resp_payout_params['error']['message'] == 'UnavailExchange'
+        assert user1.merchant1.resp_payout_params['error']['data']['reason'] == \
+               'Unavailable exchange for BCHABC to USD'
+        admin.set_pwcurrency_min_max(payway=admin.payway['webmoney']['id'], is_out=True, currency='USD',
+                                     is_active=False, tech_min=bl(1), tech_max=bl(0.97))
+        admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=10, currency_id=admin.currency['USD'],
+                      payway_id=admin.payway['webmoney']['id'], is_active=False)
 
 
 class TestInCurrList:
@@ -3270,7 +3456,7 @@ class TestGetCheque:
         admin.set_pwcurrency_min_max(payway=admin.payway['kuna']['id'], is_out=True, currency='UAH', is_active=True,
                                      tech_min=bl(0.01), tech_max=bl(1000))
         user1.delegate(params={'merch_model': 'payout', 'merch_method': 'create', 'externalid': user1.ex_id(),
-                               'payway': 'kuna', 'amount': '100', 'out_curr': 'UAH', 'm_lid': user1.merchant1.lid})
+                               'payway': 'kuna', 'amount': '100', 'out_curr': 'UAH', 'm_lid': str(user1.merchant1.lid)})
         # print('lid', user1.merchant1.lid)
         pprint.pprint(user1.resp_delegate['lid'])
         # assert user1.resp_delegate['status'] == 'done'
@@ -3304,7 +3490,7 @@ class TestGetCheque:
     def test_GetCheque_2(self):
         """ Getting payout get_cheque"""
         user1.delegate(params={'merch_model': 'payout', 'merch_method': 'get_cheque', 'lid': '19337',#str(user1.resp_delegate['lid']),
-                               'm_lid': user1.merchant1.lid})
+                               'm_lid': str(user1.merchant1.lid)})
         assert user1.resp_delegate['cheque']['amount']== '100'
         assert user1.resp_delegate['cheque']['currency']== 'UAH'
         assert user1.resp_delegate['in_amount']== '100'
@@ -3339,7 +3525,7 @@ class TestGetCheque:
                                      tech_min=bl(0.01), tech_max=bl(50))
         user1.delegate(params={'merch_model': 'payout', 'merch_method': 'create', 'externalid': user1.ex_id(),
                                'payway': 'paymer', 'amount': '50', 'out_curr': 'RUB', 'in_curr': 'UAH',
-                               'm_lid': user1.merchant1.lid, 'contact': '380965781066'})
+                               'm_lid': str(user1.merchant1.lid), 'contact': '380965781066'})
         admin.set_pwcurrency_min_max(payway=admin.payway['paymer']['id'], is_out=True, currency='RUB', is_active=True,
                                      tech_min=bl(0.01), tech_max=bl(39.99))
 
@@ -3351,7 +3537,7 @@ class TestGetCheque:
     def test_GetCheque_4(self):
         """ Getting payout get_cheque"""
         user1.delegate(params={'merch_model': 'payout', 'merch_method': 'get_cheque', 'lid': str(user1.resp_delegate['lid']),
-                               'm_lid': user1.merchant1.lid})
+                               'm_lid': str(user1.merchant1.lid)})
         assert user1.resp_delegate['message']== 'NotFound'
 
     def test_GetCheque_5(self):
@@ -3364,7 +3550,7 @@ class TestGetCheque:
     def test_GetCheque_6(self):
         """ Getting payout get_cheque"""
         user1.delegate(params={'merch_model': 'payout', 'merch_method': 'get_cheque', 'lid': '19337',#str(user1.resp_delegate['lid']),
-                               'm_lid': user1.merchant1.lid})
+                               'm_lid': str(user1.merchant1.lid)})
         assert user1.resp_delegate['data']['reason']== 'Missing report from core'
         assert user1.resp_delegate['message']== 'ApiError'
 
@@ -3391,11 +3577,11 @@ class TestPayoutGet:
                                      tech_min=bl(0.01), tech_max=bl(98))
         user1.delegate(params={'merch_model': 'payout', 'merch_method': 'create', 'externalid': user1.ex_id(),
                                'payway': 'visamc', 'amount': '0.01', 'out_curr': 'UAH',
-                               'm_lid': user1.merchant1.lid, 'payee': '4731185613244273'})
+                               'm_lid': str(user1.merchant1.lid), 'payee': '4731185613244273'})
         # print('o_lid', user1.resp_delegate['lid'])
         # pprint.pprint(user1.resp_delegate)
         user1.delegate(params={'merch_model': 'payout', 'merch_method': 'get', 'o_lid': user1.resp_delegate['lid'],
-                               'm_lid': user1.merchant1.lid})
+                               'm_lid': str(user1.merchant1.lid)})
         # pprint.pprint(user1.resp_delegate)
         assert user1.resp_delegate['account_amount'] == '0.01'
         assert user1.resp_delegate['in_amount'] == '0.01'
@@ -3482,7 +3668,7 @@ class TestPayoutGet:
     def test_get_payout_4(self):
         """ NotFound    не найден ордер c соответствующим o_lid """
         user1.delegate(params={'merch_model': 'payout', 'merch_method': 'get', 'o_lid': 99999,
-                               'm_lid': user1.merchant1.lid})
+                               'm_lid': str(user1.merchant1.lid)})
         # pprint.pprint(user1.resp_delegate)
         assert user1.resp_delegate['message'] == 'NotFound'
         assert user1.resp_delegate['data']['reason'] == 'Not found order with params'
@@ -3505,192 +3691,192 @@ class TestPayoutList:
         global admin, user1, user2
         admin, user1, user2 = start_session
 
-    # def test_payout_list_1(self):
-    #     """ All """
-    #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'list', 'm_lid': user1.merchant1.lid})
-    #     # pprint.pprint(user1.resp_delegate)
-    #
-    # def test_payout_list_2(self):
-    #     """ All """
-    #     user1.merchant1.payout_list()
-    #     # pprint.pprint(user1.merchant1.resp_payout_list)
-    #     assert user1.resp_delegate['total'] == user1.merchant1.resp_payout_list['total']
-    #
-    # def test_payout_list_3(self):
-    #     """ count = 12 """
-    #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'list', 'm_lid': user1.merchant1.lid,
-    #                            'count': 12})
-    #     # pprint.pprint(user1.resp_delegate)
-    #     assert user1.resp_delegate['count'] == 12
-    #
-    # def test_payout_list_4(self):
-    #     """ count = 12 """
-    #     user1.merchant1.payout_list(count='12')
-    #     # pprint.pprint(user1.merchant1.resp_payout_list)
-    #     assert user1.merchant1.resp_payout_list['count'] == 12
-    #
-    # def test_payout_list_5(self):
-    #     """ first """
-    #     first = user1.resp_delegate['total']-12
-    #     # print('\n', 'first', first)
-    #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'list', 'm_lid': user1.merchant1.lid,
-    #                            'first': str(first)})
-    #     # pprint.pprint(user1.resp_delegate)
-    #     assert user1.resp_delegate['first'] == first
-    #
-    # def test_payout_list_6(self):
-    #     """ first """
-    #     first = user1.merchant1.resp_payout_list['total']-12
-    #     # print('\n', 'first', first)
-    #     user1.merchant1.payout_list(first=str(first))
-    #     # pprint.pprint(user1.merchant1.resp_payout_list)
-    #     assert user1.merchant1.resp_payout_list['first'] == first
-    #
-    # def test_payout_list_7(self):
-    #     """ visamc """
-    #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'list', 'm_lid': user1.merchant1.lid,
-    #                            'payway': 'visamc'})
-    #     first = user1.resp_delegate['total']-1
-    #     # print('\n', 'first', first)
-    #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'list', 'm_lid': user1.merchant1.lid,
-    #                            'first': str(first), 'payway': 'visamc'})
-    #     # pprint.pprint(user1.resp_delegate)
-    #     assert user1.resp_delegate['data'][0]['payway_name'] == 'visamc'
-    #     assert user1.resp_delegate['data'][0]['reqdata']['payway'] == 'visamc'
-    #
-    # def test_payout_list_8(self):
-    #     """ payeer """
-    #     user1.merchant1.payout_list(payway='payeer')
-    #     first = user1.merchant1.resp_payout_list['total']-1
-    #     # print('\n', 'first', first)
-    #     user1.merchant1.payout_list(first=str(first), payway='payeer')
-    #     # pprint.pprint(user1.merchant1.resp_payout_list)
-    #     assert user1.merchant1.resp_payout_list['data'][0]['payway_name'] == 'payeer'
-    #     assert user1.merchant1.resp_payout_list['data'][0]['reqdata']['payway'] == 'payeer'
-    #
-    # def test_payout_list_9(self):
-    #     """ 'out_curr': 'UAH' """
-    #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'list', 'm_lid': user1.merchant1.lid,
-    #                            'first': '0', 'count': '5', 'out_curr': 'UAH'})
-    #     # pprint.pprint(user1.resp_delegate)
-    #     assert user1.resp_delegate['data'][0]['in_curr'] == 'UAH'
-    #     assert user1.resp_delegate['data'][0]['out_curr'] == 'UAH'
-    #     assert user1.resp_delegate['data'][0]['reqdata']['in_curr'] == None
-    #     assert user1.resp_delegate['data'][0]['reqdata']['out_curr'] == 'UAH'
-    #     assert user1.resp_delegate['data'][1]['in_curr'] == 'UAH'
-    #     assert user1.resp_delegate['data'][1]['out_curr'] == 'UAH'
-    #     assert user1.resp_delegate['data'][1]['reqdata']['in_curr'] == None
-    #     assert user1.resp_delegate['data'][1]['reqdata']['out_curr'] == 'UAH'
-    #     assert user1.resp_delegate['data'][2]['in_curr'] == 'UAH'
-    #     assert user1.resp_delegate['data'][2]['out_curr'] == 'UAH'
-    #     assert user1.resp_delegate['data'][2]['reqdata']['in_curr'] == None
-    #     assert user1.resp_delegate['data'][2]['reqdata']['out_curr'] == 'UAH'
-    #     assert user1.resp_delegate['data'][3]['in_curr'] == 'UAH'
-    #     assert user1.resp_delegate['data'][3]['out_curr'] == 'UAH'
-    #     assert user1.resp_delegate['data'][3]['reqdata']['in_curr'] == None
-    #     assert user1.resp_delegate['data'][3]['reqdata']['out_curr'] == 'UAH'
-    #     assert user1.resp_delegate['data'][4]['in_curr'] == 'UAH'
-    #     assert user1.resp_delegate['data'][4]['out_curr'] == 'UAH'
-    #     assert user1.resp_delegate['data'][4]['reqdata']['in_curr'] == None
-    #     assert user1.resp_delegate['data'][4]['reqdata']['out_curr'] == 'UAH'
-    #
-    # def test_payout_list_10(self):
-    #     """ out_curr='USD' """
-    #     user1.merchant1.payout_list(first='0', count='4', out_curr='USD')
-    #     # pprint.pprint(user1.merchant1.resp_payout_list)
-    #     assert user1.merchant1.resp_payout_list['data'][0]['in_curr'] == 'UAH'
-    #     assert user1.merchant1.resp_payout_list['data'][0]['out_curr'] == 'USD'
-    #     assert user1.merchant1.resp_payout_list['data'][0]['reqdata']['in_curr'] == 'UAH'
-    #     assert user1.merchant1.resp_payout_list['data'][0]['reqdata']['out_curr'] == 'USD'
-    #     assert user1.merchant1.resp_payout_list['data'][1]['in_curr'] == 'UAH'
-    #     assert user1.merchant1.resp_payout_list['data'][1]['out_curr'] == 'USD'
-    #     assert user1.merchant1.resp_payout_list['data'][1]['reqdata']['in_curr'] == 'UAH'
-    #     assert user1.merchant1.resp_payout_list['data'][1]['reqdata']['out_curr'] == 'USD'
-    #     assert user1.merchant1.resp_payout_list['data'][2]['in_curr'] == 'USD'
-    #     assert user1.merchant1.resp_payout_list['data'][2]['out_curr'] == 'USD'
-    #     assert user1.merchant1.resp_payout_list['data'][2]['reqdata']['in_curr'] == None
-    #     assert user1.merchant1.resp_payout_list['data'][2]['reqdata']['out_curr'] == 'USD'
-    #     assert user1.merchant1.resp_payout_list['data'][3]['in_curr'] == 'USD'
-    #     assert user1.merchant1.resp_payout_list['data'][3]['out_curr'] == 'USD'
-    #     assert user1.merchant1.resp_payout_list['data'][3]['reqdata']['in_curr'] == None
-    #     assert user1.merchant1.resp_payout_list['data'][3]['reqdata']['out_curr'] == 'USD'
-    #
-    # def test_payout_list_11(self):
-    #     """ in_curr': 'RUB' """
-    #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'list', 'm_lid': user1.merchant1.lid,
-    #                            'first': '0', 'count': '2', 'in_curr': 'RUB'})
-    #     # pprint.pprint(user1.resp_delegate)
-    #     assert user1.resp_delegate['data'][0]['in_curr'] == 'RUB'
-    #     assert user1.resp_delegate['data'][0]['out_curr'] == 'RUB'
-    #     assert user1.resp_delegate['data'][0]['reqdata']['in_curr'] == None
-    #     assert user1.resp_delegate['data'][0]['reqdata']['out_curr'] == 'RUB'
-    #     assert user1.resp_delegate['data'][1]['in_curr'] == 'RUB'
-    #     assert user1.resp_delegate['data'][1]['out_curr'] == 'RUB'
-    #     assert user1.resp_delegate['data'][1]['reqdata']['in_curr'] == None
-    #     assert user1.resp_delegate['data'][1]['reqdata']['out_curr'] == 'RUB'
-    #
-    # def test_payout_list_12(self):
-    #     """ in_curr='UAH' """
-    #     user1.merchant1.payout_list(first='0', count='6', in_curr='UAH')
-    #     # pprint.pprint(user1.merchant1.resp_payout_list)
-    #     assert user1.merchant1.resp_payout_list['data'][0]['in_curr'] == 'UAH'
-    #     assert user1.merchant1.resp_payout_list['data'][0]['out_curr'] == 'USD'
-    #     assert user1.merchant1.resp_payout_list['data'][0]['reqdata']['in_curr'] == 'UAH'
-    #     assert user1.merchant1.resp_payout_list['data'][0]['reqdata']['out_curr'] == 'USD'
-    #     assert user1.merchant1.resp_payout_list['data'][1]['in_curr'] == 'UAH'
-    #     assert user1.merchant1.resp_payout_list['data'][1]['out_curr'] == 'USD'
-    #     assert user1.merchant1.resp_payout_list['data'][1]['reqdata']['in_curr'] == 'UAH'
-    #     assert user1.merchant1.resp_payout_list['data'][1]['reqdata']['out_curr'] == 'USD'
-    #     assert user1.merchant1.resp_payout_list['data'][2]['in_curr'] == 'UAH'
-    #     assert user1.merchant1.resp_payout_list['data'][2]['out_curr'] == 'RUB'
-    #     assert user1.merchant1.resp_payout_list['data'][2]['reqdata']['in_curr'] == 'UAH'
-    #     assert user1.merchant1.resp_payout_list['data'][2]['reqdata']['out_curr'] == 'RUB'
-    #     assert user1.merchant1.resp_payout_list['data'][3]['in_curr'] == 'UAH'
-    #     assert user1.merchant1.resp_payout_list['data'][3]['out_curr'] == 'UAH'
-    #     assert user1.merchant1.resp_payout_list['data'][3]['reqdata']['in_curr'] == None
-    #     assert user1.merchant1.resp_payout_list['data'][3]['reqdata']['out_curr'] == 'UAH'
-    #     assert user1.merchant1.resp_payout_list['data'][4]['in_curr'] == 'UAH'
-    #     assert user1.merchant1.resp_payout_list['data'][4]['out_curr'] == 'UAH'
-    #     assert user1.merchant1.resp_payout_list['data'][4]['reqdata']['in_curr'] == None
-    #     assert user1.merchant1.resp_payout_list['data'][4]['reqdata']['out_curr'] == 'UAH'
-    #     assert user1.merchant1.resp_payout_list['data'][5]['in_curr'] == 'UAH'
-    #     assert user1.merchant1.resp_payout_list['data'][5]['out_curr'] == 'UAH'
-    #     assert user1.merchant1.resp_payout_list['data'][5]['reqdata']['in_curr'] == None
-    #     assert user1.merchant1.resp_payout_list['data'][5]['reqdata']['out_curr'] == 'UAH'
-    #
-    # def test_payout_list_13(self):
-    #     """ in_curr': 'TST' """
-    #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'list', 'm_lid': user1.merchant1.lid,
-    #                            'in_curr': 'TST'})
-    #     # pprint.pprint(user1.resp_delegate)
-    #     assert user1.resp_delegate['message'] == 'InvalidCurrency'
-    #     assert user1.resp_delegate['data']['reason'] == 'TST'
-    #
-    # def test_payout_list_14(self):
-    #     """ out_curr': 'TST' """
-    #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'list', 'm_lid': user1.merchant1.lid,
-    #                            'out_curr': 'TST'})
-    #     # pprint.pprint(user1.resp_delegate)
-    #     assert user1.resp_delegate['message'] == 'InvalidCurrency'
-    #     assert user1.resp_delegate['data']['reason'] == 'TST'
-    #
-    # def test_payout_list_15(self):
-    #     """ in_curr='TST' """
-    #     user1.merchant1.payout_list(first='0', count='6', in_curr='TST')
-    #     # pprint.pprint(user1.merchant1.resp_payout_list)
-    #     assert user1.merchant1.resp_payout_list['message'] == 'InvalidCurrency'
-    #     assert user1.merchant1.resp_payout_list['data']['reason'] == 'TST'
-    #
-    # def test_payout_list_16(self):
-    #     """ out_curr='TST' """
-    #     user1.merchant1.payout_list(first='0', count='6', out_curr='TST')
-    #     # pprint.pprint(user1.merchant1.resp_payout_list)
-    #     assert user1.merchant1.resp_payout_list['message'] == 'InvalidCurrency'
-    #     assert user1.merchant1.resp_payout_list['data']['reason'] == 'TST'
+    def test_payout_list_1(self):
+        """ All """
+        user1.delegate(params={'merch_model': 'payout', 'merch_method': 'list', 'm_lid': str(user1.merchant1.lid)})
+        # pprint.pprint(user1.resp_delegate)
+
+    def test_payout_list_2(self):
+        """ All """
+        user1.merchant1.payout_list()
+        # pprint.pprint(user1.merchant1.resp_payout_list)
+        assert user1.resp_delegate['total'] == user1.merchant1.resp_payout_list['total']
+
+    def test_payout_list_3(self):
+        """ count = 12 """
+        user1.delegate(params={'merch_model': 'payout', 'merch_method': 'list', 'm_lid': str(user1.merchant1.lid),
+                               'count': '12'})
+        # pprint.pprint(user1.resp_delegate)
+        assert user1.resp_delegate['count'] == 12
+
+    def test_payout_list_4(self):
+        """ count = 12 """
+        user1.merchant1.payout_list(count='12')
+        # pprint.pprint(user1.merchant1.resp_payout_list)
+        assert user1.merchant1.resp_payout_list['count'] == 12
+
+    def test_payout_list_5(self):
+        """ first """
+        first = user1.resp_delegate['total']-12
+        # print('\n', 'first', first)
+        user1.delegate(params={'merch_model': 'payout', 'merch_method': 'list', 'm_lid': str(user1.merchant1.lid),
+                               'first': str(first)})
+        # pprint.pprint(user1.resp_delegate)
+        assert user1.resp_delegate['first'] == first
+
+    def test_payout_list_6(self):
+        """ first """
+        first = user1.merchant1.resp_payout_list['total']-12
+        # print('\n', 'first', first)
+        user1.merchant1.payout_list(first=str(first))
+        # pprint.pprint(user1.merchant1.resp_payout_list)
+        assert user1.merchant1.resp_payout_list['first'] == first
+
+    def test_payout_list_7(self):
+        """ visamc """
+        user1.delegate(params={'merch_model': 'payout', 'merch_method': 'list', 'm_lid': str(user1.merchant1.lid),
+                               'payway': 'visamc'})
+        first = user1.resp_delegate['total']-1
+        # print('\n', 'first', first)
+        user1.delegate(params={'merch_model': 'payout', 'merch_method': 'list', 'm_lid': str(user1.merchant1.lid),
+                               'first': str(first), 'payway': 'visamc'})
+        # pprint.pprint(user1.resp_delegate)
+        assert user1.resp_delegate['data'][0]['payway_name'] == 'visamc'
+        assert user1.resp_delegate['data'][0]['reqdata']['payway'] == 'visamc'
+
+    def test_payout_list_8(self):
+        """ payeer """
+        user1.merchant1.payout_list(payway='payeer')
+        first = user1.merchant1.resp_payout_list['total']-1
+        # print('\n', 'first', first)
+        user1.merchant1.payout_list(first=str(first), payway='payeer')
+        # pprint.pprint(user1.merchant1.resp_payout_list)
+        assert user1.merchant1.resp_payout_list['data'][0]['payway_name'] == 'payeer'
+        assert user1.merchant1.resp_payout_list['data'][0]['reqdata']['payway'] == 'payeer'
+
+    def test_payout_list_9(self):
+        """ 'out_curr': 'UAH' """
+        user1.delegate(params={'merch_model': 'payout', 'merch_method': 'list', 'm_lid': str(user1.merchant1.lid),
+                               'first': '0', 'count': '5', 'out_curr': 'UAH'})
+        # pprint.pprint(user1.resp_delegate)
+        assert user1.resp_delegate['data'][0]['in_curr'] == 'UAH'
+        assert user1.resp_delegate['data'][0]['out_curr'] == 'UAH'
+        assert user1.resp_delegate['data'][0]['reqdata']['in_curr'] == None
+        assert user1.resp_delegate['data'][0]['reqdata']['out_curr'] == 'UAH'
+        assert user1.resp_delegate['data'][1]['in_curr'] == 'UAH'
+        assert user1.resp_delegate['data'][1]['out_curr'] == 'UAH'
+        assert user1.resp_delegate['data'][1]['reqdata']['in_curr'] == None
+        assert user1.resp_delegate['data'][1]['reqdata']['out_curr'] == 'UAH'
+        assert user1.resp_delegate['data'][2]['in_curr'] == 'UAH'
+        assert user1.resp_delegate['data'][2]['out_curr'] == 'UAH'
+        assert user1.resp_delegate['data'][2]['reqdata']['in_curr'] == None
+        assert user1.resp_delegate['data'][2]['reqdata']['out_curr'] == 'UAH'
+        assert user1.resp_delegate['data'][3]['in_curr'] == 'UAH'
+        assert user1.resp_delegate['data'][3]['out_curr'] == 'UAH'
+        assert user1.resp_delegate['data'][3]['reqdata']['in_curr'] == None
+        assert user1.resp_delegate['data'][3]['reqdata']['out_curr'] == 'UAH'
+        assert user1.resp_delegate['data'][4]['in_curr'] == 'UAH'
+        assert user1.resp_delegate['data'][4]['out_curr'] == 'UAH'
+        assert user1.resp_delegate['data'][4]['reqdata']['in_curr'] == None
+        assert user1.resp_delegate['data'][4]['reqdata']['out_curr'] == 'UAH'
+
+    def test_payout_list_10(self):
+        """ out_curr='USD' """
+        user1.merchant1.payout_list(first='0', count='4', out_curr='USD')
+        # pprint.pprint(user1.merchant1.resp_payout_list)
+        assert user1.merchant1.resp_payout_list['data'][0]['in_curr'] == 'UAH'
+        assert user1.merchant1.resp_payout_list['data'][0]['out_curr'] == 'USD'
+        assert user1.merchant1.resp_payout_list['data'][0]['reqdata']['in_curr'] == 'UAH'
+        assert user1.merchant1.resp_payout_list['data'][0]['reqdata']['out_curr'] == 'USD'
+        assert user1.merchant1.resp_payout_list['data'][1]['in_curr'] == 'UAH'
+        assert user1.merchant1.resp_payout_list['data'][1]['out_curr'] == 'USD'
+        assert user1.merchant1.resp_payout_list['data'][1]['reqdata']['in_curr'] == 'UAH'
+        assert user1.merchant1.resp_payout_list['data'][1]['reqdata']['out_curr'] == 'USD'
+        assert user1.merchant1.resp_payout_list['data'][2]['in_curr'] == 'USD'
+        assert user1.merchant1.resp_payout_list['data'][2]['out_curr'] == 'USD'
+        assert user1.merchant1.resp_payout_list['data'][2]['reqdata']['in_curr'] == None
+        assert user1.merchant1.resp_payout_list['data'][2]['reqdata']['out_curr'] == 'USD'
+        assert user1.merchant1.resp_payout_list['data'][3]['in_curr'] == 'USD'
+        assert user1.merchant1.resp_payout_list['data'][3]['out_curr'] == 'USD'
+        assert user1.merchant1.resp_payout_list['data'][3]['reqdata']['in_curr'] == None
+        assert user1.merchant1.resp_payout_list['data'][3]['reqdata']['out_curr'] == 'USD'
+
+    def test_payout_list_11(self):
+        """ in_curr': 'RUB' """
+        user1.delegate(params={'merch_model': 'payout', 'merch_method': 'list', 'm_lid': str(user1.merchant1.lid),
+                               'first': '0', 'count': '2', 'in_curr': 'RUB'})
+        # pprint.pprint(user1.resp_delegate)
+        assert user1.resp_delegate['data'][0]['in_curr'] == 'RUB'
+        assert user1.resp_delegate['data'][0]['out_curr'] == 'RUB'
+        assert user1.resp_delegate['data'][0]['reqdata']['in_curr'] == None
+        assert user1.resp_delegate['data'][0]['reqdata']['out_curr'] == 'RUB'
+        assert user1.resp_delegate['data'][1]['in_curr'] == 'RUB'
+        assert user1.resp_delegate['data'][1]['out_curr'] == 'RUB'
+        assert user1.resp_delegate['data'][1]['reqdata']['in_curr'] == None
+        assert user1.resp_delegate['data'][1]['reqdata']['out_curr'] == 'RUB'
+
+    def test_payout_list_12(self):
+        """ in_curr='UAH' """
+        user1.merchant1.payout_list(first='0', count='6', in_curr='UAH')
+        # pprint.pprint(user1.merchant1.resp_payout_list)
+        assert user1.merchant1.resp_payout_list['data'][0]['in_curr'] == 'UAH'
+        assert user1.merchant1.resp_payout_list['data'][0]['out_curr'] == 'USD'
+        assert user1.merchant1.resp_payout_list['data'][0]['reqdata']['in_curr'] == 'UAH'
+        assert user1.merchant1.resp_payout_list['data'][0]['reqdata']['out_curr'] == 'USD'
+        assert user1.merchant1.resp_payout_list['data'][1]['in_curr'] == 'UAH'
+        assert user1.merchant1.resp_payout_list['data'][1]['out_curr'] == 'USD'
+        assert user1.merchant1.resp_payout_list['data'][1]['reqdata']['in_curr'] == 'UAH'
+        assert user1.merchant1.resp_payout_list['data'][1]['reqdata']['out_curr'] == 'USD'
+        assert user1.merchant1.resp_payout_list['data'][2]['in_curr'] == 'UAH'
+        assert user1.merchant1.resp_payout_list['data'][2]['out_curr'] == 'RUB'
+        assert user1.merchant1.resp_payout_list['data'][2]['reqdata']['in_curr'] == 'UAH'
+        assert user1.merchant1.resp_payout_list['data'][2]['reqdata']['out_curr'] == 'RUB'
+        assert user1.merchant1.resp_payout_list['data'][3]['in_curr'] == 'UAH'
+        assert user1.merchant1.resp_payout_list['data'][3]['out_curr'] == 'UAH'
+        assert user1.merchant1.resp_payout_list['data'][3]['reqdata']['in_curr'] == None
+        assert user1.merchant1.resp_payout_list['data'][3]['reqdata']['out_curr'] == 'UAH'
+        assert user1.merchant1.resp_payout_list['data'][4]['in_curr'] == 'UAH'
+        assert user1.merchant1.resp_payout_list['data'][4]['out_curr'] == 'UAH'
+        assert user1.merchant1.resp_payout_list['data'][4]['reqdata']['in_curr'] == None
+        assert user1.merchant1.resp_payout_list['data'][4]['reqdata']['out_curr'] == 'UAH'
+        assert user1.merchant1.resp_payout_list['data'][5]['in_curr'] == 'UAH'
+        assert user1.merchant1.resp_payout_list['data'][5]['out_curr'] == 'UAH'
+        assert user1.merchant1.resp_payout_list['data'][5]['reqdata']['in_curr'] == None
+        assert user1.merchant1.resp_payout_list['data'][5]['reqdata']['out_curr'] == 'UAH'
+
+    def test_payout_list_13(self):
+        """ in_curr': 'TST' """
+        user1.delegate(params={'merch_model': 'payout', 'merch_method': 'list', 'm_lid': str(user1.merchant1.lid),
+                               'in_curr': 'TST'})
+        # pprint.pprint(user1.resp_delegate)
+        assert user1.resp_delegate['message'] == 'InvalidCurrency'
+        assert user1.resp_delegate['data']['reason'] == 'TST'
+
+    def test_payout_list_14(self):
+        """ out_curr': 'TST' """
+        user1.delegate(params={'merch_model': 'payout', 'merch_method': 'list', 'm_lid': str(user1.merchant1.lid),
+                               'out_curr': 'TST'})
+        # pprint.pprint(user1.resp_delegate)
+        assert user1.resp_delegate['message'] == 'InvalidCurrency'
+        assert user1.resp_delegate['data']['reason'] == 'TST'
+
+    def test_payout_list_15(self):
+        """ in_curr='TST' """
+        user1.merchant1.payout_list(first='0', count='6', in_curr='TST')
+        # pprint.pprint(user1.merchant1.resp_payout_list)
+        assert user1.merchant1.resp_payout_list['message'] == 'InvalidCurrency'
+        assert user1.merchant1.resp_payout_list['data']['reason'] == 'TST'
+
+    def test_payout_list_16(self):
+        """ out_curr='TST' """
+        user1.merchant1.payout_list(first='0', count='6', out_curr='TST')
+        # pprint.pprint(user1.merchant1.resp_payout_list)
+        assert user1.merchant1.resp_payout_list['message'] == 'InvalidCurrency'
+        assert user1.merchant1.resp_payout_list['data']['reason'] == 'TST'
 
     def test_payout_list_17(self):
         """ 'payway': 'test' """
-        user1.delegate(params={'merch_model': 'payout', 'merch_method': 'list', 'm_lid': user1.merchant1.lid,
+        user1.delegate(params={'merch_model': 'payout', 'merch_method': 'list', 'm_lid': str(user1.merchant1.lid),
                                'payway': 'test'})
         # pprint.pprint(user1.resp_delegate)
         assert user1.resp_delegate['message'] == 'InvalidPayway'
@@ -3706,16 +3892,24 @@ class TestPayoutList:
     def test_payout_list_19(self):
         """ first='-1' """
         user1.merchant1.payout_list(first='-1', count='6', in_curr='LTC')
-        pprint.pprint(user1.merchant1.resp_payout_list)
+        # pprint.pprint(user1.merchant1.resp_payout_list)
         assert user1.merchant1.resp_payout_list['message'] == 'InvalidParam'
-        assert user1.merchant1.resp_payout_list['data']['reason'] == ['-1', '6']
+        assert user1.merchant1.resp_payout_list['data']['reason'] == 'first: - has to be a positive number'
 
     def test_payout_list_20(self):
         """ first='1.5' """
         user1.merchant1.payout_list(first='1.5', count='6', out_curr='BTC')
-        pprint.pprint(user1.merchant1.resp_payout_list)
+        # pprint.pprint(user1.merchant1.resp_payout_list)
         assert user1.merchant1.resp_payout_list['message'] == 'InvalidParam'
-        assert user1.merchant1.resp_payout_list['data']['reason'] == ['1.5', '6']
+        assert user1.merchant1.resp_payout_list['data']['reason'] == 'first - has to be an Integer'
+
+    def test_payout_list_21(self):
+        """ count = 12 """
+        user1.delegate(params={'merch_model': 'payout', 'merch_method': 'list', 'm_lid': str(user1.merchant1.lid),
+                               'count': 12})
+        # pprint.pprint(user1.resp_delegate)
+        assert user1.resp_delegate['message'] == 'InvalidParam'
+        assert user1.resp_delegate['data']['reason'] == "Key 'count' must not be of 'int' type"
 
 
 class TestPayoutCalc:
@@ -3740,8 +3934,8 @@ class TestPayoutCalc:
     #     admin.set_pwcurrency_min_max(payway=admin.payway['visamc']['id'], is_out=True, currency='UAH', is_active=True,
     #                                  tech_min=bl(0.01), tech_max=bl(98))
     #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'calc', 'payway': 'visamc',
-    #                            'amount': '0.01', 'out_curr': 'UAH', 'm_lid': user1.merchant1.lid})
-    #     # pprint.pprint(user1.resp_delegate)
+    #                            'amount': '0.01', 'out_curr': 'UAH', 'm_lid': str(user1.merchant1.lid)})
+    #     pprint.pprint(user1.resp_delegate)
     #     assert user1.resp_delegate['account_amount'] == '0.01'
     #     assert user1.resp_delegate['in_amount'] == '0.01'
     #     assert user1.resp_delegate['in_fee_amount'] == '0'
@@ -3762,7 +3956,7 @@ class TestPayoutCalc:
     #     admin.set_pwcurrency_min_max(payway=admin.payway['kuna']['id'], is_out=True, currency='UAH', is_active=True,
     #                                  tech_min=bl(0.01), tech_max=bl(98))
     #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'calc', 'payway': 'kuna',
-    #                            'amount': '0.01', 'out_curr': 'UAH', 'm_lid': user1.merchant1.lid})
+    #                            'amount': '0.01', 'out_curr': 'UAH', 'm_lid': str(user1.merchant1.lid)})
     #     # pprint.pprint(user1.resp_delegate)
     #     assert user1.resp_delegate['account_amount'] == '0.01'
     #     assert user1.resp_delegate['in_amount'] == '0.01'
@@ -3825,7 +4019,7 @@ class TestPayoutCalc:
     #     admin.set_pwcurrency_min_max(payway=admin.payway['privat24']['id'], is_out=True, currency='UAH', is_active=True,
     #                                  tech_min=bl(1), tech_max=bl(100))
     #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'calc', 'payway': 'privat24',
-    #                            'amount': '10', 'out_curr': 'UAH', 'm_lid': user1.merchant1.lid})
+    #                            'amount': '10', 'out_curr': 'UAH', 'm_lid': str(user1.merchant1.lid)})
     #     # pprint.pprint(user1.resp_delegate)
     #     assert user1.resp_delegate['account_amount'] == '11.5'
     #     assert user1.resp_delegate['in_amount'] == '10'
@@ -3874,7 +4068,7 @@ class TestPayoutCalc:
     #     admin.set_pwcurrency_min_max(payway=admin.payway['qiwi']['id'], is_out=True, currency='RUB', is_active=True,
     #                                  tech_min=bl(1), tech_max=bl(100))
     #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'calc', 'payway': 'qiwi', 'amount': '10',
-    #                            'out_curr': 'RUB', 'm_lid': user1.merchant1.lid})
+    #                            'out_curr': 'RUB', 'm_lid': str(user1.merchant1.lid)})
     #     # pprint.pprint(user1.resp_delegate)
     #     assert user1.resp_delegate['account_amount'] == '11.55'
     #     assert user1.resp_delegate['in_amount'] == '10'
@@ -3928,7 +4122,7 @@ class TestPayoutCalc:
     #     admin.set_pwcurrency_min_max(payway=admin.payway['cash_kiev']['id'], is_out=True, currency='USD',
     #                                  is_active=True, tech_min=bl(1), tech_max=bl(15))
     #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'calc', 'payway': 'cash_kiev', 'amount': '10',
-    #                            'out_curr': 'USD', 'm_lid': user1.merchant1.lid})
+    #                            'out_curr': 'USD', 'm_lid': str(user1.merchant1.lid)})
     #     # pprint.pprint(user1.resp_delegate)
     #     assert user1.resp_delegate['account_amount'] == '11.55'
     #     assert user1.resp_delegate['in_amount'] == '10'
@@ -3955,7 +4149,7 @@ class TestPayoutCalc:
     #     admin.set_pwcurrency_min_max(payway=admin.payway['paymer']['id'], is_out=True, currency='RUB',
     #                                  is_active=True, tech_min=bl(0.01), tech_max=bl(50))
     #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'calc', 'payway': 'paymer', 'amount': '50',
-    #                            'out_curr': 'RUB', 'in_curr': 'UAH', 'm_lid': user1.merchant1.lid})
+    #                            'out_curr': 'RUB', 'in_curr': 'UAH', 'm_lid': str(user1.merchant1.lid)})
     #     # pprint.pprint(user1.resp_delegate)
     #     assert user1.resp_delegate['account_amount'] == '18.76'
     #     assert user1.resp_delegate['in_amount'] == '18.76'
@@ -4026,26 +4220,26 @@ class TestPayoutCalc:
     #     assert user1.merchant1.resp_payout_calc['rate'] == ['28.7639', '1']
     #     admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=10, currency_id=admin.currency['USD'],
     #                   payway_id=admin.payway['exmo']['id'], is_active=False)
-
-    def test_wrong_payout_calc_1(self):# Вывод суммы больше чем на счету списания
-        """ Payout amount more than debit account
-        Calc payout to visamc 0.01 UAH: UAH to UAN by OWNER without fee for payout. """
-        admin.set_wallet_amount(balance=bl(0.01), currency='UAH', merch_lid=user1.merchant1.lid)
-        admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=10, currency_id=admin.currency['UAH'],
-                      payway_id=admin.payway['visamc']['id'], is_active=True, merchant_id=user1.merchant1.id)
-        admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=10, currency_id=admin.currency['UAH'],
-                      payway_id=admin.payway['visamc']['id'], is_active=True)
-        admin.set_pwmerchactive(merch_id=user1.merchant1.id, payway_id=admin.payway['visamc']['id'],
-                                is_active=True)
-        admin.set_pwcurrency_min_max(payway=admin.payway['visamc']['id'], is_out=True, currency='UAH',
-                                     is_active=True, tech_min=bl(0.01), tech_max=bl(98))
-        user1.delegate(params={'merch_model': 'payout', 'merch_method': 'calc', 'payway': 'visamc', 'amount': '0.02',
-                               'out_curr': 'UAH', 'm_lid': user1.merchant1.lid})
-        # pprint.pprint(user1.resp_delegate)
-        assert user1.resp_delegate['message'] == 'InsufficientFunds'
-        assert user1.resp_delegate['data']['reason'] == 'Amount 0.02 less then balance 0.01 in UAH'
-        admin.set_pwcurrency_min_max(payway=admin.payway['visamc']['id'], is_out=True, currency='UAH',
-                                     is_active=True, tech_min=bl(1), tech_max=bl(98))
+    #
+    # def test_wrong_payout_calc_1(self):# Вывод суммы больше чем на счету списания
+    #     """ Payout amount more than debit account
+    #     Calc payout to visamc 0.01 UAH: UAH to UAN by OWNER without fee for payout. """
+    #     admin.set_wallet_amount(balance=bl(0.01), currency='UAH', merch_lid=user1.merchant1.lid)
+    #     admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=10, currency_id=admin.currency['UAH'],
+    #                   payway_id=admin.payway['visamc']['id'], is_active=True, merchant_id=user1.merchant1.id)
+    #     admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=10, currency_id=admin.currency['UAH'],
+    #                   payway_id=admin.payway['visamc']['id'], is_active=True)
+    #     admin.set_pwmerchactive(merch_id=user1.merchant1.id, payway_id=admin.payway['visamc']['id'],
+    #                             is_active=True)
+    #     admin.set_pwcurrency_min_max(payway=admin.payway['visamc']['id'], is_out=True, currency='UAH',
+    #                                  is_active=True, tech_min=bl(0.01), tech_max=bl(98))
+    #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'calc', 'payway': 'visamc', 'amount': '0.02',
+    #                            'out_curr': 'UAH', 'm_lid': str(user1.merchant1.lid)})
+    #     # pprint.pprint(user1.resp_delegate)
+    #     assert user1.resp_delegate['message'] == 'InsufficientFunds'
+    #     assert user1.resp_delegate['data']['reason'] == 'Balance 0.01 less then amount 0.02 in UAH'
+    #     admin.set_pwcurrency_min_max(payway=admin.payway['visamc']['id'], is_out=True, currency='UAH',
+    #                                  is_active=True, tech_min=bl(1), tech_max=bl(98))
 
     def test_wrong_payout_calc_2(self):# Вывод суммы больше чем на счету списания
         """ Payout amount more than debit account
@@ -4062,7 +4256,7 @@ class TestPayoutCalc:
         user1.merchant1.payout_calc(payway='payeer', amount='3.02', out_curr='RUB')
         # pprint.pprint(user1.merchant1.resp_payout_calc)
         assert user1.merchant1.resp_payout_calc['message'] == 'InsufficientFunds'
-        assert user1.merchant1.resp_payout_calc['data']['reason'] == 'Amount 3.02 less then balance 1.02 in RUB'
+        assert user1.merchant1.resp_payout_calc['data']['reason'] == 'Balance 1.02 less then amount 3.02 in RUB'
 
     def test_wrong_payout_calc_3(self):# Вывод суммы не существующим мерчантом
         """ Payout by non-existing merchant
@@ -4080,10 +4274,7 @@ class TestPayoutCalc:
                                'out_curr': 'UAH', 'm_lid': '1234567890'})
         # pprint.pprint(user1.resp_delegate)
         assert user1.resp_delegate['message'] == 'NotFound'
-        assert user1.resp_delegate['data']['reason'] == \
-               f'Merchant with lid 1234567890 was not found for user with id {user1.id}'
-        assert user1.resp_delegate['data']['reason'] == \
-               'Merchant with lid 1234567890 was not found for user with id {}'.format(user1.id)
+        assert user1.resp_delegate['data']['reason'] == 'Merchant with lid 1234567890 was not found'
         admin.set_pwcurrency_min_max(payway=admin.payway['visamc']['id'], is_out=True, currency='UAH',
                                      is_active=True, tech_min=bl(1), tech_max=bl(98))
 
@@ -4101,13 +4292,12 @@ class TestPayoutCalc:
                                      is_active=True, tech_min=bl(0.01), tech_max=bl(98))
         admin.set_merchant(lid=user1.merchant1.lid, is_active=False)
         user1.delegate(params={'merch_model': 'payout', 'merch_method': 'calc', 'payway': 'visamc', 'amount': '0.01',
-                               'out_curr': 'UAH', 'm_lid': user1.merchant1.lid})
+                               'out_curr': 'UAH', 'm_lid': str(user1.merchant1.lid)})
         # pprint.pprint(user1.resp_delegate)
         assert user1.resp_delegate['message'] == 'InvalidMerchant'
+        assert user1.resp_delegate['data']['reason'] == f'Active merchant with lid {user1.merchant1.lid} was not found'
         assert user1.resp_delegate['data']['reason'] == \
-               f'Active merchant with lid {user1.merchant1.lid} was not found for user with id {user1.id}'
-        assert user1.resp_delegate['data']['reason'] == \
-               'Active merchant with lid {} was not found for user with id {}'.format(user1.merchant1.lid, user1.id)
+               'Active merchant with lid {} was not found'.format(user1.merchant1.lid)
         admin.set_pwcurrency_min_max(payway=admin.payway['visamc']['id'], is_out=True, currency='UAH',
                                      is_active=True, tech_min=bl(1), tech_max=bl(98))
 
@@ -4125,10 +4315,10 @@ class TestPayoutCalc:
                                      is_active=True, tech_min=bl(0.01), tech_max=bl(98))
         user1.delegate(params={'merch_model': 'payout', 'merch_method': 'create', 'externalid': user1.ex_id(),
                                'payway': 'visamc', 'amount': None, 'out_curr': 'UAH',
-                               'm_lid': user1.merchant1.lid, 'payee': '5363542305527674'})
+                               'm_lid': str(user1.merchant1.lid), 'payee': '5363542305527674'})
         pprint.pprint(user1.resp_delegate)
-        assert user1.resp_delegate['message'] == 'InvalidAmountFormat'
-        assert user1.resp_delegate['data']['reason'] == 'Invalid amount None for currency UAH'
+        assert user1.resp_delegate['message'] == 'InvalidInputParams'
+        assert user1.resp_delegate['data']['reason'] == "method 'payout.calc' missing 1 argument: 'amount'"
         admin.set_pwcurrency_min_max(payway=admin.payway['visamc']['id'], is_out=True, currency='UAH',
                                      is_active=True, tech_min=bl(1), tech_max=bl(98))
 
@@ -4145,10 +4335,10 @@ class TestPayoutCalc:
         admin.set_pwcurrency_min_max(payway=admin.payway['visamc']['id'], is_out=True, currency='UAH',
                                      is_active=True, tech_min=bl(0.01), tech_max=bl(98))
         user1.delegate(params={'merch_model': 'payout', 'merch_method': 'calc', 'payway': 'visamc', 'amount': None,
-                                'out_curr': 'UAH', 'm_lid': user1.merchant1.lid})
+                                'out_curr': 'UAH', 'm_lid': str(user1.merchant1.lid)})
         pprint.pprint(user1.resp_delegate)
-        assert user1.resp_delegate['message'] == 'InvalidAmountFormat'
-        assert user1.resp_delegate['data']['reason'] == 'Invalid amount None for currency UAH'
+        assert user1.resp_delegate['message'] == 'InvalidInputParams'
+        assert user1.resp_delegate['data']['reason'] == "method 'merchant.delegate' missing 1 argument: 'amount'"
         admin.set_pwcurrency_min_max(payway=admin.payway['visamc']['id'], is_out=True, currency='UAH',
                                      is_active=True, tech_min=bl(1), tech_max=bl(98))
 
@@ -4183,7 +4373,7 @@ class TestPayoutCalc:
     #                                  is_active=True, tech_min=bl(0.01), tech_max=bl(98))
     #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'create', 'externalid': user1.ex_id(),
     #                            'payway': 'visamc', 'out_curr': 'UAH',
-    #                            'm_lid': user1.merchant1.lid, 'payee': '5363542305527674'})
+    #                            'm_lid': str(user1.merchant1.lid), 'payee': '5363542305527674'})
     #     # pprint.pprint(user1.resp_delegate)
     #     assert user1.resp_delegate['message'] == 'InvalidInputParams'
     #     assert user1.resp_delegate['data']['reason'] == "method 'merchant.delegate' missing 1 argument: 'amount'"
@@ -4231,7 +4421,7 @@ class TestPayoutCalc:
     #                                  is_active=True,  tech_min=bl(0.01), tech_max=bl(98))
     #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'create', 'externalid': user1.ex_id(),
     #                            'payway': 'visamc', 'amount': 'Test', 'out_curr': 'UAH',
-    #                            'm_lid': user1.merchant1.lid, 'payee': '5363542305527674'})
+    #                            'm_lid': str(user1.merchant1.lid), 'payee': '5363542305527674'})
     #     # pprint.pprint(user1.resp_delegate)
     #     assert user1.resp_delegate['message']== 'InvalidAmountFormat'
     #     assert user1.resp_delegate['data']['reason']== 'Invalid format Test for UAH'
@@ -4269,7 +4459,7 @@ class TestPayoutCalc:
     #                                  is_active=True, tech_min=bl(0.01), tech_max=bl(98))
     #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'create', 'externalid': user1.ex_id(),
     #                            'payway': 'visamc', 'amount': '0.111', 'out_curr': 'UAH',
-    #                            'm_lid': user1.merchant1.lid, 'payee': '5363542305527674'})
+    #                            'm_lid': str(user1.merchant1.lid), 'payee': '5363542305527674'})
     #     # pprint.pprint(user1.resp_delegate)
     #     assert user1.resp_delegate['message'] == 'InvalidAmountFormat'
     #     assert user1.resp_delegate['data']['reason'] == 'Invalid format 0.111 for UAH'
@@ -4307,7 +4497,7 @@ class TestPayoutCalc:
     #                                  is_active=True, tech_min=bl(0.01), tech_max=bl(98))
     #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'create', 'externalid': user1.ex_id(),
     #                            'payway': 'visamc', 'amount': '0.01', 'out_curr': 'TST',
-    #                            'm_lid': user1.merchant1.lid, 'payee': '5363542305527674'})
+    #                            'm_lid': str(user1.merchant1.lid), 'payee': '5363542305527674'})
     #     # print(user1.resp_delegate)
     #     assert user1.resp_delegate['message'] == 'InvalidCurrency'
     #     assert user1.resp_delegate['data']['reason'] == 'TST'
@@ -4346,7 +4536,7 @@ class TestPayoutCalc:
     #     admin.set_currency_activity(name='UAH', is_disabled=False, is_active=False)
     #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'create', 'externalid': user1.ex_id(),
     #                            'payway': 'visamc', 'amount': '0.01', 'out_curr': 'UAH',
-    #                            'm_lid': user1.merchant1.lid, 'payee': '5363542305527674'})
+    #                            'm_lid': str(user1.merchant1.lid), 'payee': '5363542305527674'})
     #     # print(user1.resp_delegate)
     #     assert user1.resp_delegate['message'] == 'InactiveCurrency'
     #     assert user1.resp_delegate['data']['reason'] == 'UAH'
@@ -4387,7 +4577,7 @@ class TestPayoutCalc:
     #                                  is_active=True, tech_min=bl(0.01), tech_max=bl(50))
     #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'create', 'externalid': user1.ex_id(),
     #                            'payway': 'paymer', 'amount': '50', 'out_curr': 'RUB', 'in_curr': 'TST',
-    #                            'm_lid': user1.merchant1.lid, 'contact': '380965781066'})
+    #                            'm_lid': str(user1.merchant1.lid), 'contact': '380965781066'})
     #     # pprint.pprint(user1.resp_delegate)
     #     assert user1.resp_delegate['message'] == 'InvalidCurrency'
     #     assert user1.resp_delegate['data']['reason'] == 'TST'
@@ -4439,7 +4629,7 @@ class TestPayoutCalc:
     #     admin.set_currency_activity(name='UAH', is_disabled=False, is_active=False)
     #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'create', 'externalid': user1.ex_id(),
     #                            'payway': 'paymer', 'amount': '50', 'out_curr': 'RUB', 'in_curr': 'UAH',
-    #                            'm_lid': user1.merchant1.lid, 'contact': '380965781066'})
+    #                            'm_lid': str(user1.merchant1.lid), 'contact': '380965781066'})
     #     # pprint.pprint(user1.resp_delegate)
     #     assert user1.resp_delegate['message'] == 'InactiveCurrency'
     #     assert user1.resp_delegate['data']['reason'] == 'UAH'
@@ -4489,7 +4679,7 @@ class TestPayoutCalc:
     #     admin.set_currency_activity(name='UAH', is_disabled=True, is_active=True)
     #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'create', 'externalid': user1.ex_id(),
     #                            'payway': 'visamc', 'amount': '0.01', 'out_curr': 'UAH',
-    #                            'm_lid': user1.merchant1.lid, 'payee': '5363542305527674'})
+    #                            'm_lid': str(user1.merchant1.lid), 'payee': '5363542305527674'})
     #     # print(user1.resp_delegate)
     #     assert user1.resp_delegate['message'] == 'InactiveCurrency'
     #     assert user1.resp_delegate['data']['reason'] == 'UAH'
@@ -4531,7 +4721,7 @@ class TestPayoutCalc:
     #     admin.set_currency_activity(name='UAH', is_disabled=True, is_active=True)
     #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'create', 'externalid': user1.ex_id(),
     #                            'payway': 'paymer', 'amount': '50', 'out_curr': 'RUB', 'in_curr': 'UAH',
-    #                            'm_lid': user1.merchant1.lid, 'contact': '380965781066'})
+    #                            'm_lid': str(user1.merchant1.lid), 'contact': '380965781066'})
     #     # print(user1.resp_delegate)
     #     assert user1.resp_delegate['message'] == 'InactiveCurrency'
     #     assert user1.resp_delegate['data']['reason'] == 'UAH'
@@ -4579,7 +4769,7 @@ class TestPayoutCalc:
     #                                  is_active=True, tech_min=bl(0.02), tech_max=bl(98))
     #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'create', 'externalid': user1.ex_id(),
     #                            'payway': 'kuna', 'amount': '0.01', 'out_curr': 'UAH',
-    #                            'm_lid': user1.merchant1.lid, 'payee': '5363542305527674'})
+    #                            'm_lid': str(user1.merchant1.lid), 'payee': '5363542305527674'})
     #     # print(user1.resp_delegate)
     #     assert user1.resp_delegate['message'] == 'AmountTooSmall'
     #     assert user1.resp_delegate['data']['reason'] == '0.01'
@@ -4662,7 +4852,7 @@ class TestPayoutCalc:
     #                                  is_active=True, tech_min=bl(1), tech_max=bl(1))
     #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'create', 'externalid': user1.ex_id(),
     #                            'payway': 'cash_kiev', 'amount': '10', 'out_curr': 'USD',
-    #                            'm_lid': user1.merchant1.lid, 'contact': '380965781066'})
+    #                            'm_lid': str(user1.merchant1.lid), 'contact': '380965781066'})
     #     # print(user1.resp_delegate)
     #     assert user1.resp_delegate['message'] == 'AmountTooBig'
     #     assert user1.resp_delegate['data']['reason'] == '10'
@@ -4687,7 +4877,7 @@ class TestPayoutCalc:
     #                                  is_active=True, tech_min=bl(1), tech_max=bl(10))
     #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'create', 'externalid': user1.ex_id(),
     #                            'payway': 'cash_kiev', 'amount': '10', 'out_curr': 'USD',
-    #                            'm_lid': user1.merchant1.lid, 'contact': '380965781066'})
+    #                            'm_lid': str(user1.merchant1.lid), 'contact': '380965781066'})
     #     # pprint.pprint(user1.resp_delegate)
     #     # assert user1.resp_delegate['status'] == 'done'
     #     assert user1.resp_delegate['account_amount'] == '11.55'
@@ -4718,7 +4908,7 @@ class TestPayoutCalc:
     #                                  is_active=True, tech_min=bl(0.01), tech_max=bl(50))
     #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'create', 'externalid': user1.ex_id(),
     #                            'payway': 'paymer', 'amount': '50', 'out_curr': 'RUB', 'in_curr': 'UAH',
-    #                            'm_lid': user1.merchant1.lid, 'contact': '380965781066'})
+    #                            'm_lid': str(user1.merchant1.lid), 'contact': '380965781066'})
     #     # pprint.pprint(user1.resp_delegate)
     #     assert user1.resp_delegate['message'] == 'AmountTooSmall'
     #     assert user1.resp_delegate['data']['reason'] == '18.76'
@@ -4773,7 +4963,7 @@ class TestPayoutCalc:
     #                                  is_active=True, tech_min=bl(0.01), tech_max=bl(50))
     #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'create', 'externalid': user1.ex_id(),
     #                            'payway': 'paymer', 'amount': '50', 'out_curr': 'RUB', 'in_curr': 'UAH',
-    #                            'm_lid': user1.merchant1.lid, 'contact': '380965781066'})
+    #                            'm_lid': str(user1.merchant1.lid), 'contact': '380965781066'})
     #     # pprint.pprint(user1.resp_delegate)
     #     # assert user1.resp_delegate['status'] == 'done'
     #     assert user1.resp_delegate['account_amount'] == '18.76'
@@ -4842,7 +5032,7 @@ class TestPayoutCalc:
     #                                  is_active=True, tech_min=bl(0.01), tech_max=bl(50))
     #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'create', 'externalid': user1.ex_id(),
     #                            'payway': 'paymer', 'amount': '50', 'out_curr': 'RUB', 'in_curr': 'UAH',
-    #                            'm_lid': user1.merchant1.lid, 'contact': '380965781066'})
+    #                            'm_lid': str(user1.merchant1.lid), 'contact': '380965781066'})
     #     # pprint.pprint(user1.resp_delegate)
     #     assert user1.resp_delegate['message'] == 'AmountTooBig'
     #     assert user1.resp_delegate['data']['reason'] == '18.76'
@@ -4897,7 +5087,7 @@ class TestPayoutCalc:
     #                                  is_active=True, tech_min=bl(0.01), tech_max=bl(50))
     #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'create', 'externalid': user1.ex_id(),
     #                            'payway': 'paymer', 'amount': '50', 'out_curr': 'RUB', 'in_curr': 'UAH',
-    #                            'm_lid': user1.merchant1.lid, 'contact': '380965781066'})
+    #                            'm_lid': str(user1.merchant1.lid), 'contact': '380965781066'})
     #     # pprint.pprint(user1.resp_delegate)
     #     # assert user1.resp_delegate['status'] == 'done'
     #     assert user1.resp_delegate['account_amount'] == '18.76'
@@ -4962,7 +5152,7 @@ class TestPayoutCalc:
     #                                  is_active=True, tech_min=bl(0.01), tech_max=bl(98))
     #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'create', 'externalid': user1.ex_id(),
     #                            'payway': 'visamc', 'amount': '0.009', 'out_curr': 'UAH',
-    #                            'm_lid': user1.merchant1.lid, 'payee': '5363542305527674'})
+    #                            'm_lid': str(user1.merchant1.lid), 'payee': '5363542305527674'})
     #     # pprint.pprint(user1.resp_delegate)
     #     assert user1.resp_delegate['message'] == 'InvalidAmountFormat'
     #     assert user1.resp_delegate['data']['reason'] == 'Invalid format 0.009 for UAH'
@@ -4995,7 +5185,7 @@ class TestPayoutCalc:
     #     admin.set_pwcurrency_min_max(payway=admin.payway['visamc']['id'], is_out=True, currency='UAH',
     #                                  is_active=True, tech_min=bl(0.01), tech_max=bl(98))
     #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'create', 'externalid': user1.ex_id(),
-    #                            'payway': 'visamc', 'amount': '0.01', 'm_lid': user1.merchant1.lid,
+    #                            'payway': 'visamc', 'amount': '0.01', 'm_lid': str(user1.merchant1.lid),
     #                            'payee': '4731185613244273'})
     #     # pprint.pprint(user1.resp_delegate)
     #     assert user1.resp_delegate['message'] == 'InvalidInputParams'
@@ -5040,7 +5230,7 @@ class TestPayoutCalc:
     #                                  is_active=True, tech_min=bl(0.01), tech_max=bl(98))
     #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'create', 'externalid': user1.ex_id(),
     #                            'payway': 'visamc', 'amount': '0.01', 'out_curr': None,
-    #                            'm_lid': user1.merchant1.lid, 'payee': '5363542305527674'})
+    #                            'm_lid': str(user1.merchant1.lid), 'payee': '5363542305527674'})
     #     # pprint.pprint(user1.resp_delegate)
     #     assert user1.resp_delegate['message'] == 'InvalidCurrency'
     #     assert user1.resp_delegate['data']['reason'] == None
@@ -5075,7 +5265,7 @@ class TestPayoutCalc:
     #                                  is_active=True, tech_min=bl(0.01), tech_max=bl(98))
     #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'create', 'externalid': user1.ex_id(),
     #                            'payway': 'visamc', 'amount': '0.01', 'out_curr': 'UAH',
-    #                            'm_lid': user1.merchant1.lid, 'payee': '4731185613244273', 'par': '123'})
+    #                            'm_lid': str(user1.merchant1.lid), 'payee': '4731185613244273', 'par': '123'})
     #     # pprint.pprint(user1.resp_delegate)
     #     assert user1.resp_delegate['message'] == 'InvalidInputParams'
     #     assert user1.resp_delegate['data']['reason'] == "method 'merchant.delegate' received a redundant argument 'par'"
@@ -5118,7 +5308,7 @@ class TestPayoutCalc:
     #     admin.set_pwcurrency_min_max(payway=admin.payway['visamc']['id'], is_out=True, currency='UAH',
     #                                  is_active=True, tech_min=bl(0.01), tech_max=bl(98))
     #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'create', 'payway': 'visamc', 'amount': '0.01',
-    #                            'out_curr': 'UAH', 'm_lid': user1.merchant1.lid, 'payee': '4731185613244273'})
+    #                            'out_curr': 'UAH', 'm_lid': str(user1.merchant1.lid), 'payee': '4731185613244273'})
     #     # pprint.pprint(user1.resp_delegate)
     #     assert user1.resp_delegate['message'] == 'InvalidInputParams'
     #     assert user1.resp_delegate['data']['reason'] == "method 'merchant.delegate' missing 1 argument: 'externalid'"
@@ -5162,10 +5352,10 @@ class TestPayoutCalc:
     #     tmp_ex_id = user1.ex_id()
     #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'create', 'externalid': tmp_ex_id,
     #                            'payway': 'visamc', 'amount': '0.01', 'out_curr': 'UAH',
-    #                            'm_lid': user1.merchant1.lid, 'payee': '4731185613244273'})
+    #                            'm_lid': str(user1.merchant1.lid), 'payee': '4731185613244273'})
     #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'create', 'externalid': tmp_ex_id,
     #                            'payway': 'visamc', 'amount': '0.01', 'out_curr': 'UAH',
-    #                            'm_lid': user1.merchant1.lid, 'payee': '4731185613244273'})
+    #                            'm_lid': str(user1.merchant1.lid), 'payee': '4731185613244273'})
     #     # pprint.pprint(user1.resp_delegate)
     #     assert user1.resp_delegate['message'] == 'Unique'
     #     assert user1.resp_delegate['data']['reason'] == 'Duplicated key for externalid'
@@ -5261,10 +5451,10 @@ class TestPayoutCalc:
     #                                  is_active=True, tech_min=bl(0.01), tech_max=bl(50))
     #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'create', 'externalid': user1.ex_id(),
     #                            'payway': 'paymer', 'amount': '50', 'out_curr': 'RUB', 'in_curr': 'UAH',
-    #                            'm_lid': user1.merchant1.lid, 'contact': 'R378259361317'})
+    #                            'm_lid': str(user1.merchant1.lid), 'contact': 'R378259361317'})
     #     # pprint.pprint(user1.resp_delegate)
     #     assert user1.resp_delegate['message'] == 'UnavailExchange'
-    #     assert user1.resp_delegate['data']['reason'] == 'Unavailable excange for UAH to RUB'
+    #     assert user1.resp_delegate['data']['reason'] == 'Unavailable exchange for UAH to RUB'
     #     admin.set_pwcurrency_min_max(payway=admin.payway['paymer']['id'], is_out=True, currency='RUB',
     #                                  is_active=True, tech_min=bl(0.01), tech_max=bl(39.99))
     #
@@ -5283,10 +5473,10 @@ class TestPayoutCalc:
     #                                  is_active=True, tech_min=bl(0.01), tech_max=bl(50))
     #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'create', 'externalid': user1.ex_id(),
     #                            'payway': 'paymer', 'amount': '50', 'out_curr': 'RUB', 'in_curr': 'USD',
-    #                            'm_lid': user1.merchant1.lid, 'contact': 'R378259361317'})
+    #                            'm_lid': str(user1.merchant1.lid), 'contact': 'R378259361317'})
     #     # pprint.pprint(user1.resp_delegate)
     #     assert user1.resp_delegate['message'] == 'UnavailExchange'
-    #     assert user1.resp_delegate['data']['reason'] == 'Unavailable excange for USD to RUB'
+    #     assert user1.resp_delegate['data']['reason'] == 'Unavailable exchange for USD to RUB'
     #     admin.set_pwcurrency_min_max(payway=admin.payway['paymer']['id'], is_out=True, currency='RUB',
     #                                  is_active=True, tech_min=bl(0.01), tech_max=bl(39.99))
     #
@@ -5313,7 +5503,7 @@ class TestPayoutCalc:
     #                                   in_curr='UAH', payee='Z123456789012')
     #     # pprint.pprint(user1.merchant1.resp_payout_create)
     #     assert user1.merchant1.resp_payout_create['error']['message'] == 'UnavailExchange'
-    #     assert user1.merchant1.resp_payout_create['error']['data']['reason'] == 'Unavailable excange for UAH to USD'
+    #     assert user1.merchant1.resp_payout_create['error']['data']['reason'] == 'Unavailable exchange for UAH to USD'
     #     admin.set_pwcurrency_min_max(payway=admin.payway['webmoney']['id'], is_out=True, currency='USD',
     #                                  is_active=False, tech_min=bl(1), tech_max=bl(0.97))
     #     admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=10, currency_id=admin.currency['USD'],
@@ -5342,7 +5532,7 @@ class TestPayoutCalc:
     #     # pprint.pprint(user1.merchant1.resp_payout_create)
     #     assert user1.merchant1.resp_payout_create['error']['message'] == 'UnavailExchange'
     #     assert user1.merchant1.resp_payout_create['error']['data']['reason'] == \
-    #            'Unavailable excange for BCHABC to USD'
+    #            'Unavailable exchange for BCHABC to USD'
     #     admin.set_pwcurrency_min_max(payway=admin.payway['webmoney']['id'], is_out=True, currency='USD',
     #                                  is_active=False, tech_min=bl(1), tech_max=bl(0.97))
     #     admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=10, currency_id=admin.currency['USD'],
@@ -5361,7 +5551,7 @@ class TestPayoutCalc:
     #                                  is_active=True, tech_min=bl(0.01), tech_max=bl(98))
     #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'create', 'externalid': user1.ex_id(),
     #                            'payway': 'test', 'amount': '0.01', 'out_curr': 'UAH',
-    #                            'm_lid': user1.merchant1.lid, 'payee': '5363542305527674'})
+    #                            'm_lid': str(user1.merchant1.lid), 'payee': '5363542305527674'})
     #     # pprint.pprint(user1.resp_delegate)
     #     assert user1.resp_delegate['message'] == 'InvalidPayway'
     #     assert user1.resp_delegate['data']['reason'] == 'test is unknown'
@@ -5398,7 +5588,7 @@ class TestPayoutCalc:
     #     admin.set_payways(name='kuna', is_active=False)
     #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'create', 'externalid': user1.ex_id(),
     #                            'payway': 'kuna', 'amount': '0.01', 'out_curr': 'UAH',
-    #                            'm_lid': user1.merchant1.lid, 'payee': '4731185613244273'})
+    #                            'm_lid': str(user1.merchant1.lid), 'payee': '4731185613244273'})
     #     # pprint.pprint(user1.resp_delegate)
     #     assert user1.resp_delegate['message'] == 'InvalidPayway'
     #     assert user1.resp_delegate['data']['reason'] == 'kuna is inactive'

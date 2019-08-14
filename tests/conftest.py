@@ -367,3 +367,30 @@ def _activate_merchant_payways():
     admin.set_pwmerchactive(merch_id=user1.merchant1.id, payway_id=admin.payway['btc']['id'], is_active=True)
 
 
+@pytest.yield_fixture(scope='class')
+def _create_other_type_order():
+    print('In creating')
+    if not admin.get_order({'merchant_id': user1.merchant1.id, 'tp': 20}):
+        admin.set_wallet_amount(balance=bl(10), currency='UAH', merch_lid=user1.merchant1.lid)
+        user1.merchant1.convert_create(in_curr='UAH', out_curr='USD', in_amount='10', out_amount=None)
+    if not admin.get_order({'merchant_id': user1.merchant2.id, 'tp': 0}):
+        print('In other merchant. ')
+        admin.set_pwc(pw_id=admin.payway['visamc']['id'], currency='UAH', is_out=False, is_active=True,
+                      tech_min=bl(10), tech_max=bl(100))
+        user1.merchant2.payin_create(payway='visamc', amount='10', in_curr='UAH', out_curr='UAH')
+    yield
+
+
+@pytest.yield_fixture(scope='class')
+def _creating_payin_list():
+    if admin.get_order({'merchant_id': user1.merchant1.id, 'tp': 0}) < 6:
+        admin.set_pwc(pw_id=admin.payway['visamc']['id'], currency='UAH', is_out=False, is_active=True,
+                      tech_min=bl(10), tech_max=bl(100))
+        user1.merchant1.payin_create(payway='payeer', amount='50', in_curr='RUB', out_curr='RUB')
+        user1.merchant1.payin_create(payway='visamc', amount='50', in_curr='UAH', out_curr='UAH')
+
+
+
+
+
+

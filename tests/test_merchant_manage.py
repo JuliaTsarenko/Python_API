@@ -172,11 +172,17 @@ class TestGetMerchant:
         assert user1.resp_merch_get['error'] == {'code': -32010, 'message': 'InvalidMerchant', 'data': 'Server Error'}
 
     def test_merchant_get_5(self):
+        """ Getting information with wrong merchant lid. """
+        user1.merchant_get(m_lid='1', balance=False)
+        assert user1.resp_merch_get['error'] == {'code': -32090, 'data': {'field': None, 'reason': 'Merchant with lid 1 was not found'},
+                                                 'message': 'NotFound'}
+
+    def test_merchant_get_6(self):
         """ Getting information without m_lid. """
         user1.merchant_get(m_lid=None, balance=False)
         assert user1.resp_merch_get['error'] == {'code': -32070, 'message': 'InvalidParam'}
 
-    def test_merchant_get_6(self):
+    def test_merchant_get_7(self):
         """ Getting information with wrong session token. """
         session, user1.headers['x-token'] = user1.headers['x-token'], '1'
         user1.merchant_get(m_lid=user1.merchant1.lid, balance=True)
@@ -184,7 +190,7 @@ class TestGetMerchant:
                                                  'data': {'reason': 'Invalid or expired session token', 'token': '1'}}
         user1.headers['x-token'] = session
 
-    def test_merchant_get_7(self):
+    def test_merchant_get_8(self):
         """ Getting key without session token. """
         session, user1.headers['x-token'] = user1.headers['x-token'], None
         user1.merchant_get(m_lid=user1.merchant1.lid, balance=True)
