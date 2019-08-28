@@ -1,5 +1,7 @@
 import pytest
 from users.user import User
+from json import loads
+import requests
 
 
 @pytest.mark.usefixtures('_validate_pwd_off')
@@ -109,31 +111,36 @@ class TestRegistration:
     def test_registration_13(self):
         """ Registration with wrong format email: without @. """
         User.registration(email='anymoneyuser100mailinator.com', pwd='Ac*123')
-        assert User.resp_registration['error'] == {"code": -32035, "message": "InvalidField"}
+        assert User.resp_registration['error']['code'] == -32070
+        assert User.resp_registration['error']['message'] == 'InvalidParam'
         assert admin.get_user(email='anymoneyuser100mailinator.com')['exception'] == "User wasn't found"
 
     def test_registration_14(self):
         """ Registration with wrong format email: double @. """
         User.registration(email='anymoneyuser100@@mailinator.com', pwd='Ac*123')
-        assert User.resp_registration['error'] == {"code": -32035, "message": "InvalidField"}
+        assert User.resp_registration['error']['code'] == -32070
+        assert User.resp_registration['error']['message'] == 'InvalidParam'
         assert admin.get_user(email='anymoneyuser100@@mailinator.com') == {'exception': "User wasn't found"}
 
     def test_registration_15(self):
         """ Registration with wrong format email: without string before @. """
         User.registration(email='@zzz.com', pwd='Ac*123')
-        assert User.resp_registration['error'] == {"code": -32035, "message": "InvalidField"}
+        assert User.resp_registration['error']['code'] == -32070
+        assert User.resp_registration['error']['message'] == 'InvalidParam'
         assert admin.get_user(email='@zzz.com')['exception'] == "User wasn't found"
 
     def test_registration_16(self):
         """ Registration with wrong format email: without domain part. """
         User.registration(email='anymoneyuser100@mailinator', pwd='Ac*123')
-        assert User.resp_registration['error'] == {"code": -32035, "message": "InvalidField"}
+        assert User.resp_registration['error']['code'] == -32070
+        assert User.resp_registration['error']['message'] == 'InvalidParam'
         assert admin.get_user(email='anymoneyuser100@mailinator') == {'exception': "User wasn't found"}
 
     def test_registration_17(self):
         """ Registration with wrong format email: without host part. """
         User.registration(email='anymoneyuser100@.com', pwd='Ac*123')
-        assert User.resp_registration['error'] == {"code": -32035, "message": "InvalidField"}
+        assert User.resp_registration['error']['code'] == -32070
+        assert User.resp_registration['error']['message'] == 'InvalidParam'
         assert admin.get_user(email='anymoneyuser100.com')['exception'] == "User wasn't found"
 
     def test_registration_18(self, _delete_user):
@@ -836,3 +843,152 @@ class TestBookmark:
                                                        'data': {'reason': 'Add x-token to headers'}}
         user1.headers['x-token'] = session
         user1.bookmark_delete(m_lid=user1.merchant1.lid, oid=user1.bookmark_oid)
+
+
+class TestUpdateSessExpiry:
+    """ Update time active session. """
+
+    def test_0(self, start_session):
+        """ Warm. """
+        global admin, user1, user2
+        admin, user1, user2 = start_session
+
+    def test_1(self):
+        """ Success test update sess expiry with timedelta. """
+        r = user1.update_sess_expiry(timedelta='10h')
+        assert r['user']['sess_expiry'] == 36000000
+        assert admin.get_user(user1.email)['sess_expiry'] == 36000000
+
+    def test_2(self):
+        """ Success test update sess expiry with timedelta. """
+        r = user1.update_sess_expiry(timedelta='1h10m10s10ms')
+        assert r['user']['sess_expiry'] == 4210010, r
+        assert admin.get_user(user1.email)['sess_expiry'] == 4210010, r
+
+    def test_3(self):
+        """ Success test update sess expiry with timedelta. """
+        r = user1.update_sess_expiry(timedelta='36000')
+        assert r['user']['sess_expiry'] == 36000000, r
+        assert admin.get_user(user1.email)['sess_expiry'] == 36000000, r
+
+    def test_4(self):
+        """ Wrong request without timedelta. """
+        r = user1.update_sess_expiry(timedelta=None)
+        assert r['error'] == {'code': -32602, 'message': 'InvalidInputParams',
+                              'data': {'reason': "method 'account.update_sess_expiry' missing 1 argument: 'timedelta'"}}
+
+    def test_5(self):
+        """ Wrong request with timedelta = int value. """
+        r = user1.update_sess_expiry(timedelta=36000)
+        assert r['error'] == {'code': -32070, 'message': 'InvalidParam',
+                              'data': {'reason': "Key 'timedelta' must not be of 'int' type"}}
+
+    def test_6(self):
+        """ Wrong request with timedelta > max value. """
+        r = user1.update_sess_expiry(timedelta='999999999')
+        assert r['error'] == {'code': -32070, 'message': 'InvalidParam',
+                              'data': {'reason': "too long period"}}, r
+
+    def test_7(self):
+        """ Success request with timedelta = 0. """
+        r = user1.update_sess_expiry(timedelta='0')
+        assert r['user']['sess_expiry'] == 0, r
+        assert admin.get_user(user1.email)['sess_expiry'] == 0, r
+
+    def test_8(self):
+        """ Wrong request with timedelta < min value. """
+        r = user1.update_sess_expiry(timedelta='1')
+        assert r['error'] == {'code': -32070, 'message': 'InvalidParam',
+                              'data': {'reason': "too short period"}}, r
+
+    def test_9(self):
+        """ Wrong request with timedelta no value. """
+        r = user1.update_sess_expiry(timedelta='h')
+        assert r['error'] == {'code': -32070, 'message': 'InvalidParam',
+                              'data': {'reason': "timedelta - is in wrong format. Should be an amount of sec"
+                                                 "onds as Integer or pattern like '1w1d1h1m1s1ms', '1d23m'"}}, r
+
+    def test_10(self):
+        """ Request with wrong param."""
+        r = loads(requests.post(url=user1.wapi_url,
+                                json={'method': 'account.update_sess_expiry',
+                                      'params': {'unknown': 'test'},
+                                      'jsonrpc': 2.0, 'id': user1.ex_id()},
+                                headers=user1.headers, verify=False).text)
+        assert r['error'] == {'code': -32602, 'message': 'InvalidInputParams',
+                              'data': {'reason': "method 'account.update_sess_expiry' received a redundant argument 'unknown'"}}, r
+
+    def test_11(self):
+        """ Request without headers. """
+        r = loads(requests.post(url=user1.wapi_url,
+                                json={'method': 'account.update_sess_expiry',
+                                      'params': {},
+                                      'jsonrpc': 2.0, 'id': user1.ex_id()},
+                                verify=False).text)
+        assert r['error'] == {'code': -32003, 'message': 'InvalidHeaders',
+                              'data': {'reason': "Add x-token to headers"}}, r
+
+
+class TestSessManyAllow:
+    """ Test change user many session's"""
+
+    def test_0(self, start_session):
+        """ Warm. """
+        global admin, user1, user2
+        admin, user1, user2 = start_session
+
+    def test_1(self):
+        """ Success test sess_many_allow with True value. """
+        r = user1.sess_many_allow(allow=True)
+        assert r['user']['many_sess_allowed'] == True
+        user1.authorization_by_email(email=user1.email, pwd=user1.pwd)
+        list = user1.session_list()
+        assert list['total'] == 2
+
+    def test_2(self):
+        """ Success test sess_many_allow with False value. """
+        r = user1.sess_many_allow(allow=False)
+        assert r['user']['many_sess_allowed'] == False
+        user1.authorization_by_email(email=user1.email, pwd=user1.pwd)
+        list = user1.session_list()
+        assert list['error'] == {'code': -32034, 'message': 'Forbidden',
+                                 'data': {'reason': 'Allowed only if many session allowed for user'}}
+
+    def test_3(self):
+        """ Wrong test sess_many_allow with None value. """
+        r = user1.sess_many_allow(allow=None)
+        assert r['error'] == {'code': -32602, 'message': 'InvalidInputParams',
+                              'data': {'reason': "method 'account.sess_many_allow' missing 1 argument: 'allow'"}}
+
+    def test_4(self):
+        """ Wrong test sess_many_allow with string value. """
+        r = user1.sess_many_allow(allow='test')
+        assert r['error'] == {'code': -32070, 'message': 'InvalidParam',
+                              'data': {'reason': 'allow - has to be a Boolean'}}
+
+    def test_5(self):
+        """ Wrong test sess_many_allow with int value. """
+        r = user1.sess_many_allow(allow=10)
+        assert r['error'] == {'code': -32070, 'message': 'InvalidParam',
+                              'data': {'reason': "Key 'allow' must not be of 'int' type"}}
+
+    def test_6(self):
+        """ Request with wrong param."""
+        r = loads(requests.post(url=user1.wapi_url,
+                                json={'method': 'account.sess_many_allow',
+                                      'params': {'unknown': 'test'},
+                                      'jsonrpc': 2.0, 'id': user1.ex_id()},
+                                headers=user1.headers, verify=False).text)
+        assert r['error'] == {'code': -32602, 'message': 'InvalidInputParams',
+                              'data': {'reason': "method 'account.sess_many_allow'"
+                                                 " received a redundant argument 'unknown'"}}, r
+
+    def test_7(self):
+        """ Request without headers. """
+        r = loads(requests.post(url=user1.wapi_url,
+                                json={'method': 'account.sess_many_allow',
+                                      'params': {},
+                                      'jsonrpc': 2.0, 'id': user1.ex_id()},
+                                verify=False).text)
+        assert r['error'] == {'code': -32003, 'message': 'InvalidHeaders',
+                              'data': {'reason': "Add x-token to headers"}}, r

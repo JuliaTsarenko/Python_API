@@ -12,8 +12,8 @@ requests.packages.urllib3.disable_warnings()
 
 class User:
 
-    wapi_url = 'https://anymoney-back-p3.e-cash.pro/_handler/wapi/'
-    eapi_url = 'https://anymoney-back-p3.e-cash.pro/_handler/eapi/'
+    wapi_url = 'https://anymoney.e-cash.pro/_handler/wapi/'
+    eapi_url = 'https://anymoney.e-cash.pro/_handler/eapi/'
 
     confirm_key = ''
     headers = {'x-token': ''}
@@ -23,15 +23,12 @@ class User:
 
     def __init__(self, user=None, pwd=None, admin=None):
         if user:
-            print(user)
-            print(pwd)
             self.params = {'token': ''}
             self.email = user['email']
             self.pwd = pwd
             self.id = user['id']
             self.headers = {'x-token': ''}
             merchants = admin.get_merchants(owner_id=self.id)
-            print(merchants)
             self.merchant2 = Merchant(next(merchants))
             self.merchant1 = Merchant(next(merchants))
 
@@ -303,7 +300,6 @@ class User:
         except KeyError:
             self.resp_merch_list = loads(r.text)
 
-
     def merchant_get(self, m_lid, balance):
         r = requests.post(url=self.wapi_url,
                           json={'method': 'merchant.get', 'params': {'m_lid': m_lid, 'balance': balance},
@@ -333,7 +329,6 @@ class User:
             except KeyError:
                     self.resp_merch_get_key = loads(r.text)
 
-
     def merchant_renew_key(self, m_lid):
         r = requests.post(url=self.wapi_url,
                           json={'method': 'merchant.renew_key', 'params': {'m_lid': m_lid},
@@ -350,7 +345,6 @@ class User:
                     self.resp_merch_renew_key = loads(r.text)
             except KeyError:
                 self.resp_merch_renew_key = loads(r.text)
-
 
     def merchant_update(self, m_lid, title, params, payment_expiry, rotate_addr, apiip):
         r = requests.post(url=self.wapi_url,
@@ -424,7 +418,6 @@ class User:
         except KeyError:
             self.resp_bookmark_update = loads(r.text)
 
-
     def bookmark_delete(self, m_lid, oid):
         r = requests.post(url=self.wapi_url,
                           json={'method': 'bookmark.delete',
@@ -440,19 +433,89 @@ class User:
     def delegate(self, params):
         data = {'method': 'merchant.delegate', 'params': params, 'jsonrpc': 2.0, 'id': self.ex_id()}
         r = requests.post(url=self.wapi_url, json=data, headers=self.headers, verify=False)
-        # print('\n', r.text)
+        # print(r.text)
         try:
             self.resp_delegate = loads(r.text)['result']
         except KeyError:
             self.resp_delegate = loads(r.text)['error']
 
+    def session_get(self, sess_id=None):
+        r = requests.post(url=self.wapi_url,
+                          json={'method': 'session.get',
+                                'params': {'sess_id': sess_id},
+                                'jsonrpc': 2.0, 'id': self.ex_id()},
+                          headers=self.headers, verify=False)
+        try:
+            return loads(r.text)['result']
+        except KeyError:
+            return loads(r.text)
+
+    def session_list(self, first=None, count=None):
+        r = requests.post(url=self.wapi_url,
+                          json={'method': 'session.list',
+                                'params': {'first': first,
+                                           'count': count},
+                                'jsonrpc': 2.0, 'id': self.ex_id()},
+                          headers=self.headers, verify=False)
+        try:
+            return loads(r.text)['result']
+        except KeyError:
+            return loads(r.text)
+
+    def session_delete(self, sess_id=None):
+        r = requests.post(url=self.wapi_url,
+                          json={'method': 'session.delete',
+                                'params': {'sess_id': sess_id},
+                                'jsonrpc': 2.0, 'id': self.ex_id()},
+                          headers=self.headers, verify=False)
+        try:
+            return loads(r.text)['result']
+        except KeyError:
+            return loads(r.text)
+
+    def session_delete_all(self):
+        r = requests.post(url=self.wapi_url,
+                          json={'method': 'session.delete_all',
+                                'jsonrpc': 2.0, 'id': self.ex_id()},
+                          headers=self.headers, verify=False)
+        try:
+            return loads(r.text)['result']
+        except KeyError:
+            return loads(r.text)
+
+    def update_sess_expiry(self, timedelta):
+        r = requests.post(url=self.wapi_url,
+                          json={'method': 'account.update_sess_expiry',
+                                'params': {'timedelta': timedelta},
+                                'jsonrpc': 2.0, 'id': self.ex_id()},
+                          headers=self.headers, verify=False)
+        try:
+            res = loads(r.text)['result']
+        except KeyError:
+            return loads(r.text)
+        self.headers['x-token'] = res['session']['token']
+        return res
+
+    def sess_many_allow(self, allow):
+        r = requests.post(url=self.wapi_url,
+                          json={'method': 'account.sess_many_allow',
+                                'params': {'allow': allow},
+                                'jsonrpc': 2.0, 'id': self.ex_id()},
+                          headers=self.headers, verify=False)
+        try:
+            res = loads(r.text)['result']
+        except KeyError:
+            return loads(r.text)
+        self.headers['x-token'] = res['session']['token']
+        return res
 
 if __name__ == '__main__':
-    admin1 = Admin(token='_RmwXc_7QNNxBbOMwQLAZ3xu7UlR8iHuT0cSehrPDcA4QFeRfY2S2vmhGE3B9ePGpw0q')
+    # admin1 = Admin(token='_RmwXc_7QNNxBbOMwQLAZ3xu7UlR8iHuT0cSehrPDcA4QFeRfY2S2vmhGE3B9ePGpw0q')
     user1 = User()
     user1.authorization_by_email(email='testjcash@gmail.com', pwd='aA/123')
-    user1.logout()
+    # user1.logout()
     # user1.forgot('testjcash@gmail.com')
     # user1.confirm_registration(key=user1.forgot_key, code=admin1.get_onetime_code(email='testjcash@gmail.com'))
     # user1.update_pwd('aA/123')
     # print(user1.resp_authorization)
+

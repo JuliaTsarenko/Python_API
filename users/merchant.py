@@ -6,11 +6,10 @@ from json import loads
 from string import ascii_uppercase
 
 
-
 class Merchant:
 
-    japi_url = 'https://anymoney-back-p3.e-cash.pro/_handler/japi/'
-    wapi_url = 'https://anymoney-back-p3.e-cash.pro/_handler/wapi/'
+    japi_url = 'https://anymoney.e-cash.pro/_handler/japi/'
+    wapi_url = 'https://anymoney.e-cash.pro/_handler/wapi/'
 
     def __init__(self, merchant=None):
         self.id = merchant['id']
@@ -131,6 +130,7 @@ class Merchant:
         data = {'method': 'address.get', 'params': {'oid': oid, 'name': name}, 'jsonrpc': 2.0, 'id': self.req_id}
         time_sent = self.time_sent()
         r = requests.post(url=self.japi_url, json=data, headers=self.headers(data, time_sent), verify=False)
+        print(r.text)
         try:
             self.resp_address_get = loads(r.text)['result']
         except KeyError:
@@ -145,6 +145,26 @@ class Merchant:
             self.resp_address_edit = loads(r.text)['result']
         except KeyError:
             self.resp_address_edit = loads(r.text)['error']
+
+    def address_out_currencies(self, params):
+        self.req_id = self._id()
+        data = {'method': 'address.out_currencies', 'params': params, 'jsonrpc': 2.0, 'id': self.req_id}
+        time_sent = self.time_sent()
+        r = requests.post(url=self.japi_url, json=data, headers=self.headers(data, time_sent), verify=False)
+        try:
+            self.resp_address_out_currencies = loads(r.text)['result']
+        except KeyError:
+            self.resp_address_out_currencies = loads(r.text)['error']
+
+    def address_history(self, params):
+        self.req_id = self._id()
+        data = {'method': 'address.address_history',  'params': params, 'jsonrpc': 2.0, 'id': self.req_id}
+        time_sent = self.time_sent()
+        r = requests.post(url=self.japi_url, json=data, headers=self.headers(data, time_sent), verify=False)
+        try:
+            self.resp_address_history = loads(r.text)['result']
+        except KeyError:
+            self.resp_address_history = loads(r.text)['error']
 
     def convert_create(self, in_curr, out_curr, in_amount, out_amount):
         self.req_id = self._id()
@@ -326,6 +346,18 @@ class Merchant:
         except KeyError:
             self.resp_transfer_calc = loads(r.text)['error']
 
+    def transfer_list(self, in_curr=None, out_curr=None, first=None, count=None):
+        self.req_id = self._id()
+        data = {'method': 'transfer.list',
+                'params': {'in_curr': in_curr, 'out_curr': out_curr, 'first': first, 'count': count},
+                'jsonrpc': 2.0, 'id': self.req_id}
+        time_sent = self.time_sent()
+        r = requests.post(url=self.japi_url, json=data, headers=self.headers(data, time_sent), verify=False)
+        try:
+            return loads(r.text)['result']
+        except KeyError:
+            return loads(r.text)
+
     def payout_create(self, payway, amount, out_curr, in_curr=None, payee=None, contact=None, region=None, payer=None):
         self.req_id = self._id()
         data = {'method': 'payout.create',
@@ -350,6 +382,62 @@ class Merchant:
             self.resp_payout_params = loads(r.text)['result']
         except KeyError:
             self.resp_payout_params = loads(r.text)
+
+    def ibill_history(self, begin=None, end=None, curr=None, first='0', count='20', ord_by=None, ord_dir=False,
+                      lid=None, filter_amount=None, filter_fee=None, group=None):
+        self.req_id = self._id()
+        data = {'method': 'merchant.ibill_history',
+                'params': {'begin': begin, 'end': end, 'curr': curr, 'lid': lid, 'filter_amount':filter_amount, 'filter_fee':filter_fee,
+                           'group': group, 'first': first, 'count': count, 'ord_by': ord_by, 'ord_dir': ord_dir},
+                'jsonrpc': 2.0, 'id': self.req_id}
+        time_sent = self.time_sent()
+        r = requests.post(url=self.japi_url, json=data, headers=self.headers(data, time_sent), verify=False)
+        try:
+            return loads(r.text)['result']
+        except KeyError:
+            return loads(r.text)
+
+    def inpay_history(self, begin='0', end=None, curr=None, first='0', count='20', payway=None, status=None,
+                      ord_by=None, ord_dir=False):
+        self.req_id = self._id()
+        data = {'method': 'merchant.inpay_history',
+                'params': {'begin': begin, 'end': end, 'curr': curr, 'payway': payway, 'status': status,
+                           'first': first, 'count': count, 'ord_by': ord_by, 'ord_dir': ord_dir},
+                'jsonrpc': 2.0, 'id': self.req_id}
+        time_sent = self.time_sent()
+        r = requests.post(url=self.japi_url, json=data, headers=self.headers(data, time_sent), verify=False)
+        try:
+            return loads(r.text)['result']
+        except KeyError:
+            return loads(r.text)
+
+    def outpay_history(self, begin=None, end=None, curr=None, first='0', count='20', payway=None, status=None,
+                      ord_by=None, ord_dir=False):
+        self.req_id = self._id()
+        data = {'method': 'merchant.outpay_history',
+                'params': {'begin': begin, 'end': end, 'curr': curr, 'payway': payway, 'status': status,
+                           'first': first, 'count': count, 'ord_by': ord_by, 'ord_dir': ord_dir},
+                'jsonrpc': 2.0, 'id': self.req_id}
+        time_sent = self.time_sent()
+        r = requests.post(url=self.japi_url, json=data, headers=self.headers(data, time_sent), verify=False)
+        try:
+            return loads(r.text)['result']
+        except KeyError:
+            return loads(r.text)
+
+    def convert_history(self, begin='0', end=None, in_curr=None, out_curr=None, first='0', count='20', status=None,
+                      ord_by=None, ord_dir=False):
+        self.req_id = self._id()
+        data = {'method': 'merchant.convert_history',
+                'params': {'begin': begin, 'end': end, 'in_curr': in_curr, 'out_curr': out_curr, 'status': status,
+                           'first': first, 'count': count, 'ord_by': ord_by, 'ord_dir': ord_dir},
+                'jsonrpc': 2.0, 'id': self.req_id}
+        time_sent = self.time_sent()
+        r = requests.post(url=self.japi_url, json=data, headers=self.headers(data, time_sent), verify=False)
+        try:
+            return loads(r.text)['result']
+        except KeyError:
+            return loads(r.text)
 
     def payout_in_curr_list(self, payway, out_curr):
         self.req_id = self._id()
@@ -469,13 +557,10 @@ class Merchant:
         self.resp_payway_list = loads(r.text)
         return loads(r.text)
 
-
-    def ibill_history(self, begin='0', end=None, is_out=None, o_tp=None, curr=None,
-                   first='0', count='20', ord_by=None, ord_dir=False):
+    def convert_list(self, in_curr=None, out_curr=None, first=None, count=None):
         self.req_id = self._id()
-        data = {'method': 'merchant.ibill_history',
-                'params': {'begin': begin, 'end': end, 'curr': curr,
-                           'first': first, 'count': count, 'ord_by': ord_by, 'ord_dir': ord_dir},
+        data = {'method': 'convert.list',
+                'params': {'in_curr': in_curr, 'out_curr': out_curr, 'first': first, 'count': count},
                 'jsonrpc': 2.0, 'id': self.req_id}
         time_sent = self.time_sent()
         r = requests.post(url=self.japi_url, json=data, headers=self.headers(data, time_sent), verify=False)
@@ -483,6 +568,3 @@ class Merchant:
             return loads(r.text)['result']
         except KeyError:
             return loads(r.text)
-
-
-

@@ -1,7 +1,6 @@
 import requests
 import pytest
 from json import loads
-from users.tools import *
 from users.sign import create_sign
 
 
@@ -43,10 +42,10 @@ class TestAddressCreate:
     @pytest.mark.skip(reason='Disabling exchange LTC to UAH')
     def test_create_adress_4(self, _delete_crypto_address):
         """ Creating crypto adress LTC with autoconvert to UAH by MERCHANT. """
-        user1.merchant1.address_create(in_curr='LTC', out_curr='UAH', comment='')
+        user1.merchant1.address_create(in_curr='BTC', out_curr='USD', comment='')
         assert user1.merchant1.resp_address_create['comment'] == ''
-        assert user1.merchant1.resp_address_create['in_curr'] == 'LTC'
-        assert user1.merchant1.resp_address_create['out_curr'] == 'UAH'
+        assert user1.merchant1.resp_address_create['in_curr'] == 'BTC'
+        assert user1.merchant1.resp_address_create['out_curr'] == 'USD'
 
 
 class TestWrongCreateAddress:
@@ -339,7 +338,8 @@ class TestAddressList:
     @pytest.mark.skip(reason='Fail')
     def test_address_list_15(self):
         """ Getting list with BEGIN, END, FIRST, COUNT, ROTATE=TRUE parameter by OWNER. """
-        adm_list = [{'ctime': dct['ctime'], 'id': dct['id'], 'rotate': dct['rotate']} for dct in admin.get_crypto_adress(_filter='merchant_id', value=user1.merchant1.id)]
+        adm_list = [{'ctime': dct['ctime'], 'id': dct['id'], 'rotate': dct['rotate']} for dct
+                    in admin.get_crypto_adress(_filter='merchant_id', value=user1.merchant1.id)]
         print(adm_list)
         adm_list = adm_list[:5]
         print(str(adm_list[0]['id']))
@@ -353,7 +353,7 @@ class TestAddressList:
 
 
 class TestWrongAddressList:
-    """ Test wrong address list"""
+    """ Test wrong address list. """
 
     def test_0(self, start_session):
         """ Warm. """
@@ -376,13 +376,15 @@ class TestWrongAddressList:
         """ Request with negative data in first. """
         user1.merchant1.address_list(in_curr=None, out_curr=None, is_autoconvert=None, rotate=False, first='-1', count=None,
                                      begin=None, end=None)
-        assert user1.merchant1.resp_address_list == {'code': -32070, 'message': 'InvalidParam'}
+        assert user1.merchant1.resp_address_list == {'code': -32070, 'message': 'InvalidParam',
+                                                     'data': {'reason': 'first: - has to be a positive number'}}
 
     def test_wrong_address_list_4(self):
         """ Request with negative data in count. """
         user1.merchant1.address_list(in_curr=None, out_curr=None, is_autoconvert=None, rotate=False, first=None, count='-1',
                                      begin=None, end=None)
-        assert user1.merchant1.resp_address_list == {'code': -32070, 'message': 'InvalidParam'}
+        assert user1.merchant1.resp_address_list == {'code': -32070, 'message': 'InvalidParam',
+                                                     'data': {'reason': 'count: - has to be a positive number'}}
 
     def test_wrong_address_list_5(self):
         """ Request with int in FIRST parameter. """
@@ -529,7 +531,7 @@ class TestGetAddress:
         assert user1.merchant1.resp_address_get['link'] == str(address['name'])
         assert user1.merchant1.resp_address_get['name'] == address['name']
 
-    @pytest.mark.skip()
+    @pytest.mark.skip(reason='Need name')
     def test_2(self):
         """ Getting address by name parameter by OWNER. """
         address = admin.get_crypto_adress(_filter='merchant_id', value=user1.merchant1.id)[0]
@@ -562,8 +564,8 @@ class TestWrongGetAddress:
         """ Getting address by oid and name. """
         address = admin.get_crypto_adress(_filter='merchant_id', value=user1.merchant1.id)[0]
         user1.merchant1.address_get(oid=str(address['id']), name='3MCEhmhitQFBWvE8x7mvhSmVfgneiPoSWr')
-        # assert user1.merchant1.resp_address_get == {'code': -32090, 'data': {'reason': '3MCEhmhitQFBWvE8x7mvhSmVfgneiPoSWr' +
-                                                                                       # str(address['id'])}, 'message': 'NotFound'}
+        assert user1.merchant1.resp_address_get == {'code': -32090, 'data': {'reason': 'name 3MCEhmhitQFBWvE8x7mvhSmVfgneiPoSWr, '
+                                                                             + 'oid ' + str(address['id'])}, 'message': 'NotFound'}
 
     def test_wrong_get_address_3(self):
         """ Getting address with oid and name NONE. """
@@ -574,13 +576,13 @@ class TestWrongGetAddress:
     def test_wrong_get_address_4(self):
         """ Getting address with not real oid. """
         user1.merchant1.address_get(oid='111', name=None)
-        assert user1.merchant1.resp_address_get == {'code': -32090, 'data': {'reason': 'None 111'}, 'message': 'NotFound'}
+        assert user1.merchant1.resp_address_get == {'code': -32090, 'data': {'reason': 'name None, oid 111'}, 'message': 'NotFound'}
 
     def test_wrong_get_address_5(self):
         """ Getting address with not real name. """
         user1.merchant1.address_get(oid=None, name='3MCEhmhitQFBWv11x7mvhSmVfgneiPoSWr')
-        assert user1.merchant1.resp_address_get == {'code': -32090, 'data': {'reason': '3MCEhmhitQFBWv11x7mvhSmVfgneiPoSWr None'},
-                                                   'message': 'NotFound'}
+        assert user1.merchant1.resp_address_get == {'code': -32090, 'data': {'reason': 'name 3MCEhmhitQFBWv11x7mvhSmVfgneiPoSWr, oid None'},
+                                                    'message': 'NotFound'}
 
     def test_wrong_get_address_6(self):
         """ Getting address without oid and name parameter. """
@@ -604,7 +606,7 @@ class TestWrongGetAddress:
                 'jsonrpc': 2.0, 'id': user1.merchant1._id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
-                          headers={'x-merchant': str(1),
+                          headers={'x-merchant': '1',
                                    'x-signature': create_sign(user1.merchant1.akey, data['params'], time_sent),
                                    'x-utc-now-ms': time_sent}, verify=False)
         print(r.text)
@@ -624,7 +626,7 @@ class TestWrongGetAddress:
         assert loads(r.text)['error'] == {'code': -32003, 'data': {'reason': 'Add x-merchant to headers'}, 'message': 'InvalidHeaders'}
 
     def test_wrong_get_address_9(self):
-        """ Getting address with wrong signature. """
+        """ Getting address with wrong signature: Api key from other user's merchant. """
         address = admin.get_crypto_adress(_filter='merchant_id', value=user1.merchant1.id)[0]
         data = {'method': 'address.get',
                 'params': {'oid': str(address['id']), 'name': None},
@@ -632,7 +634,7 @@ class TestWrongGetAddress:
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': str(user1.merchant1.lid),
-                                   'x-signature': 'Wrong Sign',
+                                   'x-signature': create_sign(user2.merchant1.akey, data['params'], time_sent),
                                    'x-utc-now-ms': time_sent}, verify=False)
         print(r.text)
         assert loads(r.text)['error'] == {'code': -32002, 'data': {'reason': 'Invalid signature'}, 'message': 'InvalidSign'}
@@ -848,5 +850,197 @@ class TestOutCurrencies:
         """ Warm. """
         global admin, user1, user2
         admin, user1, user2 = start_session
+
+    def test_address_out_currencies_1(self):
+        """ Getting out_currencies for in_curr BTC by MERCHANT. """
+        adm_ls = [dct['out_currency_id'] for dct in admin.get_exchange(_filter='in_currency_id', value=admin.currency['BTC'])
+                  if dct['is_active'] is True]
+        adm_ls.sort()
+        user1.merchant1.address_out_currencies(params={'in_curr': 'BTC'})
+        us_ls = [admin.currency[dct] for dct in user1.merchant1.resp_address_out_currencies.values()]
+        us_ls.sort()
+        print(adm_ls, us_ls)
+        assert us_ls == adm_ls
+
+    @pytest.mark.skip(reason='Fail')
+    def test_address_out_currencies_2(self):
+        """ Getting out_currencies for in_curr ETH by OWNER. """
+        adm_ls = [dct['out_currency_id'] for dct in admin.get_exchange(_filter='in_currency_id', value=admin.currency['LTC'])
+                  if dct['is_active'] is True]
+        adm_ls.sort()
+        user1.delegate(params={'m_lid': user1.merchant1.lid, 'merch_model': 'address', 'merch_method': 'out_currencies', 'in_curr': 'ETH'})
+        us_ls = [admin.currency[dct] for dct in user1.resp_delegate.values()]
+        us_ls.sort()
+        print(adm_ls, us_ls)
+        assert us_ls == adm_ls
+
+
+class TestWrongOutCurrencies:
+    """ Checked wrong request to method address out_currencies. """
+
+    def test_0(self, start_session):
+        """ Warm. """
+        global admin, user1, user2
+        admin, user1, user2 = start_session
+
+    def test_wrong_address_out_currencies_1(self):
+        """ Request with not crypto currency. """
+        user1.merchant1.address_out_currencies(params={'in_curr': 'USD'})
+        assert user1.merchant1.resp_address_out_currencies == {'code': -32076, 'message': 'InvalidCurrency',
+                                                               'data': {'reason': 'USD is not cryptocurrency'}}
+
+    def test_wrong_address_out_currencies_2(self):
+        """ Request with not active crypto currency. """
+        user1.merchant1.address_out_currencies(params={'in_curr': 'BCHABC'})
+        assert user1.merchant1.resp_address_out_currencies == {'code': -32077, 'message': 'InactiveCurrency', 'data': {'reason': 'BCHABC'}}
+
+    def test_wrong_address_out_currencies_3(self):
+        """ Request with NONE  crypto currency. """
+        user1.merchant1.address_out_currencies(params={'in_curr': None})
+        assert user1.merchant1.resp_address_out_currencies['message'] == 'InvalidCurrency'
+
+    def test_wrong_address_out_currencies_4(self):
+        """ Request without in_curr parameter. """
+        user1.merchant1.address_out_currencies(params={})
+        assert user1.merchant1.resp_address_out_currencies == {'code': -32602, 'message': 'InvalidInputParams',
+                                                               'data': {'reason': "method 'address.out_currencies' missing 1 argument: 'in_curr'"}}
+
+    def test_wrong_address_out_currencies_5(self):
+        """ Request without excist parameter 'out_cur'. """
+        user1.merchant1.address_out_currencies(params={'in_curr': 'BTC', 'out_curr': 'USD'})
+        assert user1.merchant1.resp_address_out_currencies == {'code': -32602, 'message': 'InvalidInputParams',
+                                                               'data': {'reason': "method 'address.out_currencies' "
+                                                                                  "received a redundant argument 'out_curr'"}}
+
+    def test_wrong_address_out_currencies_6(self):
+        """ Request with not real merchant. """
+        data = {'method': 'address.out_currencies', 'params': {'in_curr': 'BTC'}, 'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+        time_sent = user1.merchant1.time_sent()
+        r = requests.post(url=user1.merchant1.japi_url, json=data,
+                          headers={'x-merchant': '1',
+                                   'x-signature': create_sign(user1.merchant1.akey, data['params'], time_sent),
+                                   'x-utc-now-ms': time_sent}, verify=False)
+        assert loads(r.text)['error'] == {'code': -32010, 'message': 'InvalidMerchant', 'data': {'reason': 'Merchant Is Not Active'}}
+
+    def test_wrong_address_out_currencies_7(self):
+        """ Request with NONE merchant. """
+        data = {'method': 'address.out_currencies', 'params': {'in_curr': 'BTC'}, 'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+        time_sent = user1.merchant1.time_sent()
+        r = requests.post(url=user1.merchant1.japi_url, json=data,
+                          headers={'x-merchant': None,
+                                   'x-signature': create_sign(user1.merchant1.akey, data['params'], time_sent),
+                                   'x-utc-now-ms': time_sent}, verify=False)
+        assert loads(r.text)['error'] == {'code': -32003, 'message': 'InvalidHeaders', 'data': {'reason': 'Add x-merchant to headers'}}
+
+    def test_wrong_address_out_currencies_8(self):
+        """ Request without x-merchant parameter. """
+        data = {'method': 'address.out_currencies', 'params': {'in_curr': 'BTC'}, 'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+        time_sent = user1.merchant1.time_sent()
+        r = requests.post(url=user1.merchant1.japi_url, json=data,
+                          headers={'x-signature': create_sign(user1.merchant1.akey, data['params'], time_sent),
+                                   'x-utc-now-ms': time_sent}, verify=False)
+        assert loads(r.text)['error'] == {'code': -32003, 'message': 'InvalidHeaders', 'data': {'reason': 'Add x-merchant to headers'}}
+
+    def test_wrong_address_out_currencies_9(self):
+        """ Request with wrong sign: api-key from other user parameter. """
+        data = {'method': 'address.out_currencies', 'params': {'in_curr': 'BTC'}, 'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+        time_sent = user1.merchant1.time_sent()
+        r = requests.post(url=user1.merchant1.japi_url, json=data,
+                          headers={'x-merchant': str(user1.merchant1.lid),
+                                   'x-signature': create_sign(user2.merchant1.akey, data['params'], time_sent),
+                                   'x-utc-now-ms': time_sent}, verify=False)
+        assert loads(r.text)['error'] == {'code': -32002, 'message': 'InvalidSign', 'data': {'reason': 'Invalid signature'}}
+
+    def test_wrong_address_out_currencies_10(self):
+        """ Request without x-signature parameter . """
+        data = {'method': 'address.out_currencies', 'params': {'in_curr': 'BTC'}, 'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+        time_sent = user1.merchant1.time_sent()
+        r = requests.post(url=user1.merchant1.japi_url, json=data,
+                          headers={'x-merchant': str(user1.merchant1.lid),
+                                   'x-utc-now-ms': time_sent}, verify=False)
+        assert loads(r.text)['error'] == {'code': -32003, 'message': 'InvalidHeaders', 'data': {'reason': 'Add x-signature to headers'}}
+
+    def test_wrong_address_out_currencies_11(self):
+        """ Request without x-utc-now-ms parameter . """
+        data = {'method': 'address.out_currencies', 'params': {'in_curr': 'BTC'}, 'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+        time_sent = user1.merchant1.time_sent()
+        r = requests.post(url=user1.merchant1.japi_url, json=data,
+                          headers={'x-merchant': str(user1.merchant1.lid),
+                                   'x-signature': create_sign(user2.merchant1.akey, data['params'], time_sent)}, verify=False)
+        assert loads(r.text)['error'] == {'code': -32003, 'message': 'InvalidHeaders', 'data': {'reason': 'Add x-utc-now-ms to headers'}}
+
+
+@pytest.mark.skip(reason='Need payin on crypto address')
+class TestAddressHistory:
+    """ Checking address history method. """
+
+    def test_0(self, start_session):
+        """ Warm. """
+        global admin, user1, user2
+        admin, user1, user2 = start_session
+
+    def test_address_history_1(self):
+        """ Getting full information by payin type on address by MERCHANT. """
+        addr_id = admin.get_crypto_adress(_filter='merchant_id', value=user1.merchant1.id)
+        user1.merchant1.address_history(params={'addr_id': addr_id, 'is_autoconvert': None, 'tp': 'payin', 'status': None,
+                                                'first': None, 'count': None})
+        assert user1.merchant1.resp_address_history == {'code': -32076, 'message': 'InvalidCurrency',
+                                                        'data': {'reason': 'USD is not cryptocurrency'}}
+
+    def test_address_history_2(self):
+        """ Getting full information by autopayin type on address by OWNER. """
+        addr_id = admin.get_crypto_adress(_filter='merchant_id', value=user1.merchant1.id)
+        user1.delegate(params={'m_lid': addr_id, 'merch_model': 'address', 'merch_method': 'address_history',
+                               'addr_id': None, 'is_autoconvert': None, 'tp': 'autopayin', 'status': None, 'first': None, 'count': None})
+        assert user1.resp_delegate == ''
+
+    def test_address_history_3(self):
+        """ Getting full information by payin type on address with first  and count parameter by OWNER. """
+        addr_id = admin.get_crypto_adress(_filter='merchant_id', value=user1.merchant1.id)
+        user1.delegate(params={'m_lid': addr_id, 'merch_model': 'address', 'merch_method': 'address_history',
+                               'addr_id': None, 'is_autoconvert': None, 'tp': 'autopayin', 'status': None, 'first': '1', 'count': '2'})
+        assert user1.resp_delegate == ''
+
+    def test_address_history_4(self):
+        """ Getting information by payin type on address with first and count parameter by OWNER. """
+        addr_id = admin.get_crypto_adress(_filter='merchant_id', value=user1.merchant1.id)
+        user1.merchant1.address_history(params={'addr_id': addr_id, 'is_autoconvert': None, 'tp': 'payin', 'status': None, 'first': None,
+                                                'count': None})
+        assert user1.resp_delegate == ''
+
+    def test_address_history_5(self):
+        """ Getting information by autopayin type on address with first and count and is autoconvert type by MERCHANT. """
+        addr_id = admin.get_crypto_adress(_filter='merchant_id', value=user1.merchant1.id)
+        user1.merchant1.address_history(params={'addr_id': addr_id, 'is_autoconvert': None, 'tp': 'payin', 'status': None, 'first': None,
+                                                'count': None})
+        assert user1.merchant1.resp_address_history == ''
+
+    def test_address_history_6(self):
+        """ Getting information by autopayin type on address with first and count and is autoconvert with status by OWNER. """
+        addr_id = admin.get_crypto_adress(_filter='merchant_id', value=user1.merchant1.id)
+        user1.delegate(params={'m_lid': addr_id, 'merch_model': 'address', 'merch_method': 'address_history',
+                               'addr_id': None, 'is_autoconvert': None, 'tp': 'autopayin', 'status': None, 'first': '1', 'count': '3'})
+        assert user1.delegaet == ''
+
+
+@pytest.mark.usefixtures('_create_crypto_address')
+class TestWrongAddressHistory:
+    """ Checking wrong request address_history method. """
+
+    def test_0(self, start_session):
+        """ Warm. """
+        global admin, user1, user2
+        admin, user1, user2 = start_session
+
+    def test_wrong_address_history_1(self):
+        """ Request with not own addr_id. """
+        addr_id = [dct['id'] for dct in admin.get_crypto_adress(_filter=None, value=None) if dct['merchant_id'] != user1.merchant1.id]
+        user1.merchant1.address_history(params={'addr_id': addr_id, 'is_autoconvert': None, 'tp': 'payin', 'status': None, 'first': None,
+                                                'count': None})
+
+
+
+
+
 
 

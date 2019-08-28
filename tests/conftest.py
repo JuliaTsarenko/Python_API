@@ -35,7 +35,7 @@ def start_session(comline):
         print(' Admin token...')
         admin = Admin(token=comline['admin'])
     user1 = User(user=admin.get_user(email=comline['user1'].split(':')[0]), pwd=comline['user1'].split(':')[1], admin=admin)
-    user2 = User(user=admin.get_user(email=comline['user2'].split(':')[0]), pwd=comline['user1'].split(':')[1], admin=admin)
+    user2 = User(user=admin.get_user(email=comline['user2'].split(':')[0]), pwd=comline['user2'].split(':')[1], admin=admin)
     user1.authorization_by_email(user1.email, pwd=user1.pwd)
     user2.authorization_by_email(user2.email, pwd=user2.pwd)
     yield admin, user1, user2
@@ -131,6 +131,23 @@ def _personal_exchange_fee():
     yield
     print(' \n Deleting personal exchange fee')
     admin.delete_personal_exchange_fee(merchant_id=user1.merchant1.id)
+
+
+@pytest.yield_fixture(scope='class')
+def _transfer_fee():
+    print('\n Creating transfer fee')
+    # admin.create_common_fee(currency_id=admin.currency['USD'], is_active=False, tp=30)
+    admin.create_personal_fee(currency_id=admin.currency['USD'], merchant_id=user1.merchant1.id, is_active=False, tp=30)
+    # admin.create_common_fee(currency_id=admin.currency['UAH'], is_active=False, tp=30)
+    admin.create_personal_fee(currency_id=admin.currency['UAH'], merchant_id=user1.merchant1.id, is_active=False, tp=30)
+    # admin.create_common_fee(currency_id=admin.currency['RUB'], is_active=False, tp=30)
+    admin.create_personal_fee(currency_id=admin.currency['RUB'], merchant_id=user1.merchant1.id, is_active=False, tp=30)
+    # admin.create_common_fee(currency_id=admin.currency['BTC'], is_active=False, tp=30)
+    admin.create_personal_fee(currency_id=admin.currency['BTC'], merchant_id=user1.merchant1.id, is_active=False, tp=30)
+    yield
+    print(' \n Deleting transfer fee')
+    # admin.delete_common_fee(tp=30)
+    admin.delete_personal_fee(merchant_id=user1.merchant1.id, tp=30)
 
 
 @pytest.yield_fixture(scope='class')
@@ -383,13 +400,25 @@ def _create_other_type_order():
 
 @pytest.yield_fixture(scope='class')
 def _creating_payin_list():
-    if admin.get_order({'merchant_id': user1.merchant1.id, 'tp': 0}) < 6:
+    if len(admin.get_order({'merchant_id': user1.merchant1.id, 'tp': 0})) < 7:
+        print('Creating payin list for tests')
         admin.set_pwc(pw_id=admin.payway['visamc']['id'], currency='UAH', is_out=False, is_active=True,
                       tech_min=bl(10), tech_max=bl(100))
+        admin.set_pwc(pw_id=admin.payway['perfect']['id'], currency='USD', is_out=False, is_active=True,
+                      tech_min=bl(1), tech_max=bl(100))
+        user1.merchant1.payin_create(payway='visamc', amount='12', in_curr='UAH', out_curr='UAH')
         user1.merchant1.payin_create(payway='payeer', amount='50', in_curr='RUB', out_curr='RUB')
-        user1.merchant1.payin_create(payway='visamc', amount='50', in_curr='UAH', out_curr='UAH')
+        user1.merchant1.payin_create(payway='visamc', amount='25', in_curr='UAH', out_curr='UAH')
+        user1.merchant1.payin_create(payway='visamc', amount='70', in_curr='UAH', out_curr='USD')
+        user1.merchant1.payin_create(payway='visamc', amount='60', in_curr='UAH', out_curr='USD')
+        user1.merchant1.payin_create(payway='perfect', amount='5', in_curr='USD', out_curr='UAH')
+    yield
 
 
+@pytest.fixture(scope='class')
+def allow_many_session():
+    admin.update_user(key={'id': user1.id}, data={'many_sess_allowed': True})
+    user1.authorization_by_email(email=user1.email, pwd=user1.pwd)
 
 
 
