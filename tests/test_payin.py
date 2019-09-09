@@ -750,11 +750,10 @@ class TestWrongPayinCreate:
     @pytest.mark.skip(reason='Not correct work')
     def test_wrong_payin_12(self):
         """ Payin by not real pair payway+currency. """
-        admin.set_pwc(pw_id=admin.payway['qiwi']['id'], currency='RUB', is_out=False, is_active=True,
+        admin.set_pwc(pw_id=admin.payway['payeer']['id'], currency='UAH', is_out=False, is_active=True,
                       tech_min=bl(1), tech_max=bl(150))
-        user1.merchant1.payin_create(payway='qiwi', amount='10', in_curr='USD', out_curr='USD')
-        assert user1.merchant1.resp_payin_create == {'code': -32070, 'data': {"reason": "Invalid data", "data": {}},
-                                                     'message': 'InvalidParam'}
+        user1.merchant1.payin_create(payway='payeer', amount='10', in_curr='UAH', out_curr='UAH')
+        assert user1.merchant1.resp_payin_create == {'code': -32076, 'data': {'reason': None}, 'message': 'InvalidCurrency'}
 
     def test_wrong_payin_13(self):
         """ Payin without in_curr parameter. """
@@ -836,7 +835,7 @@ class TestWrongPayinCreate:
         """ Payin with equal external_id. """
         ex_id = user1.merchant1._id()
         time_sent = user1.merchant1.time_sent()
-        data = {'method': 'payin.create',
+        data = {'method': 'sci_pay.create',
                 'params': {'amount': '50', 'in_curr': 'UAH', 'payway': 'visamc',
                            'externalid': ex_id},
                 'jsonrpc': 2.0, 'id': user1.merchant1._id()}
@@ -1320,7 +1319,7 @@ class TestWrongParams:
                 'jsonrpc': 2.0, 'id': user1.merchant1._id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
-                          headers={'x-merchant': '1',
+                          headers={'x-merchant': '01',
                                    'x-signature': create_sign(user1.merchant1.akey, data['params'], time_sent),
                                    'x-utc-now-ms': time_sent}, verify=False)
         print(r.text)

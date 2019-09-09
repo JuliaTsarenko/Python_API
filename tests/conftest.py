@@ -65,7 +65,6 @@ def _disable_2type():
     user1.confirm_registration(code=admin.get_onetime_code(email=user1.email), key=user1.confirm_key, user=user1)
     user1.set_2type(tp=None)
     user1.confirm_registration(code=admin.get_onetime_code(email=user1.email), key=user1.confirm_key, user=user1)
-    print('\n disable 2type')
 
 
 @pytest.yield_fixture(scope='function')
@@ -136,36 +135,87 @@ def _personal_exchange_fee():
 @pytest.yield_fixture(scope='class')
 def _transfer_fee():
     print('\n Creating transfer fee')
-    # admin.create_common_fee(currency_id=admin.currency['USD'], is_active=False, tp=30)
-    admin.create_personal_fee(currency_id=admin.currency['USD'], merchant_id=user1.merchant1.id, is_active=False, tp=30)
-    # admin.create_common_fee(currency_id=admin.currency['UAH'], is_active=False, tp=30)
-    admin.create_personal_fee(currency_id=admin.currency['UAH'], merchant_id=user1.merchant1.id, is_active=False, tp=30)
-    # admin.create_common_fee(currency_id=admin.currency['RUB'], is_active=False, tp=30)
-    admin.create_personal_fee(currency_id=admin.currency['RUB'], merchant_id=user1.merchant1.id, is_active=False, tp=30)
-    # admin.create_common_fee(currency_id=admin.currency['BTC'], is_active=False, tp=30)
-    admin.create_personal_fee(currency_id=admin.currency['BTC'], merchant_id=user1.merchant1.id, is_active=False, tp=30)
+    admin.create_personal_fee(currency='USD', merchant_id=user1.merchant1.id, is_active=False, tp=30)
+    admin.create_personal_fee(currency='UAH', merchant_id=user1.merchant1.id, is_active=False, tp=30)
+    admin.create_personal_fee(currency='RUB', merchant_id=user1.merchant1.id, is_active=False, tp=30)
+    admin.create_personal_fee(currency='BTC', merchant_id=user1.merchant1.id, is_active=False, tp=30)
     yield
     print(' \n Deleting transfer fee')
-    # admin.delete_common_fee(tp=30)
     admin.delete_personal_fee(merchant_id=user1.merchant1.id, tp=30)
+
+
+@pytest.yield_fixture(scope='class')
+def _payout_fee():
+    print('\n Creating payout fee')
+    admin.create_personal_fee(currency='USD', merchant_id=user1.merchant1.id, is_active=False, tp=10,
+                              payway_id=admin.payway['perfect']['id'])
+    admin.create_personal_fee(currency='USD', merchant_id=user1.merchant1.id, is_active=False, tp=10,
+                              payway_id=admin.payway['cash_kiev']['id'])
+    admin.create_personal_fee(currency='UAH', merchant_id=user1.merchant1.id, is_active=False, tp=10)
+    admin.create_personal_fee(currency='RUB', merchant_id=user1.merchant1.id, is_active=False, tp=10)
+    admin.create_personal_fee(currency='BTC', merchant_id=user1.merchant1.id, is_active=False, tp=10)
+    yield
+    print(' \n Deleting payout fee')
+    admin.delete_personal_fee(merchant_id=user1.merchant1.id, tp=10)
+
+
+@pytest.yield_fixture(scope='class')
+def _sci_fee():
+    print('\n Creating sci fee')
+    admin.create_personal_fee(currency='UAH', merchant_id=user1.merchant1.id, is_active=False, tp=40)
+    admin.create_personal_fee(currency='RUB', merchant_id=user1.merchant1.id, is_active=False, tp=40)
+    admin.create_personal_fee(currency='BTC', merchant_id=user1.merchant1.id, is_active=False, tp=40)
+    admin.create_personal_fee(currency='USD', is_active=False, payway_id=admin.payway_id['perfect'],
+                              merchant_id=user1.merchant1.id, tp=40)
+    admin.create_personal_fee(currency='USD', is_active=False, payway_id=admin.payway_id['cash_kiev'],
+                              merchant_id=user1.merchant1.id, tp=40)
+    admin.create_personal_fee(currency='BTC', is_active=False, payway_id=admin.payway_id['btc'],
+                              merchant_id=user1.merchant1.id, tp=40)
+    admin.create_personal_fee(currency='UAH', is_active=False, payway_id=admin.payway_id['privat24'],
+                              merchant_id=user1.merchant1.id, tp=40)
+    admin.create_personal_fee(currency='USD', is_active=False, merchant_id=user1.merchant1.id, tp=46,
+                              payway_id=admin.payway_id['anycash'])
+    admin.create_personal_fee(currency='BTC', is_active=False, merchant_id=user1.merchant1.id, tp=46,
+                              payway_id=admin.payway_id['anycash'])
+    admin.create_personal_fee(currency='UAH', is_active=False, merchant_id=user1.merchant1.id, tp=46,
+                              payway_id=admin.payway_id['anycash'])
+    admin.create_personal_fee(currency='RUB', is_active=False, merchant_id=user1.merchant1.id, tp=46,
+                              payway_id=admin.payway_id['anycash'])
+    admin.create_personal_fee(currency='USD', is_active=False, payway_id=admin.payway_id['perfect'],
+                              merchant_id=user1.merchant1.id, tp=45)
+    admin.create_personal_fee(currency='USD', is_active=False, payway_id=admin.payway_id['cash_kiev'],
+                              merchant_id=user1.merchant1.id, tp=45)
+    admin.create_personal_fee(currency='BTC', is_active=False, payway_id=admin.payway_id['btc'],
+                              merchant_id=user1.merchant1.id, tp=45)
+    admin.create_personal_fee(currency='UAH', is_active=False, payway_id=admin.payway_id['privat24'],
+                              merchant_id=user1.merchant1.id, tp=45)
+    yield
+    print(' \n Deleting sci fee')
+    admin.set_fee(currency_id=admin.currency['USD'], is_active=False, payway_id=admin.payway_id['anycash'], tp=46)
+    admin.set_fee(currency_id=admin.currency['BTC'], is_active=False, payway_id=admin.payway_id['anycash'], tp=46)
+    admin.set_fee(currency_id=admin.currency['UAH'], is_active=False, payway_id=admin.payway_id['anycash'], tp=46)
+    admin.set_fee(currency_id=admin.currency['RUB'], is_active=False, payway_id=admin.payway_id['anycash'], tp=46)
+    admin.delete_personal_fee(merchant_id=user1.merchant1.id, tp=40)
+    admin.delete_personal_fee(merchant_id=user1.merchant1.id, tp=45)
+    admin.delete_personal_fee(merchant_id=user1.merchant1.id, tp=46)
 
 
 @pytest.yield_fixture(scope='class')
 def _personal_operation_fee():
     print('\n Creating personal PAYIN fee')
-    admin.create_personal_fee(currency='USD', is_active=False, payway_id=admin.payway['perfect']['id'],
+    admin.create_personal_fee(currency='USD', is_active=False, payway_id=admin.payway_id['perfect'],
                               merchant_id=user1.merchant1.id)
-    admin.create_personal_fee(currency='USD', is_active=False, payway_id=admin.payway['cash_kiev']['id'],
+    admin.create_personal_fee(currency='USD', is_active=False, payway_id=admin.payway_id['cash_kiev'],
                               merchant_id=user1.merchant1.id)
-    admin.create_personal_fee(currency='BTC', is_active=False, payway_id=admin.payway['btc']['id'],
+    admin.create_personal_fee(currency='BTC', is_active=False, payway_id=admin.payway_id['btc'],
                               merchant_id=user1.merchant1.id)
-    admin.create_personal_fee(currency='UAH', is_active=False, payway_id=admin.payway['privat24']['id'],
+    admin.create_personal_fee(currency='UAH', is_active=False, payway_id=admin.payway_id['privat24'],
                               merchant_id=user1.merchant1.id)
-    admin.create_personal_fee(currency='USD', is_active=False, payway_id=admin.payway['exmo']['id'],
+    admin.create_personal_fee(currency='USD', is_active=False, payway_id=admin.payway_id['exmo'],
                               merchant_id=user1.merchant1.id)
-    admin.create_personal_fee(currency='UAH', is_active=False, payway_id=admin.payway['kuna']['id'],
+    admin.create_personal_fee(currency='UAH', is_active=False, payway_id=admin.payway_id['kuna'],
                               merchant_id=user1.merchant1.id)
-    admin.create_personal_fee(currency='UAH', is_active=False, payway_id=admin.payway['visamc']['id'],
+    admin.create_personal_fee(currency='UAH', is_active=False, payway_id=admin.payway_id['visamc'],
                               merchant_id=user1.merchant1.id, tp=10)
     yield
     print('\n Deleting personal PAYIN fee')
@@ -173,9 +223,25 @@ def _personal_operation_fee():
 
 
 @pytest.yield_fixture(scope='class')
+def _personal_sci_fee():
+    print('\n Creating personal SCI fee')
+    admin.create_personal_fee(currency='USD', is_active=False, payway_id=admin.payway_id['perfect'],
+                              merchant_id=user1.merchant1.id, tp=40)
+    admin.create_personal_fee(currency='USD', is_active=False, payway_id=admin.payway_id['cash_kiev'],
+                              merchant_id=user1.merchant1.id, tp=40)
+    admin.create_personal_fee(currency='BTC', is_active=False, payway_id=admin.payway_id['btc'],
+                              merchant_id=user1.merchant1.id, tp=40)
+    admin.create_personal_fee(currency='UAH', is_active=False, payway_id=admin.payway_id['privat24'],
+                              merchant_id=user1.merchant1.id, tp=40)
+    yield
+    print('\n Deleting personal fee')
+    admin.delete_personal_fee(merchant_id=user1.merchant1.id)
+
+
+@pytest.yield_fixture(scope='class')
 def _personal_operation_payout_fee():
     print('\n Creating personal PAYOUT fee')
-    admin.create_personal_fee(currency='UAH', is_active=False, payway_id=admin.payway['visamc']['id'], tp=10,
+    admin.create_personal_fee(currency='UAH', is_active=False, payway_id=admin.payway_id['visamc'], tp=10,
                               merchant_id=user1.merchant1.id)
     yield
     print('\n Deleting personal PAYOUT fee')
@@ -347,9 +413,9 @@ def _delete_crypto_address():
 def _edit_default_crypto_address():
     print('Start editing default')
     _id = admin.get_crypto_adress(_filter='merchant_id', value=user1.merchant1.id)[0]['id']
-    user1.merchant1.address_edit(oid=str(_id), comment='BASE-COMMENT', rotate=False)
+    user1.merchant1.address_edit(params={'oid': str(_id), 'comment': 'BASE-COMMENT', 'rotate': False})
     yield
-    user1.merchant1.address_edit(oid=str(_id), comment='BASE-COMMENT', rotate=False)
+    user1.merchant1.address_edit(params={'oid': str(_id), 'comment': 'BASE-COMMENT', 'rotate': False})
     print('Finish editing default')
 
 
@@ -358,16 +424,47 @@ def create_address_list():
     """ Creating list address for test if count of address by merchant less than 5. """
     if len(admin.get_crypto_adress(_filter='merchant_id', value=user1.merchant1.id)) < 5:
         print('Start creating list address. ')
-        user1.merchant1.address_create(in_curr='BTC', out_curr=None, comment=None)
-        user1.merchant1.address_create(in_curr='BTC', out_curr='USD', comment=None)
-        user1.merchant1.address_create(in_curr='ETH', out_curr=None, comment=None)
-        user1.merchant1.address_create(in_curr='BTC', out_curr='USD', comment=None)
-        user1.merchant1.address_create(in_curr='LTC', out_curr=None, comment=None)
+        user1.merchant1.address_create(params={'in_curr': 'BTC', 'out_curr': None, 'comment': None})
+        user1.merchant1.address_create(params={'in_curr': 'BTC', 'out_curr': 'USD', 'comment': None})
+        user1.merchant1.address_create(params={'in_curr': 'ETH', 'out_curr': None, 'comment': None})
+        user1.merchant1.address_create(params={'in_curr': 'BTC', 'out_curr': 'USD', 'comment': None})
+        user1.merchant1.address_create(params={'in_curr': 'LTC', 'out_curr': None, 'comment':None})
     yield
 
 
 @pytest.yield_fixture(scope='function')
+def _activate_pwcurrency():
+    yield
+    admin.set_pwc(pw_id=admin.payway_id['anycash'], currency='UAH', is_out=True, is_active=True,
+                  tech_min=bl(0.01), tech_max=bl(3000))
+    admin.set_pwc(pw_id=admin.payway_id['anycash'], currency='USD', is_out=True, is_active=True,
+                  tech_min=bl(0.01), tech_max=bl(3000))
+    admin.set_pwc(pw_id=admin.payway_id['anycash'], currency='RUB', is_out=True, is_active=True,
+                  tech_min=bl(0.01), tech_max=bl(3000))
+    admin.set_pwc(pw_id=admin.payway_id['anycash'], currency='BTC', is_out=True, is_active=True,
+                  tech_min=bl(0.000001), tech_max=bl(3))
+
+
+@pytest.yield_fixture(scope='function')
 def _activate_merchant_payways():
+    admin.set_pwmerchactive(merch_id=user1.merchant1.id, payway_id=admin.payway['eth']['id'], is_active=True)
+    admin.set_pwmerchactive(merch_id=user1.merchant1.id, payway_id=admin.payway['kuna']['id'], is_active=True)
+    admin.set_pwmerchactive(merch_id=user1.merchant1.id, payway_id=admin.payway['ltc']['id'], is_active=True)
+    admin.set_pwmerchactive(merch_id=user1.merchant1.id, payway_id=admin.payway['qiwi']['id'], is_active=True)
+    admin.set_pwmerchactive(merch_id=user1.merchant1.id, payway_id=admin.payway['exmo']['id'], is_active=True)
+    admin.set_pwmerchactive(merch_id=user1.merchant1.id, payway_id=admin.payway['webmoney']['id'], is_active=True)
+    admin.set_pwmerchactive(merch_id=user1.merchant1.id, payway_id=admin.payway['cash_kiev']['id'], is_active=True)
+    admin.set_pwmerchactive(merch_id=user1.merchant1.id, payway_id=admin.payway['perfect']['id'], is_active=True)
+    admin.set_pwmerchactive(merch_id=user1.merchant1.id, payway_id=admin.payway['payeer']['id'], is_active=True)
+    admin.set_pwmerchactive(merch_id=user1.merchant1.id, payway_id=admin.payway['privat24']['id'], is_active=True)
+    admin.set_pwmerchactive(merch_id=user1.merchant1.id, payway_id=admin.payway['paymer']['id'], is_active=True)
+    admin.set_pwmerchactive(merch_id=user1.merchant1.id, payway_id=admin.payway['visamc']['id'], is_active=True)
+    admin.set_pwmerchactive(merch_id=user1.merchant1.id, payway_id=admin.payway['btc']['id'], is_active=True)
+    yield
+
+
+@pytest.yield_fixture(scope='function')
+def _activate_merchant_payways_after():
     yield
     admin.set_pwmerchactive(merch_id=user1.merchant1.id, payway_id=admin.payway['eth']['id'], is_active=True)
     admin.set_pwmerchactive(merch_id=user1.merchant1.id, payway_id=admin.payway['kuna']['id'], is_active=True)
@@ -388,12 +485,11 @@ def _activate_merchant_payways():
 def _create_other_type_order():
     print('In creating')
     if not admin.get_order({'merchant_id': user1.merchant1.id, 'tp': 20}):
-        admin.set_wallet_amount(balance=bl(10), currency='UAH', merch_lid=user1.merchant1.lid)
-        user1.merchant1.convert_create(in_curr='UAH', out_curr='USD', in_amount='10', out_amount=None)
+        admin.set_wallet_amount(balance=bl(20), currency='UAH', merch_lid=user1.merchant1.lid)
+        user1.merchant1.convert_create(in_curr='UAH', out_curr='USD', in_amount='20', out_amount=None)
     if not admin.get_order({'merchant_id': user1.merchant2.id, 'tp': 0}):
         print('In other merchant. ')
-        admin.set_pwc(pw_id=admin.payway['visamc']['id'], currency='UAH', is_out=False, is_active=True,
-                      tech_min=bl(10), tech_max=bl(100))
+        admin.set_pwc(pw_id=admin.payway_id['visamc'], currency='UAH', is_out=False, is_active=True, tech_min=bl(10), tech_max=bl(100))
         user1.merchant2.payin_create(payway='visamc', amount='10', in_curr='UAH', out_curr='UAH')
     yield
 
@@ -401,7 +497,6 @@ def _create_other_type_order():
 @pytest.yield_fixture(scope='class')
 def _creating_payin_list():
     if len(admin.get_order({'merchant_id': user1.merchant1.id, 'tp': 0})) < 7:
-        print('Creating payin list for tests')
         admin.set_pwc(pw_id=admin.payway['visamc']['id'], currency='UAH', is_out=False, is_active=True,
                       tech_min=bl(10), tech_max=bl(100))
         admin.set_pwc(pw_id=admin.payway['perfect']['id'], currency='USD', is_out=False, is_active=True,
@@ -415,11 +510,60 @@ def _creating_payin_list():
     yield
 
 
+@pytest.yield_fixture(scope='class')
+def _default_crypto_address():
+    admin.set_crypto_address(merchant_id=user1.merchant1.id)
+    yield
+    admin.set_crypto_address(merchant_id=user1.merchant1.id)
+
+
 @pytest.fixture(scope='class')
 def allow_many_session():
     admin.update_user(key={'id': user1.id}, data={'many_sess_allowed': True})
     user1.authorization_by_email(email=user1.email, pwd=user1.pwd)
 
 
+@pytest.yield_fixture(scope='class')
+def _create_convert_order():
+    if not [ls for ls in admin.get_model(model='order', _filter='merchant_id', value=user1.merchant1.id) if ls['tp'] == 20]:
+        admin.set_wallet_amount(balance=bl(100), currency='UAH', merch_lid=user1.merchant1.lid)
+        user1.merchant1.convert(method='create', params={'in_curr': 'UAH', 'out_curr': 'USD', 'in_amount': '50', 'out_amount': None,
+                                                         'externalid': user1.merchant1._id()})
+    if not [ls for ls in admin.get_model(model='order', _filter='merchant_id', value=user1.merchant2.id) if ls['tp'] == 20]:
+        admin.set_wallet_amount(balance=bl(100), currency='UAH', merch_lid=user1.merchant2.lid)
+        user1.merchant2.convert(method='create', params={'in_curr': 'UAH', 'out_curr': 'USD', 'in_amount': '50', 'out_amount': None,
+                                                         'externalid': user1.merchant2._id()})
+    yield
 
 
+@pytest.yield_fixture(scope='class')
+def _create_sci_pay_order():
+    admin.set_pwc(pw_id=admin.payway_id['visamc'], currency='UAH', is_out=False, is_active=True, tech_min=bl(1), tech_max=bl(100))
+    user1.merchant1.sci_pay(method='create', params={'amount': '50', 'in_curr': 'UAH', 'out_curr': 'UAH', 'payway': 'visamc',
+                                                     'expiry': '60s', 'externalid': user1.merchant1._id()})
+    yield
+
+
+
+@pytest.fixture(scope='function')
+def reate_payin_with_uaccount():
+    if not admin.get_order(selector={'merchant_id': user1.merchant1.id, 'tp': 0, 'uaccount': '5168********7159'}):
+        user1.merchant1.payin_create(payway='visamc', amount='0.01', in_curr='UAH', payer='5168********7159')
+
+
+@pytest.yield_fixture(scope='class')
+def _create_sci_pay_list():
+    print('Calculating sci_pay orders ...')
+    if len([dct for dct in admin.get_model(model='order', _filter='merchant_id', value=user1.merchant1.id) if dct['tp'] == 40]) < 5:
+        print('Creating sci_pay orders ...')
+        user1.merchant1.sci_pay(method='create', params={'amount': '50', 'in_curr': 'UAH', 'out_curr': 'UAH', 'payway': 'visamc',
+                                                         'expiry': '60s', 'externalid': user1.merchant1._id()})
+        user1.merchant1.sci_pay(method='create', params={'amount': '50', 'in_curr': 'USD', 'out_curr': 'UAH', 'payway': 'payeer',
+                                                         'expiry': '60s', 'externalid': user1.merchant1._id()})
+        user1.merchant1.sci_pay(method='create', params={'amount': '50', 'in_curr': 'UAH', 'out_curr': 'USD', 'payway': 'privat24',
+                                                         'expiry': '60s', 'externalid': user1.merchant1._id()})
+        user1.merchant1.sci_pay(method='create', params={'amount': '50', 'in_curr': 'UAH', 'out_curr': 'UAH', 'payway': 'privat24',
+                                                         'expiry': '60s', 'externalid': user1.merchant1._id()})
+        user1.merchant1.sci_pay(method='create', params={'amount': '50', 'in_curr': 'USD', 'out_curr': 'UAH', 'payway': 'perfect',
+                                                         'expiry': '60s', 'externalid': user1.merchant1._id()})
+    yield

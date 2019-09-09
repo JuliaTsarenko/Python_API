@@ -4,6 +4,7 @@ import random
 from users import sign
 from json import loads
 from string import ascii_uppercase
+import pprint
 
 
 class Merchant:
@@ -13,7 +14,7 @@ class Merchant:
 
     def __init__(self, merchant=None):
         self.id = merchant['id']
-        self.lid = merchant['lid']
+        self.lid = str(merchant['lid'])
         self.akey = merchant['apikey']
 
     @staticmethod
@@ -25,7 +26,7 @@ class Merchant:
         return random.choice(list(ascii_uppercase)) + str(random.randint(0, 100000))
 
     def headers(self, data, time_sent):
-        return {'x-merchant': str(self.lid),
+        return {'x-merchant': self.lid,
                 'x-signature': sign.create_sign(self.akey, data['params'], time_sent),
                 'x-utc-now-ms': time_sent}
 
@@ -97,11 +98,9 @@ class Merchant:
         r = requests.post(url=self.japi_url, json=data, headers=self.headers(data, time_sent), verify=False)
         self.resp_adress_get = loads(r.text)
 
-    def address_create(self, in_curr, out_curr, comment):
+    def address_create(self, params):
         self.req_id = self._id()
-        data = {'method': 'address.create',
-                'params': {'in_curr': in_curr, 'out_curr': out_curr, 'comment': comment},
-                'jsonrpc': 2.0, 'id': self.req_id}
+        data = {'method': 'address.create', 'params': params, 'jsonrpc': 2.0, 'id': self.req_id}
         time_sent = self.time_sent()
         r = requests.post(url=self.japi_url, json=data, headers=self.headers(data, time_sent), verify=False)
         print('\n', r.text)
@@ -110,13 +109,9 @@ class Merchant:
         except KeyError:
             self.resp_address_create = loads(r.text)['error']
 
-    def address_list(self, in_curr, out_curr, is_autoconvert, rotate, first, count, begin, end):
-        print('Begin', begin, 'End', end, 'First', first, 'Count', count)
+    def address_list(self, params):
         self.req_id = self._id()
-        data = {'method': 'address.list',
-                'params': {'in_curr': in_curr, 'out_curr': out_curr, 'is_autoconvert': is_autoconvert, 'rotate': rotate,
-                           'first': first, 'count': count, 'begin': begin, 'end': end},
-                'jsonrpc': 2.0, 'id': self.req_id}
+        data = {'method': 'address.list', 'params': params, 'jsonrpc': 2.0, 'id': self.req_id}
         time_sent = self.time_sent()
         r = requests.post(url=self.japi_url, json=data, headers=self.headers(data, time_sent), verify=False)
         print(r.text)
@@ -125,9 +120,9 @@ class Merchant:
         except KeyError:
             self.resp_address_list = loads(r.text)['error']
 
-    def address_get(self, oid, name):
+    def address_get(self, params):
         self.req_id = self._id()
-        data = {'method': 'address.get', 'params': {'oid': oid, 'name': name}, 'jsonrpc': 2.0, 'id': self.req_id}
+        data = {'method': 'address.get', 'params': params, 'jsonrpc': 2.0, 'id': self.req_id}
         time_sent = self.time_sent()
         r = requests.post(url=self.japi_url, json=data, headers=self.headers(data, time_sent), verify=False)
         print(r.text)
@@ -136,9 +131,9 @@ class Merchant:
         except KeyError:
             self.resp_address_get = loads(r.text)['error']
 
-    def address_edit(self, oid, comment, rotate):
+    def address_edit(self, params):
         self.req_id = self._id()
-        data = {'method': 'address.edit', 'params': {'oid': oid, 'comment': comment, 'rotate': rotate}, 'jsonrpc': 2.0, 'id': self.req_id}
+        data = {'method': 'address.edit', 'params': params, 'jsonrpc': 2.0, 'id': self.req_id}
         time_sent = self.time_sent()
         r = requests.post(url=self.japi_url, json=data, headers=self.headers(data, time_sent), verify=False)
         try:
@@ -166,6 +161,28 @@ class Merchant:
         except KeyError:
             self.resp_address_history = loads(r.text)['error']
 
+    def address_currencies(self, params):
+        self.req_id = self._id()
+        data = {'method': 'address.currencies', 'params': params, 'jsonrpc': 2.0, 'id': self.req_id}
+        time_sent = self.time_sent()
+        r = requests.post(url=self.japi_url, json=data, headers=self.headers(data, time_sent), verify=False)
+        try:
+            self.resp_address_currencies = loads(r.text)['result']
+        except KeyError:
+            self.resp_address_currencies = loads(r.text)['error']
+
+    def convert(self, method, params):
+        self.req_id = self._id()
+        data = {'method': 'convert.' + method, 'params': params, 'jsonrpc': 2.0, 'id': self.req_id}
+        time_sent = self.time_sent()
+        r = requests.post(url=self.japi_url, json=data, headers=self.headers(data, time_sent), verify=False)
+        print(r.text)
+        try:
+            self.resp_convert = loads(r.text)['result']
+        except KeyError:
+            self.resp_convert = loads(r.text)['error']
+
+
     def convert_create(self, in_curr, out_curr, in_amount, out_amount):
         self.req_id = self._id()
         data = {'method': 'convert.create',
@@ -174,7 +191,6 @@ class Merchant:
                 'jsonrpc': 2.0, 'id': self.req_id}
         time_sent = self.time_sent()
         r = requests.post(url=self.japi_url, json=data, headers=self.headers(data, time_sent), verify=False)
-        # print('\n', r.text)
         try:
             self.resp_convert_create = loads(r.text)['result']
         except KeyError:
@@ -196,7 +212,10 @@ class Merchant:
                 'jsonrpc': 2.0, 'id': self.req_id}
         time_sent = self.time_sent()
         r = requests.post(url=self.japi_url, json=data, headers=self.headers(data, time_sent), verify=False)
-        return loads(r.text)
+        try:
+            self.resp_convert_params = loads(r.text)['result']
+        except KeyError:
+            self.resp_convert_params = loads(r.text)['error']
 
     def convert_calc(self, in_amount, out_amount, in_curr, out_curr, validate_balance=True):
         self.req_id = self._id()
@@ -205,13 +224,23 @@ class Merchant:
                            'in_curr': in_curr, 'out_curr': out_curr, 'validate_balance': validate_balance},
                 'jsonrpc': 2.0, 'id': self.req_id}
         time_sent = self.time_sent()
-        # print('out_curr', out_curr)
         r = requests.post(url=self.japi_url, json=data, headers=self.headers(data, time_sent), verify=False)
-        # pprint.pprint(loads(r.text))
         try:
             self.resp_convert_calc = loads(r.text)['result']
         except KeyError:
             self.resp_convert_calc = loads(r.text)['error']
+
+    def payin(self, method, params):
+        self.req_id = self._id()
+        data = {'method': 'convert.' + method, 'params': params, 'jsonrpc': 2.0, 'id': self.req_id}
+        time_sent = self.time_sent()
+        r = requests.post(url=self.japi_url, json=data, headers=self.headers(data, time_sent), verify=False)
+        print(r.text)
+        try:
+            self.resp_payin = loads(r.text)['result']
+        except KeyError:
+            self.resp_payin = loads(r.text)['error']
+
 
     def payin_calc(self, payway, amount, in_curr, out_curr):
         self.req_id = self._id()
@@ -293,6 +322,44 @@ class Merchant:
         except KeyError:
             self.resp_cheque_verify = loads(r.text)['error']
 
+    def sci_pay(self, method, params):
+        self.req_id = self._id()
+        data = {'method': 'sci_pay.' + method, 'params': params, 'jsonrpc': 2.0, 'id': self.req_id}
+        time_sent = self.time_sent()
+        r = requests.post(url=self.japi_url, json=data, headers=self.headers(data, time_sent), verify=False)
+        # print(r.text)
+        try:
+            self.resp_sci_pay = loads(r.text)['result']
+            # pprint.pprint(loads(r.text))
+            self.sci_pay_lid = loads(r.text).get('result', {}).get('lid')
+            self.sci_pay_token = loads(r.text).get('result', {}).get('token')
+        except KeyError:
+            self.resp_sci_pay = loads(r.text)['error']
+
+    def sci_subpay(self, method, params):
+        self.req_id = self._id()
+        data = {'method': 'sci_subpay.' + method, 'params': params, 'jsonrpc': 2.0, 'id': self.req_id}
+        time_sent = self.time_sent()
+        r = requests.post(url=self.japi_url, json=data, headers=self.headers(data, time_sent), verify=False)
+        try:
+            self.resp_sci_subpay = loads(r.text)['result']
+            self.sci_subpay_lid = loads(r.text).get('result', {}).get('lid')
+            self.sci_subpay_token = loads(r.text).get('result', {}).get('token')
+        except KeyError:
+            self.resp_sci_subpay = loads(r.text)['error']
+
+    def sci_refund(self, method, params):
+        self.req_id = self._id()
+        data = {'method': 'sci_refund.' + method, 'params': params, 'jsonrpc': 2.0, 'id': self.req_id}
+        # print(data)
+        time_sent = self.time_sent()
+        r = requests.post(url=self.japi_url, json=data, headers=self.headers(data, time_sent), verify=False)
+        try:
+            self.resp_sci_refund = loads(r.text)['result']
+        except KeyError:
+            self.resp_sci_refund = loads(r.text)['error']
+
+
     def transfer_create(self, amount, out_curr, tgt, in_curr=None):
         self.req_id = self._id()
         data = {'method': 'transfer.create',
@@ -301,7 +368,6 @@ class Merchant:
                 'jsonrpc': 2.0, 'id': self.req_id}
         time_sent = self.time_sent()
         r = requests.post(url=self.japi_url, json=data, headers=self.headers(data, time_sent), verify=False)
-        # pprint.pprint(loads(r.text))
         self.resp_transfer_create = loads(r.text)
 
     def transfer_params(self, out_curr, in_curr=None):
@@ -322,11 +388,8 @@ class Merchant:
         data = {'method': 'transfer.get',
                 'params': {'o_lid': str(o_lid)},
                 'jsonrpc': 2.0, 'id': self.req_id}
-        # print('data', data)
         time_sent = self.time_sent()
         r = requests.post(url=self.japi_url, json=data, headers=self.headers(data, time_sent), verify=False)
-        # print('r.text', r.text)
-        # pprint.pprint(loads(r.text))
         try:
             self.resp_transfer_get = loads(r.text)['result']
         except KeyError:
@@ -353,10 +416,11 @@ class Merchant:
                 'jsonrpc': 2.0, 'id': self.req_id}
         time_sent = self.time_sent()
         r = requests.post(url=self.japi_url, json=data, headers=self.headers(data, time_sent), verify=False)
+        # pprint.pprint(loads(r.text))
         try:
             return loads(r.text)['result']
         except KeyError:
-            return loads(r.text)
+            return loads(r.text)['error']
 
     def payout_create(self, payway, amount, out_curr, in_curr=None, payee=None, contact=None, region=None, payer=None):
         self.req_id = self._id()
@@ -397,12 +461,12 @@ class Merchant:
         except KeyError:
             return loads(r.text)
 
-    def inpay_history(self, begin='0', end=None, curr=None, first='0', count='20', payway=None, status=None,
-                      ord_by=None, ord_dir=False):
+    def inpay_history(self, begin=None, end=None, curr=None, first='0', count='20', payway=None, status=None,
+                      ord_by=None, ord_dir=False, uaccount=None):
         self.req_id = self._id()
         data = {'method': 'merchant.inpay_history',
                 'params': {'begin': begin, 'end': end, 'curr': curr, 'payway': payway, 'status': status,
-                           'first': first, 'count': count, 'ord_by': ord_by, 'ord_dir': ord_dir},
+                           'first': first, 'count': count, 'ord_by': ord_by, 'ord_dir': ord_dir, 'uaccount': uaccount},
                 'jsonrpc': 2.0, 'id': self.req_id}
         time_sent = self.time_sent()
         r = requests.post(url=self.japi_url, json=data, headers=self.headers(data, time_sent), verify=False)

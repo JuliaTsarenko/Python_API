@@ -1,10 +1,9 @@
 import requests
 import random
+import time
 from users.merchant import Merchant
 from json import loads
 from string import ascii_uppercase
-from users.admin import Admin
-import pprint
 
 
 requests.packages.urllib3.disable_warnings()
@@ -23,7 +22,6 @@ class User:
 
     def __init__(self, user=None, pwd=None, admin=None):
         if user:
-            self.params = {'token': ''}
             self.email = user['email']
             self.pwd = pwd
             self.id = user['id']
@@ -120,7 +118,6 @@ class User:
             except KeyError:
                 self.resp_authorization = loads(r.text)
         else:
-            print('2')
             try:
                 if type(loads(r.text)['error']['data']) == dict:
                     self.confirm_key = loads(r.text)['error']['data']['key']
@@ -132,9 +129,11 @@ class User:
                 self.resp_authorization = loads(r.text)
 
     def logout(self):
-        requests.post(url=self.wapi_url,
-                      json={'method': 'account.logout', 'params': {}, 'jsonrpc': 2.0, 'id': self.ex_id()},
-                      headers=self.headers, verify=False)
+        r = requests.post(url=self.wapi_url,
+                          json={'method': 'account.logout', 'params': {}, 'jsonrpc': 2.0, 'id': self.ex_id()},
+                          headers=self.headers, verify=False)
+        time.sleep(3)
+        print(r.text)
 
     def renew_session(self):
         r = requests.post(url=self.wapi_url,
@@ -150,7 +149,7 @@ class User:
 
     def set_2type(self, tp=None):
         r = requests.post(url=self.wapi_url,
-                          json={'method': 'account.set_auth2type', 'params': {'tp': str(tp)}, 'jsonrpc': 2.0, 'id': self.ex_id()},
+                          json={'method': 'account.set_auth2type', 'params': {'tp': tp}, 'jsonrpc': 2.0, 'id': self.ex_id()},
                           headers=self.headers, verify=False)
         try:
             if type(loads(r.text)['error']['data']) == dict:
@@ -218,7 +217,7 @@ class User:
         try:
             self.headers['x-token'] = loads(r.text)['result']['session']['token']
         except KeyError:
-            self.resp_update_tz = loads(r.text)
+            self.resp_update_tz = loads(r.text)['error']
 
     def update_lang(self, lang):
         r = requests.post(url=self.wapi_url,
@@ -300,12 +299,12 @@ class User:
         except KeyError:
             self.resp_merch_list = loads(r.text)
 
+
     def merchant_get(self, m_lid, balance):
         r = requests.post(url=self.wapi_url,
                           json={'method': 'merchant.get', 'params': {'m_lid': m_lid, 'balance': balance},
                                 'jsonrpc': 2.0, 'id': self.ex_id()},
                           headers=self.headers, verify=False)
-        print(r.text, self.headers)
         try:
             self.resp_merch_get = loads(r.text)['result']
         except KeyError:
@@ -329,6 +328,7 @@ class User:
             except KeyError:
                     self.resp_merch_get_key = loads(r.text)
 
+
     def merchant_renew_key(self, m_lid):
         r = requests.post(url=self.wapi_url,
                           json={'method': 'merchant.renew_key', 'params': {'m_lid': m_lid},
@@ -346,6 +346,7 @@ class User:
             except KeyError:
                 self.resp_merch_renew_key = loads(r.text)
 
+
     def merchant_update(self, m_lid, title, params, payment_expiry, rotate_addr, apiip):
         r = requests.post(url=self.wapi_url,
                           json={'method': 'merchant.update',
@@ -353,39 +354,21 @@ class User:
                                            'payment_expiry': payment_expiry, 'rotate_addr': rotate_addr, 'apiip': apiip},
                                 'jsonrpc': 2.0, 'id': self.ex_id()},
                           headers=self.headers, verify=False)
+        print(r.text)
         try:
             self.resp_merch_update = loads(r.text)['result']
         except KeyError:
             self.resp_merch_update = loads(r.text)
 
-    def pwmerchactive_public_list(self):
+    def pwmerchactive(self, method, params):
         r = requests.post(url=self.wapi_url,
-                          json={'method': 'pwmerchactive.public_list', 'params': {},
-                                'jsonrpc': 2.0, 'id': self.ex_id()},
+                          json={'method': 'pwmerchactive.' + method, 'params': params, 'jsonrpc': 2.0, 'id': self.ex_id()},
                           headers=self.headers, verify=False)
-        self.resp_merch_public_list = loads(r.text)['result']
-
-    def pwmerchactive_list(self, m_lid, curr, is_out):
-        r = requests.post(url=self.wapi_url,
-                          json={'method': 'pwmerchactive.list',
-                                'params': {'m_lid': m_lid, 'curr': curr, 'is_out': is_out},
-                                'jsonrpc': 2.0, 'id': self.ex_id()},
-                          headers=self.headers, verify=False)
+        print(r.text)
         try:
-            self.resp_pwmerchactive_list = loads(r.text)['result']
+            self.resp_pwmerchactive = loads(r.text)['result']
         except KeyError:
-            self.resp_pwmerchactive_list = loads(r.text)
-
-    def pwmerchactive_update(self, m_lid, is_active, payway_name):
-        r = requests.post(url=self.wapi_url,
-                          json={'method': 'pwmerchactive.update',
-                                'params': {'m_lid': m_lid, 'is_active': is_active, 'payway_name': payway_name},
-                                'jsonrpc': 2.0, 'id': self.ex_id()},
-                          headers=self.headers, verify=False)
-        try:
-            self.resp_pwmerchactive_update = loads(r.text)['result']
-        except KeyError:
-            self.resp_pwmerchactive_update = loads(r.text)
+            self.resp_pwmerchactive = loads(r.text)['error']
 
     def bookmark_create(self, m_lid, title, params, order):
         r = requests.post(url=self.wapi_url,
@@ -418,6 +401,7 @@ class User:
         except KeyError:
             self.resp_bookmark_update = loads(r.text)
 
+
     def bookmark_delete(self, m_lid, oid):
         r = requests.post(url=self.wapi_url,
                           json={'method': 'bookmark.delete',
@@ -434,80 +418,12 @@ class User:
         data = {'method': 'merchant.delegate', 'params': params, 'jsonrpc': 2.0, 'id': self.ex_id()}
         r = requests.post(url=self.wapi_url, json=data, headers=self.headers, verify=False)
         # print(r.text)
-        try:
-            self.resp_delegate = loads(r.text)['result']
-        except KeyError:
-            self.resp_delegate = loads(r.text)['error']
+        self.resp_delegate = loads(r.text).get('result') or loads(r.text).get('error') or loads(r.text)
+        # try:
+        #     self.resp_delegate = loads(r.text).get('result', True)
+        # except KeyError:
+        #     self.resp_delegate = loads(r.text)['error']
 
-    def session_get(self, sess_id=None):
-        r = requests.post(url=self.wapi_url,
-                          json={'method': 'session.get',
-                                'params': {'sess_id': sess_id},
-                                'jsonrpc': 2.0, 'id': self.ex_id()},
-                          headers=self.headers, verify=False)
-        try:
-            return loads(r.text)['result']
-        except KeyError:
-            return loads(r.text)
-
-    def session_list(self, first=None, count=None):
-        r = requests.post(url=self.wapi_url,
-                          json={'method': 'session.list',
-                                'params': {'first': first,
-                                           'count': count},
-                                'jsonrpc': 2.0, 'id': self.ex_id()},
-                          headers=self.headers, verify=False)
-        try:
-            return loads(r.text)['result']
-        except KeyError:
-            return loads(r.text)
-
-    def session_delete(self, sess_id=None):
-        r = requests.post(url=self.wapi_url,
-                          json={'method': 'session.delete',
-                                'params': {'sess_id': sess_id},
-                                'jsonrpc': 2.0, 'id': self.ex_id()},
-                          headers=self.headers, verify=False)
-        try:
-            return loads(r.text)['result']
-        except KeyError:
-            return loads(r.text)
-
-    def session_delete_all(self):
-        r = requests.post(url=self.wapi_url,
-                          json={'method': 'session.delete_all',
-                                'jsonrpc': 2.0, 'id': self.ex_id()},
-                          headers=self.headers, verify=False)
-        try:
-            return loads(r.text)['result']
-        except KeyError:
-            return loads(r.text)
-
-    def update_sess_expiry(self, timedelta):
-        r = requests.post(url=self.wapi_url,
-                          json={'method': 'account.update_sess_expiry',
-                                'params': {'timedelta': timedelta},
-                                'jsonrpc': 2.0, 'id': self.ex_id()},
-                          headers=self.headers, verify=False)
-        try:
-            res = loads(r.text)['result']
-        except KeyError:
-            return loads(r.text)
-        self.headers['x-token'] = res['session']['token']
-        return res
-
-    def sess_many_allow(self, allow):
-        r = requests.post(url=self.wapi_url,
-                          json={'method': 'account.sess_many_allow',
-                                'params': {'allow': allow},
-                                'jsonrpc': 2.0, 'id': self.ex_id()},
-                          headers=self.headers, verify=False)
-        try:
-            res = loads(r.text)['result']
-        except KeyError:
-            return loads(r.text)
-        self.headers['x-token'] = res['session']['token']
-        return res
 
 if __name__ == '__main__':
     # admin1 = Admin(token='_RmwXc_7QNNxBbOMwQLAZ3xu7UlR8iHuT0cSehrPDcA4QFeRfY2S2vmhGE3B9ePGpw0q')
@@ -518,4 +434,5 @@ if __name__ == '__main__':
     # user1.confirm_registration(key=user1.forgot_key, code=admin1.get_onetime_code(email='testjcash@gmail.com'))
     # user1.update_pwd('aA/123')
     # print(user1.resp_authorization)
+
 

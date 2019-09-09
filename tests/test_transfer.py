@@ -261,10 +261,10 @@ class TestTransfer:
     #     assert user1.merchant1.resp_transfer_create['result']['rate'] == ['3582.44443', '1']
     #     assert user1.merchant1.resp_transfer_create['result']['reqdata']['amount'] == '0.43'
     #     # user1.merchant1.balance(curr='USD')
-    #     # assert user1.merchant1.resp_balance['result']['USD'] == '164.6'
+    #     # assert user1.merchant1.resp_balance['USD'] == '164.6'
     #     # time.sleep(2)
     #     # user1.merchant2.balance(curr='BTC')
-    #     # assert user1.merchant2.resp_balance['result']['BTC'] == '1.43'
+    #     # assert user1.merchant2.resp_balance['BTC'] == '1.43'
     #     admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=30, currency_id=admin.currency['BTC'],
     #                   is_active=False)
     #
@@ -321,8 +321,9 @@ class TestTransfer:
     #                            'm_lid': str(user1.merchant1.lid), 'tgt': str(user1.merchant2.lid),
     #                            'amount': '0.01', 'out_curr': 'UAH'})
     #     # pprint.pprint(user1.resp_delegate)
-    #     assert user1.resp_delegate['message'] == 'UnavailableOutPay'
-    #     assert user1.resp_delegate['data']['reason'] == 'Out pay is blocked for system'
+    #     assert user1.resp_delegate['code'] == -32036
+    #     assert user1.resp_delegate['message'] == 'EStateOutPayUnavailable'
+    #     assert user1.resp_delegate['data']['reason'] == 'Out pay is blocked'
     #
     # def test_transfer_15(self, _disable_st_value): # Выплаты во всей системе заблокированы
     #     """ Payments in the entire system are blocked
@@ -330,8 +331,9 @@ class TestTransfer:
     #     admin.set_st_value(name='out_is_blocked', value=True)
     #     user1.merchant1.transfer_create(tgt=user2.merchant1.lid, amount='5', out_curr='USD')
     #     # pprint.pprint(user1.merchant1.resp_transfer_create)
-    #     assert user1.merchant1.resp_transfer_create['error']['message'] == 'UnavailableOutPay'
-    #     assert user1.merchant1.resp_transfer_create['error']['data']['reason'] == 'Out pay is blocked for system'
+    #     assert user1.merchant1.resp_transfer_create['error']['code'] == -32036
+    #     assert user1.merchant1.resp_transfer_create['error']['message'] == 'EStateOutPayUnavailable'
+    #     assert user1.merchant1.resp_transfer_create['error']['data']['reason'] == 'Out pay is blocked'
     #
     # def test_transfer_16(self, _enable_merchant_payout_allowed):
     #     # Вывод для данного пользователя заблокирован (payout_allowed)
@@ -342,10 +344,9 @@ class TestTransfer:
     #                            'm_lid': str(user1.merchant1.lid), 'tgt': str(user1.merchant2.lid),
     #                            'amount': '0.01', 'out_curr': 'UAH'})
     #     # pprint.pprint(user1.resp_delegate)
-    #     assert user1.resp_delegate['message'] == 'UnavailableOutPay'
-    #     assert user1.resp_delegate['data']['reason'] == f'Out pay is blocked for merchant {user1.merchant1.lid}'
-    #     assert user1.resp_delegate['data']['reason'] == \
-    #            'Out pay is blocked for merchant {}'.format(user1.merchant1.lid)
+    #     assert user1.resp_delegate['code'] == -32036
+    #     assert user1.resp_delegate['message'] == 'EStateOutPayUnavailable'
+    #     assert user1.resp_delegate['data']['reason'] == 'Out pay is blocked'
     #
     # def test_transfer_17(self, _enable_merchant_payout_allowed): # Вывод для получателя заблокирован (payout_allowed)
     #     """ Recipient payout is blocked
@@ -375,11 +376,9 @@ class TestTransfer:
     #     admin.set_merchant(lid=user1.merchant1.lid, payout_allowed=False)
     #     user1.merchant1.transfer_create(tgt=user2.merchant1.lid, amount='5', out_curr='USD')
     #     # pprint.pprint(user1.merchant1.resp_transfer_create)
-    #     assert user1.merchant1.resp_transfer_create['error']['message'] == 'UnavailableOutPay'
-    #     assert user1.merchant1.resp_transfer_create['error']['data']['reason'] == \
-    #            f'Out pay is blocked for merchant {user1.merchant1.lid}'
-    #     assert user1.merchant1.resp_transfer_create['error']['data']['reason'] == \
-    #            'Out pay is blocked for merchant {}'.format(user1.merchant1.lid)
+    #     assert user1.merchant1.resp_transfer_create['error']['code'] == -32036
+    #     assert user1.merchant1.resp_transfer_create['error']['message'] == 'EStateOutPayUnavailable'
+    #     assert user1.merchant1.resp_transfer_create['error']['data']['reason'] == 'Out pay is blocked'
     #
     # def test_transfer_19(self, _enable_merchant_payout_allowed): # Вывод для получателя заблокирован (payout_allowed)
     #     """ Recipient payout is blocked
@@ -411,8 +410,9 @@ class TestTransfer:
     #                            'm_lid': str(user1.merchant1.lid), 'tgt': str(user1.merchant2.lid),
     #                            'amount': '0.02', 'out_curr': 'UAH'})
     #     # pprint.pprint(user1.resp_delegate)
-    #     assert user1.resp_delegate['message'] == 'InsufficientFunds'
-    #     assert user1.resp_delegate['data']['reason'] == 'Balance 0.01 less then amount 0.02 in UAH'
+    #     assert user1.resp_delegate['code'] == -32056
+    #     assert user1.resp_delegate['message'] == 'EStateInsufficientFunds'
+    #     assert user1.resp_delegate['data']['reason'] == 'Balance 0.01 less then amount 0.02'
     #     admin.set_fee(tp=30, currency_id=admin.currency['UAH'], is_active=False, merchant_id=user1.merchant1.id)
     #
     # def test_transfer_21(self): # Перевод суммы больше чем на счету списания
@@ -424,8 +424,9 @@ class TestTransfer:
     #                   is_active=True)
     #     user1.merchant1.transfer_create(tgt=user2.merchant1.lid, amount='10', out_curr='USD')
     #     # pprint.pprint(user1.merchant1.resp_transfer_create)
-    #     assert user1.merchant1.resp_transfer_create['error']['message'] == 'InsufficientFunds'
-    #     assert user1.merchant1.resp_transfer_create['error']['data']['reason'] == 'Balance 5 less then amount 10 in USD'
+    #     assert user1.merchant1.resp_transfer_create['error']['code'] == -32056
+    #     assert user1.merchant1.resp_transfer_create['error']['message'] == 'EStateInsufficientFunds'
+    #     assert user1.merchant1.resp_transfer_create['error']['data']['reason'] == 'Balance 5 less then amount 10'
     #     admin.set_fee(tp=30, currency_id=admin.currency['USD'], is_active=False, merchant_id=user1.merchant1.id)
     #
     # def test_transfer_22(self): # Перевод суммы не существующему мерчанту
@@ -434,8 +435,10 @@ class TestTransfer:
     #                            'm_lid': str(user1.merchant1.lid), 'tgt': '11111',
     #                            'amount': '0.01', 'out_curr': 'UAH'})
     #     # pprint.pprint(user1.resp_delegate)
-    #     assert user1.resp_delegate['message'] == 'NotFound'
-    #     assert user1.resp_delegate['data']['reason'] == 'Merchant with lid 11111 was not found'
+    #     assert user1.resp_delegate['code'] == -32090
+    #     assert user1.resp_delegate['message'] == 'EParamNotFound'
+    #     assert user1.resp_delegate['data']['field'] == 'tgt'
+    #     assert user1.resp_delegate['data']['reason'] == 'Not found'
     #
     # def test_transfer_23(self): # Перевод суммы не существующему мерчанту
     #     """ Transfer 5 USD to non-existent merchant to another owner: USD to USD by MERCHANT
@@ -447,9 +450,10 @@ class TestTransfer:
     #     admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=30, currency_id=admin.currency['USD'], is_active=False)
     #     user1.merchant1.transfer_create(tgt='11111', amount='5', out_curr='USD')
     #     # pprint.pprint(user1.merchant1.resp_transfer_create)
-    #     assert user1.merchant1.resp_transfer_create['error']['message'] == 'NotFound'
-    #     assert user1.merchant1.resp_transfer_create['error']['data']['reason'] == \
-    #            'Merchant with lid 11111 was not found'
+    #     assert user1.merchant1.resp_transfer_create['error']['code'] == -32090
+    #     assert user1.merchant1.resp_transfer_create['error']['message'] == 'EParamNotFound'
+    #     assert user1.merchant1.resp_transfer_create['error']['data']['field'] == 'tgt'
+    #     assert user1.merchant1.resp_transfer_create['error']['data']['reason'] == 'Not found'
     #     admin.set_currency_precision(is_crypto=False, admin_min=bl(5), admin_max=bl(3000), precision=2)
     #
     # def test_transfer_24(self, _enable_merchant_is_active): # Перевод суммы не активным мерчантом
@@ -459,10 +463,10 @@ class TestTransfer:
     #                            'm_lid': str(user1.merchant1.lid), 'tgt': str(user1.merchant2.lid),
     #                            'amount': '0.01', 'out_curr': 'UAH'})
     #     # pprint.pprint(user1.resp_delegate)
-    #     assert user1.resp_delegate['message'] == 'InvalidMerchant'
-    #     assert user1.resp_delegate['data']['reason'] == f'Active merchant with lid {user1.merchant1.lid} was not found'
-    #     assert user1.resp_delegate['data']['reason'] == \
-    #            'Active merchant with lid {} was not found'.format(user1.merchant1.lid)
+    #     assert user1.resp_delegate['code'] == -32015
+    #     assert user1.resp_delegate['message'] == 'EParamMerchantInvalid'
+    #     assert user1.resp_delegate['data']['field'] == 'merchant'
+    #     assert user1.resp_delegate['data']['reason'] == 'Improper merchant'
     #
     # def test_transfer_25(self, _enable_merchant_is_active): # Перевод суммы не активному мерчанту
     #     """ Transfer 0.01 UAH to non-active merchant the same owner: UAH to UAN by OWNER without fee for transfer. """
@@ -476,11 +480,10 @@ class TestTransfer:
     #                            'm_lid': str(user1.merchant1.lid), 'tgt': str(user1.merchant2.lid),
     #                            'amount': '0.01', 'out_curr': 'UAH'})
     #     # pprint.pprint(user1.resp_delegate)
-    #     assert user1.resp_delegate['message'] == 'InvalidMerchant'
-    #     assert user1.resp_delegate['data']['reason'] == \
-    #            f'Active merchant with lid {user1.merchant2.lid} was not found'
-    #     assert user1.resp_delegate['data']['reason'] == \
-    #            'Active merchant with lid {} was not found'.format(user1.merchant2.lid)
+    #     assert user1.resp_delegate['code'] == -32015
+    #     assert user1.resp_delegate['message'] == 'EParamMerchantInvalid'
+    #     assert user1.resp_delegate['data']['field'] == 'tgt'
+    #     assert user1.resp_delegate['data']['reason'] == 'Improper merchant'
     #
     # def test_transfer_26(self, _enable_merchant_is_active): # Перевод суммы не активным мерчантом
     #     """ Transfer 5 USD by non-active merchant to another owner: USD to USD by MERCHANT without fee for transfer. """
@@ -492,11 +495,10 @@ class TestTransfer:
     #     admin.set_merchant(lid=user2.merchant1.lid, is_active=False)
     #     user1.merchant1.transfer_create(tgt=user2.merchant1.lid, amount='5', out_curr='USD')
     #     # pprint.pprint(user1.merchant1.resp_transfer_create)
-    #     assert user1.merchant1.resp_transfer_create['error']['message'] == 'InvalidMerchant'
-    #     assert user1.merchant1.resp_transfer_create['error']['data']['reason'] == \
-    #            f'Active merchant with lid {user2.merchant1.lid} was not found'
-    #     assert user1.merchant1.resp_transfer_create['error']['data']['reason'] == \
-    #            'Active merchant with lid {} was not found'.format(user2.merchant1.lid)
+    #     assert user1.merchant1.resp_transfer_create['error']['code'] == -32015
+    #     assert user1.merchant1.resp_transfer_create['error']['message'] == 'EParamMerchantInvalid'
+    #     assert user1.merchant1.resp_transfer_create['error']['data']['field'] == 'tgt'
+    #     assert user1.merchant1.resp_transfer_create['error']['data']['reason'] == 'Improper merchant'
     #     admin.set_fee(tp=30, currency_id=admin.currency['USD'], is_active=True, merchant_id=user1.merchant1.id)
     #
     # def test_transfer_26_1(self, _enable_merchant_is_active): # Перевод суммы не активным мерчантом
@@ -504,8 +506,10 @@ class TestTransfer:
     #     admin.set_merchant(lid=user1.merchant1.lid, is_active=False)
     #     user1.merchant1.transfer_create(tgt=user2.merchant1.lid, amount='5', out_curr='USD')
     #     # pprint.pprint(user1.merchant1.resp_transfer_create)
-    #     assert user1.merchant1.resp_transfer_create['error']['message'] == 'InvalidMerchant'
-    #     assert user1.merchant1.resp_transfer_create['error']['data']['reason'] == 'Merchant Is Not Active'
+    #     assert user1.merchant1.resp_transfer_create['error']['code'] == -32015
+    #     assert user1.merchant1.resp_transfer_create['error']['message'] == 'EParamMerchantInvalid'
+    #     assert user1.merchant1.resp_transfer_create['error']['data']['field'] == 'x-merchant'
+    #     assert user1.merchant1.resp_transfer_create['error']['data']['reason'] == 'Merchant inactive'
     #
     # def test_transfer_27(self, _enable_merchant_is_active): # Перевод суммы не активному мерчанту
     #     """ Transfer 5 USD to non-active merchant to another owner: USD to USD by MERCHANT without fee for transfer. """
@@ -517,12 +521,10 @@ class TestTransfer:
     #     admin.set_merchant(lid=user2.merchant1.lid, is_active=False)
     #     user1.merchant1.transfer_create(tgt=user2.merchant1.lid, amount='5', out_curr='USD')
     #     # pprint.pprint(user1.merchant1.resp_transfer_create)
-    #     assert user1.merchant1.resp_transfer_create['error']['message'] == 'InvalidMerchant'
-    #     assert user1.merchant1.resp_transfer_create['error']['data']['reason'] == \
-    #            f'Active merchant with lid {user2.merchant1.lid} was not found'
-    #     assert user1.merchant1.resp_transfer_create['error']['data']['reason'] == \
-    #            'Active merchant with lid {} was not found'.format(user2.merchant1.lid)
-    #     admin.set_fee(tp=30, currency_id=admin.currency['USD'], is_active=True, merchant_id=user1.merchant1.id)
+    #     assert user1.merchant1.resp_transfer_create['error']['code'] == -32015
+    #     assert user1.merchant1.resp_transfer_create['error']['message'] == 'EParamMerchantInvalid'
+    #     assert user1.merchant1.resp_transfer_create['error']['data']['field'] == 'tgt'
+    #     assert user1.merchant1.resp_transfer_create['error']['data']['reason'] == 'Improper merchant'
     #
     # def test_transfer_28(self): # Перевод без суммы (amount = None)
     #     """ amount = None  delegate """
@@ -530,16 +532,19 @@ class TestTransfer:
     #                            'm_lid': str(user1.merchant1.lid), 'tgt': str(user1.merchant2.lid),
     #                            'amount': None, 'out_curr': 'UAH'})
     #     # pprint.pprint(user1.resp_delegate)
-    #     assert user1.resp_delegate['message'] == 'InvalidInputParams'
-    #     assert user1.resp_delegate['data']['reason'] == "method 'merchant.delegate' missing 1 argument: 'amount'"
+    #     assert user1.resp_delegate['code'] == -32002
+    #     assert user1.resp_delegate['message'] == 'EParamInvalid'
+    #     assert user1.resp_delegate['data']['field'] == 'amount'
+    #     assert user1.resp_delegate['data']['reason'] == 'Should be provided'
     #
     # def test_transfer_29(self): # Перевод без суммы (amount = None)
     #     """ amount = None  transfer """
     #     user1.merchant1.transfer_create(tgt=user2.merchant1.lid, amount=None, out_curr='USD')
     #     # pprint.pprint(user1.merchant1.resp_transfer_create)
-    #     assert user1.merchant1.resp_transfer_create['error']['message'] == 'InvalidInputParams'
-    #     assert user1.merchant1.resp_transfer_create['error']['data']['reason'] == \
-    #            "method 'transfer.create' missing 1 argument: 'amount'"
+    #     assert user1.merchant1.resp_transfer_create['error']['code'] == -32002
+    #     assert user1.merchant1.resp_transfer_create['error']['message'] == 'EParamInvalid'
+    #     assert user1.merchant1.resp_transfer_create['error']['data']['field'] == 'amount'
+    #     assert user1.merchant1.resp_transfer_create['error']['data']['reason'] == 'Should be provided'
     #
     # def test_transfer_30(self): # Неверное значение параметра amount (буква вместо цифры)
     #     """ amount = 'Test'  delegate """
@@ -547,7 +552,8 @@ class TestTransfer:
     #                            'm_lid': str(user1.merchant1.lid), 'tgt': str(user1.merchant2.lid),
     #                            'amount': 'Test', 'out_curr': 'UAH'})
     #     # pprint.pprint(user1.resp_delegate)
-    #     assert user1.resp_delegate['message'] == 'InvalidParam'
+    #     assert user1.resp_delegate['code'] == -32002
+    #     assert user1.resp_delegate['message'] == 'EParamInvalid'
     #     assert user1.resp_delegate['data']['field'] == 'amount'
     #     assert user1.resp_delegate['data']['reason'] == 'Should be a Number'
     #
@@ -555,7 +561,8 @@ class TestTransfer:
     #     """ amount = 'Test'  transfer """
     #     user1.merchant1.transfer_create(tgt=user2.merchant1.lid, amount='Test', out_curr='USD')
     #     # pprint.pprint(user1.merchant1.resp_transfer_create)
-    #     assert user1.merchant1.resp_transfer_create['error']['message'] == 'InvalidParam'
+    #     assert user1.merchant1.resp_transfer_create['error']['code'] == -32002
+    #     assert user1.merchant1.resp_transfer_create['error']['message'] == 'EParamInvalid'
     #     assert user1.merchant1.resp_transfer_create['error']['data']['field'] == 'amount'
     #     assert user1.merchant1.resp_transfer_create['error']['data']['reason'] == 'Should be a Number'
     #
@@ -565,15 +572,17 @@ class TestTransfer:
     #                            'm_lid': str(user1.merchant1.lid), 'tgt': str(user1.merchant2.lid),
     #                            'amount': '0.111', 'out_curr': 'UAH'})
     #     # pprint.pprint(user1.resp_delegate)
-    #     assert user1.resp_delegate['message'] == 'InvalidAmountFormat'
-    #     assert user1.resp_delegate['data']['reason'] == 'Invalid format 0.111 for UAH'
+    #     assert user1.resp_delegate['code'] == -32082
+    #     assert user1.resp_delegate['message'] == 'EParamAmountFormatInvalid'
+    #     assert user1.resp_delegate['data']['field'] == 'amount'
     #
     # def test_transfer_33(self): # Неверный формат параметра amount (фиатная 0.111)
     #     """ amount = 0.111  transfer """
     #     user1.merchant1.transfer_create(tgt=user2.merchant1.lid, amount='0.111', out_curr='USD')
     #     # pprint.pprint(user1.merchant1.resp_transfer_create)
-    #     assert user1.merchant1.resp_transfer_create['error']['message'] == 'InvalidAmountFormat'
-    #     assert user1.merchant1.resp_transfer_create['error']['data']['reason'] == 'Invalid format 0.111 for USD'
+    #     assert user1.merchant1.resp_transfer_create['error']['code'] == -32082
+    #     assert user1.merchant1.resp_transfer_create['error']['message'] == 'EParamAmountFormatInvalid'
+    #     assert user1.merchant1.resp_transfer_create['error']['data']['field'] == 'amount'
     #
     # def test_transfer_34(self): # Перевод по несуществующей валюте out_curr
     #     """ Transfer for non-existent currency out_curr """
@@ -581,7 +590,8 @@ class TestTransfer:
     #                            'm_lid': str(user1.merchant1.lid), 'tgt': str(user1.merchant2.lid),
     #                            'amount': '0.01', 'out_curr': 'TST'})
     #     # pprint.pprint(user1.resp_delegate)
-    #     assert user1.resp_delegate['message'] == 'InvalidCurrency'
+    #     assert user1.resp_delegate['code'] == -32014
+    #     assert user1.resp_delegate['message'] == 'EParamCurrencyInvalid'
     #     assert user1.resp_delegate['data']['field'] == 'out_curr'
     #     assert user1.resp_delegate['data']['reason'] == 'Invalid currency name'
     #
@@ -589,7 +599,8 @@ class TestTransfer:
     #     """ Transfer for non-existent currency out_curr """
     #     user1.merchant1.transfer_create(tgt=user2.merchant1.lid, amount='5', out_curr='TST')
     #     # pprint.pprint(user1.merchant1.resp_transfer_create)
-    #     assert user1.merchant1.resp_transfer_create['error']['message'] == 'InvalidCurrency'
+    #     assert user1.merchant1.resp_transfer_create['error']['code'] == -32014
+    #     assert user1.merchant1.resp_transfer_create['error']['message'] == 'EParamCurrencyInvalid'
     #     assert user1.merchant1.resp_transfer_create['error']['data']['field'] == 'out_curr'
     #     assert user1.merchant1.resp_transfer_create['error']['data']['reason'] == 'Invalid currency name'
     #
@@ -600,16 +611,20 @@ class TestTransfer:
     #                            'm_lid': str(user1.merchant1.lid), 'tgt': str(user1.merchant2.lid),
     #                            'amount': '0.01', 'out_curr': 'UAH'})
     #     # pprint.pprint(user1.resp_delegate)
-    #     assert user1.resp_delegate['message'] == 'InactiveCurrency'
-    #     assert user1.resp_delegate['data']['reason'] == 'UAH'
+    #     assert user1.resp_delegate['code'] == -32033
+    #     assert user1.resp_delegate['message'] == 'EStateCurrencyInactive'
+    #     assert user1.resp_delegate['data']['field'] == 'curr'
+    #     assert user1.resp_delegate['data']['reason'] == 'Inactive'
     #
     # def test_transfer_37(self, _enable_currency): # Перевод по неактивной валюте out_curr
     #     """ Currency out_curr off """
     #     admin.set_currency_activity(name='USD', is_disabled=False, is_active=False)
     #     user1.merchant1.transfer_create(tgt=user2.merchant1.lid, amount='5', out_curr='USD')
     #     # pprint.pprint(user1.merchant1.resp_transfer_create)
-    #     assert user1.merchant1.resp_transfer_create['error']['message'] == 'InactiveCurrency'
-    #     assert user1.merchant1.resp_transfer_create['error']['data']['reason'] == 'USD'
+    #     assert user1.merchant1.resp_transfer_create['error']['code'] == -32033
+    #     assert user1.merchant1.resp_transfer_create['error']['message'] == 'EStateCurrencyInactive'
+    #     assert user1.merchant1.resp_transfer_create['error']['data']['field'] == 'curr'
+    #     assert user1.merchant1.resp_transfer_create['error']['data']['reason'] == 'Inactive'
     #
     # def test_transfer_38(self, _enable_currency): # Валюта out_curr выкл
     #     """ Currency out_curr off """
@@ -618,16 +633,20 @@ class TestTransfer:
     #                            'm_lid': str(user1.merchant1.lid), 'tgt': str(user1.merchant2.lid),
     #                            'amount': '0.01', 'out_curr': 'UAH'})
     #     # pprint.pprint(user1.resp_delegate)
-    #     assert user1.resp_delegate['message'] == 'InactiveCurrency'
-    #     assert user1.resp_delegate['data']['reason'] == 'UAH'
+    #     assert user1.resp_delegate['code'] == -32033
+    #     assert user1.resp_delegate['message'] == 'EStateCurrencyInactive'
+    #     assert user1.resp_delegate['data']['field'] == 'curr'
+    #     assert user1.resp_delegate['data']['reason'] == 'Inactive'
     #
     # def test_transfer_39(self, _enable_currency): # Валюта out_curr выкл
     #     """ Currency out_curr off """
     #     admin.set_currency_activity(name='USD', is_disabled=True, is_active=True)
     #     user1.merchant1.transfer_create(tgt=user2.merchant1.lid, amount='5', out_curr='USD')
     #     # pprint.pprint(user1.merchant1.resp_transfer_create)
-    #     assert user1.merchant1.resp_transfer_create['error']['message'] == 'InactiveCurrency'
-    #     assert user1.merchant1.resp_transfer_create['error']['data']['reason'] == 'USD'
+    #     assert user1.merchant1.resp_transfer_create['error']['code'] == -32033
+    #     assert user1.merchant1.resp_transfer_create['error']['message'] == 'EStateCurrencyInactive'
+    #     assert user1.merchant1.resp_transfer_create['error']['data']['field'] == 'curr'
+    #     assert user1.merchant1.resp_transfer_create['error']['data']['reason'] == 'Inactive'
     #
     # def test_transfer_40(self): # Перевод по несуществующей валюте in_curr
     #     """ Transfer for non-existent currency in_curr """
@@ -635,7 +654,8 @@ class TestTransfer:
     #                            'm_lid': str(user1.merchant1.lid), 'tgt': str(user1.merchant2.lid),
     #                            'amount': '0.01', 'out_curr': 'UAH', 'in_curr': 'TST'})
     #     # pprint.pprint(user1.resp_delegate)
-    #     assert user1.resp_delegate['message'] == 'InvalidCurrency'
+    #     assert user1.resp_delegate['code'] == -32014
+    #     assert user1.resp_delegate['message'] == 'EParamCurrencyInvalid'
     #     assert user1.resp_delegate['data']['field'] == 'in_curr'
     #     assert user1.resp_delegate['data']['reason'] == 'Invalid currency name'
     #
@@ -643,7 +663,8 @@ class TestTransfer:
     #     """ Transfer for non-existent currency in_curr """
     #     user1.merchant1.transfer_create(tgt=user2.merchant1.lid, amount='5', out_curr='USD', in_curr='TST')
     #     # pprint.pprint(user1.merchant1.resp_transfer_create)
-    #     assert user1.merchant1.resp_transfer_create['error']['message'] == 'InvalidCurrency'
+    #     assert user1.merchant1.resp_transfer_create['error']['code'] == -32014
+    #     assert user1.merchant1.resp_transfer_create['error']['message'] == 'EParamCurrencyInvalid'
     #     assert user1.merchant1.resp_transfer_create['error']['data']['field'] == 'in_curr'
     #     assert user1.merchant1.resp_transfer_create['error']['data']['reason'] == 'Invalid currency name'
     #
@@ -654,16 +675,20 @@ class TestTransfer:
     #                            'm_lid': str(user1.merchant1.lid), 'tgt': str(user1.merchant2.lid),
     #                            'amount': '0.01', 'out_curr': 'UAH', 'in_curr': 'USD'})
     #     # pprint.pprint(user1.resp_delegate)
-    #     assert user1.resp_delegate['message'] == 'InactiveCurrency'
-    #     assert user1.resp_delegate['data']['reason'] == 'USD'
+    #     assert user1.resp_delegate['code'] == -32033
+    #     assert user1.resp_delegate['message'] == 'EStateCurrencyInactive'
+    #     assert user1.resp_delegate['data']['field'] == 'curr'
+    #     assert user1.resp_delegate['data']['reason'] == 'Inactive'
     #
     # def test_transfer_43(self, _enable_currency): # Перевод по неактивной валюте in_curr
     #     """ Currency in_curr off """
     #     admin.set_currency_activity(name='UAH', is_disabled=False, is_active=False)
     #     user1.merchant1.transfer_create(tgt=user2.merchant1.lid, amount='5', out_curr='USD', in_curr='UAH')
     #     # pprint.pprint(user1.merchant1.resp_transfer_create)
-    #     assert user1.merchant1.resp_transfer_create['error']['message'] == 'InactiveCurrency'
-    #     assert user1.merchant1.resp_transfer_create['error']['data']['reason'] == 'UAH'
+    #     assert user1.merchant1.resp_transfer_create['error']['code'] == -32033
+    #     assert user1.merchant1.resp_transfer_create['error']['message'] == 'EStateCurrencyInactive'
+    #     assert user1.merchant1.resp_transfer_create['error']['data']['field'] == 'curr'
+    #     assert user1.merchant1.resp_transfer_create['error']['data']['reason'] == 'Inactive'
     #
     # def test_transfer_44(self, _enable_currency): # Валюта in_curr выкл
     #     """ Currency in_curr off """
@@ -672,16 +697,20 @@ class TestTransfer:
     #                            'm_lid': str(user1.merchant1.lid), 'tgt': str(user1.merchant2.lid),
     #                            'amount': '0.01', 'out_curr': 'USD', 'in_curr': 'UAH'})
     #     # pprint.pprint(user1.resp_delegate)
-    #     assert user1.resp_delegate['message'] == 'InactiveCurrency'
-    #     assert user1.resp_delegate['data']['reason'] == 'UAH'
+    #     assert user1.resp_delegate['code'] == -32033
+    #     assert user1.resp_delegate['message'] == 'EStateCurrencyInactive'
+    #     assert user1.resp_delegate['data']['field'] == 'curr'
+    #     assert user1.resp_delegate['data']['reason'] == 'Inactive'
     #
     # def test_transfer_45(self, _enable_currency): # Валюта in_curr выкл
     #     """ Currency in_curr off """
     #     admin.set_currency_activity(name='UAH', is_disabled=True, is_active=True)
     #     user1.merchant1.transfer_create(tgt=user2.merchant1.lid, amount='5', out_curr='USD', in_curr='UAH')
     #     # pprint.pprint(user1.merchant1.resp_transfer_create)
-    #     assert user1.merchant1.resp_transfer_create['error']['message'] == 'InactiveCurrency'
-    #     assert user1.merchant1.resp_transfer_create['error']['data']['reason'] == 'UAH'
+    #     assert user1.merchant1.resp_transfer_create['error']['code'] == -32033
+    #     assert user1.merchant1.resp_transfer_create['error']['message'] == 'EStateCurrencyInactive'
+    #     assert user1.merchant1.resp_transfer_create['error']['data']['field'] == 'curr'
+    #     assert user1.merchant1.resp_transfer_create['error']['data']['reason'] == 'Inactive'
     #
     # def test_transfer_46(self): # Перевод суммы ниже технического минимума по таблице currency
     #     """ Amount transfer below the technical minimum in the currency table """
@@ -695,8 +724,11 @@ class TestTransfer:
     #                            'm_lid': str(user1.merchant1.lid), 'tgt': str(user1.merchant2.lid),
     #                            'amount': '0.01', 'out_curr': 'UAH'})
     #     # pprint.pprint(user1.resp_delegate)
-    #     assert user1.resp_delegate['message'] == 'AmountTooSmall'
-    #     assert user1.resp_delegate['data']['reason'] == '0.01'
+    #     assert user1.resp_delegate['code'] == -32074
+    #     assert user1.resp_delegate['message'] == 'EParamAmountTooSmall'
+    #     assert user1.resp_delegate['data']['field'] == 'amount'
+    #     assert user1.resp_delegate['data']['reason'] == 'Amount is too small'
+    #     assert user1.resp_delegate['data']['value'] == '0.01'
     #     admin.set_fee(tp=30, currency_id=admin.currency['UAH'], is_active=False, merchant_id=user1.merchant1.id)
     #     admin.set_currency_precision(is_crypto=False, admin_min=bl(0.01), admin_max=bl(3000), precision=2)
     #
@@ -710,8 +742,11 @@ class TestTransfer:
     #                   is_active=True)
     #     user1.merchant1.transfer_create(tgt=user2.merchant1.lid, amount='5', out_curr='USD')
     #     # pprint.pprint(user1.merchant1.resp_transfer_create)
-    #     assert user1.merchant1.resp_transfer_create['error']['message'] == 'AmountTooSmall'
-    #     assert user1.merchant1.resp_transfer_create['error']['data']['reason'] == '5'
+    #     assert user1.merchant1.resp_transfer_create['error']['code'] == -32074
+    #     assert user1.merchant1.resp_transfer_create['error']['message'] == 'EParamAmountTooSmall'
+    #     assert user1.merchant1.resp_transfer_create['error']['data']['field'] == 'amount'
+    #     assert user1.merchant1.resp_transfer_create['error']['data']['reason'] == 'Amount is too small'
+    #     assert user1.merchant1.resp_transfer_create['error']['data']['value'] == '5'
     #     admin.set_fee(tp=30, currency_id=admin.currency['USD'], is_active=False, merchant_id=user1.merchant1.id)
     #     admin.set_currency_precision(is_crypto=False, admin_min=bl(0.01), admin_max=bl(3000), precision=2)
     #
@@ -727,8 +762,11 @@ class TestTransfer:
     #                            'm_lid': str(user1.merchant1.lid), 'tgt': str(user1.merchant2.lid),
     #                            'amount': '5', 'out_curr': 'UAH'})
     #     # pprint.pprint(user1.resp_delegate)
-    #     assert user1.resp_delegate['message'] == 'AmountTooBig'
-    #     assert user1.resp_delegate['data']['reason'] == '5'
+    #     assert user1.resp_delegate['code'] == -32073
+    #     assert user1.resp_delegate['message'] == 'EParamAmountTooBig'
+    #     assert user1.resp_delegate['data']['field'] == 'amount'
+    #     assert user1.resp_delegate['data']['reason'] == 'Amount is too big'
+    #     assert user1.resp_delegate['data']['value'] == '5'
     #     admin.set_fee(tp=30, currency_id=admin.currency['UAH'], is_active=False, merchant_id=user1.merchant1.id)
     #     admin.set_currency_precision(is_crypto=False, admin_min=bl(0.01), admin_max=bl(3000), precision=2)
     #
@@ -742,8 +780,11 @@ class TestTransfer:
     #                   is_active=True)
     #     user1.merchant1.transfer_create(tgt=user2.merchant1.lid, amount='5', out_curr='USD')
     #     # pprint.pprint(user1.merchant1.resp_transfer_create)
-    #     assert user1.merchant1.resp_transfer_create['error']['message'] == 'AmountTooBig'
-    #     assert user1.merchant1.resp_transfer_create['error']['data']['reason'] == '5'
+    #     assert user1.merchant1.resp_transfer_create['error']['code'] == -32073
+    #     assert user1.merchant1.resp_transfer_create['error']['message'] == 'EParamAmountTooBig'
+    #     assert user1.merchant1.resp_transfer_create['error']['data']['field'] == 'amount'
+    #     assert user1.merchant1.resp_transfer_create['error']['data']['reason'] == 'Amount is too big'
+    #     assert user1.merchant1.resp_transfer_create['error']['data']['value'] == '5'
     #     admin.set_fee(tp=30, currency_id=admin.currency['USD'], is_active=False, merchant_id=user1.merchant1.id)
     #     admin.set_currency_precision(is_crypto=False, admin_min=bl(0.01), admin_max=bl(3000), precision=2)
     #
@@ -759,6 +800,7 @@ class TestTransfer:
     #     user1.delegate(params={'merch_model': 'transfer', 'merch_method': 'create', 'externalid': user1.ex_id(),
     #                            'm_lid': str(user1.merchant1.lid), 'tgt': str(user1.merchant2.lid),
     #                            'amount': '5', 'out_curr': 'UAH'})
+    #     # pprint.pprint(user1.resp_delegate)
     #     assert user1.resp_delegate['status'] == 'done'
     #     assert user1.resp_delegate['in_amount'] == '5'
     #     assert user1.resp_delegate['out_amount'] == '5'
@@ -781,6 +823,7 @@ class TestTransfer:
     #     admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=30, currency_id=admin.currency['USD'],
     #                   is_active=True)
     #     user1.merchant1.transfer_create(tgt=user2.merchant1.lid, amount='5', out_curr='USD')
+    #     # pprint.pprint(user1.merchant1.resp_transfer_create)
     #     assert user1.merchant1.resp_transfer_create['result']['status'] == 'done'
     #     assert user1.merchant1.resp_transfer_create['result']['in_amount'] == '5'
     #     assert user1.merchant1.resp_transfer_create['result']['out_amount'] == '5'
@@ -799,23 +842,27 @@ class TestTransfer:
     #                            'm_lid': str(user1.merchant1.lid), 'tgt': str(user1.merchant2.lid),
     #                            'amount': '0.009', 'out_curr': 'UAH'})
     #     # pprint.pprint(user1.resp_delegate)
-    #     assert user1.resp_delegate['message'] == 'InvalidAmountFormat'
-    #     assert user1.resp_delegate['data']['reason'] == 'Invalid format 0.009 for UAH'
+    #     assert user1.resp_delegate['code'] == -32082
+    #     assert user1.resp_delegate['message'] == 'EParamAmountFormatInvalid'
+    #     assert user1.resp_delegate['data']['field'] == 'amount'
     #
     # def test_transfer_53(self): # Перевод с параметром amount, значение которого меньше зерна валюты out_curr
     #     """ Transfer with the amount parameter, the value of which is less than the out_curr currency grain transfer_create """
     #     user1.merchant1.transfer_create(tgt=user2.merchant1.lid, amount='0.009', out_curr='USD')
     #     # pprint.pprint(user1.merchant1.resp_transfer_create)
-    #     assert user1.merchant1.resp_transfer_create['error']['message'] == 'InvalidAmountFormat'
-    #     assert user1.merchant1.resp_transfer_create['error']['data']['reason'] == 'Invalid format 0.009 for USD'
+    #     assert user1.merchant1.resp_transfer_create['error']['code'] == -32082
+    #     assert user1.merchant1.resp_transfer_create['error']['message'] == 'EParamAmountFormatInvalid'
+    #     assert user1.merchant1.resp_transfer_create['error']['data']['field'] == 'amount'
     #
     # def test_transfer_54(self): # Запрос без out_curr
     #     """ Request without out_curr """
     #     user1.delegate(params={'merch_model': 'transfer', 'merch_method': 'create', 'externalid': user1.ex_id(),
     #                            'm_lid': str(user1.merchant1.lid), 'tgt': str(user1.merchant2.lid), 'amount': '0.009'})
     #     # pprint.pprint(user1.resp_delegate)
-    #     assert user1.resp_delegate['message'] == 'InvalidInputParams'
-    #     assert user1.resp_delegate['data']['reason'] == "method 'merchant.delegate' missing 1 argument: 'out_curr'"
+    #     assert user1.resp_delegate['code'] == -32002
+    #     assert user1.resp_delegate['message'] == 'EParamInvalid'
+    #     assert user1.resp_delegate['data']['field'] == 'out_curr'
+    #     assert user1.resp_delegate['data']['reason'] == 'Should be provided'
     #
     # def test_transfer_55(self): # Запрос без out_curr
     #     """ Request without out_curr """
@@ -829,8 +876,10 @@ class TestTransfer:
     #                                'x-signature': create_sign(user1.merchant1.akey, data['params'], time_sent),
     #                                'x-utc-now-ms': time_sent}, verify=False)
     #     # print(r.text)
-    #     assert loads(r.text)['error']['message'] == 'InvalidInputParams'
-    #     assert loads(r.text)['error']['data']['reason'] == "method 'transfer.create' missing 1 argument: 'out_curr'"
+    #     assert loads(r.text)['error']['code'] == -32002
+    #     assert loads(r.text)['error']['message'] == 'EParamInvalid'
+    #     assert loads(r.text)['error']['data']['field'] == 'out_curr'
+    #     assert loads(r.text)['error']['data']['reason'] == 'Should be provided'
     #
     # def test_transfer_56(self): # Запрос out_curr = None
     #     """ Request out_curr = None """
@@ -838,16 +887,19 @@ class TestTransfer:
     #                            'm_lid': str(user1.merchant1.lid), 'tgt': str(user1.merchant2.lid), 'amount': '0.009',
     #                            'out_curr': None})
     #     # pprint.pprint(user1.resp_delegate)
-    #     assert user1.resp_delegate['message'] == 'InvalidInputParams'
-    #     assert user1.resp_delegate['data']['reason'] == "method 'merchant.delegate' missing 1 argument: 'out_curr'"
+    #     assert user1.resp_delegate['code'] == -32002
+    #     assert user1.resp_delegate['message'] == 'EParamInvalid'
+    #     assert user1.resp_delegate['data']['field'] == 'out_curr'
+    #     assert user1.resp_delegate['data']['reason'] == 'Should be provided'
     #
     # def test_transfer_57(self): # Запрос out_curr = None
     #     """ Request out_curr = None """
     #     user1.merchant1.transfer_create(tgt=user2.merchant1.lid, amount='0.009', out_curr=None)
     #     # pprint.pprint(user1.merchant1.resp_transfer_create)
-    #     assert user1.merchant1.resp_transfer_create['error']['message'] == 'InvalidInputParams'
-    #     assert user1.merchant1.resp_transfer_create['error']['data']['reason'] == \
-    #            "method 'transfer.create' missing 1 argument: 'out_curr'"
+    #     assert user1.merchant1.resp_transfer_create['error']['code'] == -32002
+    #     assert user1.merchant1.resp_transfer_create['error']['message'] == 'EParamInvalid'
+    #     assert user1.merchant1.resp_transfer_create['error']['data']['field'] == 'out_curr'
+    #     assert user1.merchant1.resp_transfer_create['error']['data']['reason'] == 'Should be provided'
     #
     # def test_transfer_58(self): # Запрос с лишним параметром 'par': '123'
     #     """ Request with extra parameter 'par': '123' """
@@ -855,9 +907,10 @@ class TestTransfer:
     #                            'm_lid': str(user1.merchant1.lid), 'tgt': str(user1.merchant2.lid), 'amount': '0.01',
     #                            'out_curr': 'UAH', 'par': '123'})
     #     # pprint.pprint(user1.resp_delegate)
-    #     assert user1.resp_delegate['message'] == 'InvalidInputParams'
-    #     assert user1.resp_delegate['data']['reason'] ==  \
-    #            "method 'merchant.delegate' received a redundant argument 'par'"
+    #     assert user1.resp_delegate['code'] == -32002
+    #     assert user1.resp_delegate['message'] == 'EParamInvalid'
+    #     assert user1.resp_delegate['data']['field'] == 'par'
+    #     assert user1.resp_delegate['data']['reason'] == 'Should not be provided'
     #
     # def test_transfer_59(self): # Запрос с лишним параметром 'par': '123'
     #     """ Request with extra parameter 'par': '123' """
@@ -871,17 +924,20 @@ class TestTransfer:
     #                                'x-signature': create_sign(user1.merchant1.akey, data['params'], time_sent),
     #                                'x-utc-now-ms': time_sent}, verify=False)
     #     # print(r.text)
-    #     assert loads(r.text)['error']['message'] == 'InvalidInputParams'
-    #     assert loads(r.text)['error']['data']['reason'] == \
-    #            "method 'transfer.create' received a redundant argument 'par'"
+    #     assert loads(r.text)['error']['code'] == -32002
+    #     assert loads(r.text)['error']['message'] == 'EParamInvalid'
+    #     assert loads(r.text)['error']['data']['field'] == 'par'
+    #     assert loads(r.text)['error']['data']['reason'] == 'Should not be provided'
     #
     # def test_transfer_60(self): # Запрос без externalid
     #     """ Request without externalid delegate """
     #     user1.delegate(params={'merch_model': 'transfer', 'merch_method': 'create', 'out_curr': 'UAH',
     #                            'm_lid': str(user1.merchant1.lid), 'tgt': str(user1.merchant2.lid), 'amount': '0.01'})
     #     # pprint.pprint(user1.resp_delegate)
-    #     assert user1.resp_delegate['message'] == 'InvalidInputParams'
-    #     assert user1.resp_delegate['data']['reason'] == "method 'merchant.delegate' missing 1 argument: 'externalid'"
+    #     assert user1.resp_delegate['code'] == -32002
+    #     assert user1.resp_delegate['message'] == 'EParamInvalid'
+    #     assert user1.resp_delegate['data']['field'] == 'externalid'
+    #     assert user1.resp_delegate['data']['reason'] == 'Should be provided'
     #
     # def test_transfer_61(self): # Запрос без externalid
     #     """ Request without externalid transfer.create """
@@ -895,8 +951,10 @@ class TestTransfer:
     #                                'x-signature': create_sign(user1.merchant1.akey, data['params'], time_sent),
     #                                'x-utc-now-ms': time_sent}, verify=False)
     #     # print(r.text)
-    #     assert loads(r.text)['error']['message'] == 'InvalidInputParams'
-    #     assert loads(r.text)['error']['data']['reason'] == "method 'transfer.create' missing 1 argument: 'externalid'"
+    #     assert loads(r.text)['error']['code'] == -32002
+    #     assert loads(r.text)['error']['message'] == 'EParamInvalid'
+    #     assert loads(r.text)['error']['data']['field'] == 'externalid'
+    #     assert loads(r.text)['error']['data']['reason'] == 'Should be provided'
     #
     # def test_transfer_62(self): # Запрос с существующим externalid
     #     """ Request with existing externalid delegate """
@@ -912,8 +970,10 @@ class TestTransfer:
     #                            'm_lid': str(user1.merchant1.lid), 'tgt': str(user1.merchant2.lid),
     #                            'amount': '0.01', 'out_curr': 'UAH'})
     #     # pprint.pprint(user1.resp_delegate)
-    #     assert user1.resp_delegate['message'] == 'Unique'
-    #     assert user1.resp_delegate['data']['reason'] == 'Duplicated key for externalid'
+    #     assert user1.resp_delegate['code'] == -32091
+    #     assert user1.resp_delegate['message'] == 'EParamUnique'
+    #     assert user1.resp_delegate['data']['field'] == 'externalid'
+    #     assert user1.resp_delegate['data']['reason'] == 'Such externalid already present'
     #     admin.set_fee(tp=30, currency_id=admin.currency['UAH'], is_active=False, merchant_id=user1.merchant1.id)
     #
     # def test_transfer_63(self): # Запрос с существующим externalid
@@ -938,8 +998,10 @@ class TestTransfer:
     #                                'x-signature': create_sign(user1.merchant1.akey, data['params'], time_sent),
     #                                'x-utc-now-ms': time_sent}, verify=False)
     #     # pprint.pprint(loads(r.text))
-    #     assert loads(r.text)['error']['message'] == 'Unique'
-    #     assert loads(r.text)['error']['data']['reason'] == 'Duplicated key for externalid'
+    #     assert loads(r.text)['error']['code'] == -32091
+    #     assert loads(r.text)['error']['message'] == 'EParamUnique'
+    #     assert loads(r.text)['error']['data']['field'] == 'externalid'
+    #     assert loads(r.text)['error']['data']['reason'] == 'Such externalid already present'
     #     admin.set_fee(tp=30, currency_id=admin.currency['USD'], is_active=False, merchant_id=user1.merchant1.id)
     #
     # def test_transfer_64(self): # Запрос без подписи
@@ -954,8 +1016,10 @@ class TestTransfer:
     #                       headers={'x-merchant': str(user1.merchant1.lid),
     #                                'x-utc-now-ms': time_sent}, verify=False)
     #     # pprint.pprint(loads(r.text))
-    #     assert loads(r.text)['error']['message'] == 'InvalidHeaders'
-    #     assert loads(r.text)['error']['data']['reason'] == 'Add x-signature to headers'
+    #     assert loads(r.text)['error']['code'] == -32012
+    #     assert loads(r.text)['error']['message'] == 'EParamHeadersInvalid'
+    #     assert loads(r.text)['error']['data']['field'] == 'x-signature'
+    #     assert loads(r.text)['error']['data']['reason'] == 'Not present'
     #
     # def test_transfer_65(self): # Запрос с невалидной подписью
     #     """ Request with invalid sign """
@@ -969,180 +1033,203 @@ class TestTransfer:
     #                       headers={'x-merchant': str(user1.merchant1.lid),
     #                                'x-signature': create_sign(user2.merchant1.akey, data['params'], time_sent),
     #                                'x-utc-now-ms': time_sent}, verify=False)
-    #     # pprint.pprint(loads(r.text))
-    #     assert loads(r.text)['error']['message'] == 'InvalidSign'
+    #     # print(r.text)
+    #     assert loads(r.text)['error']['code'] == -32010
+    #     assert loads(r.text)['error']['message'] == 'EParamSignInvalid'
     #     assert loads(r.text)['error']['data']['reason'] == 'Invalid signature'
-
-    def test_transfer_66(self): # Перевод суммы не существующим мерчантом
-        """ Transfer of non-existent merchant """
-        user1.delegate(params={'merch_model': 'transfer', 'merch_method': 'create', 'externalid': user1.ex_id(),
-                               'm_lid': '11111', 'tgt': str(user1.merchant2.lid),
-                               'amount': '0.01', 'out_curr': 'UAH'})
-        # pprint.pprint(user1.resp_delegate)
-        assert user1.resp_delegate['message'] == 'NotFound'
-        assert user1.resp_delegate['data']['reason'] == 'Merchant with lid 11111 was not found'
-
-    def test_transfer_67(self): # Запрос tgt=None
-        """ tgt=None """
-        user1.delegate(params={'merch_model': 'transfer', 'merch_method': 'create', 'externalid': user1.ex_id(),
-                               'm_lid': str(user1.merchant1.lid), 'tgt': None,
-                               'amount': '0.01', 'out_curr': 'UAH'})
-        pprint.pprint(user1.resp_delegate)
-        assert user1.resp_delegate['message'] == 'InvalidInputParams'
-        assert user1.resp_delegate['data']['reason'] == "method 'merchant.delegate' missing 1 argument: 'tgt'"
-
-    def test_transfer_68(self): # Запрос tgt=None
-        """ tgt=None """
-        admin.set_wallet_amount(balance=bl(5), currency='USD', merch_lid=user1.merchant1.lid)
-        admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=30, currency_id=admin.currency['USD'],
-                      is_active=True, merchant_id=user1.merchant1.id)
-        admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=30, currency_id=admin.currency['USD'],
-                      is_active=True)
-        user1.merchant1.transfer_create(tgt=None, amount='5', out_curr='USD')
-        pprint.pprint(user1.merchant1.resp_transfer_create)
-        assert user1.merchant1.resp_transfer_create['error']['message'] == 'InvalidParam'
-        assert user1.merchant1.resp_transfer_create['error']['data']['reason'] == 'tgt None'
-        admin.set_fee(tp=30, currency_id=admin.currency['USD'], is_active=False, merchant_id=user1.merchant1.id)
-
-    def test_transfer_69(self): # Запрос без tgt
-        """ Request without tgt """
-        user1.delegate(params={'merch_model': 'transfer', 'merch_method': 'create', 'externalid': user1.ex_id(),
-                               'm_lid': str(user1.merchant1.lid), 'amount': '0.01', 'out_curr': 'UAH'})
-        # pprint.pprint(user1.resp_delegate)
-        assert user1.resp_delegate['message'] == 'InvalidInputParams'
-        assert user1.resp_delegate['data']['reason'] == "method 'merchant.delegate' missing 1 argument: 'tgt'"
-
-    def test_transfer_70(self): # Запрос без tgt
-        """ Request without tgt """
-        ex_id = user1.merchant1._id()
-        data = {'method': 'transfer.create',
-                'params': {'amount': '5', 'out_curr': 'USD', 'externalid': ex_id},
-                'jsonrpc': 2.0, 'id': ex_id}
-        time_sent = user1.merchant1.time_sent()
-        r = requests.post(url=user1.merchant1.japi_url, json=data,
-                            headers={'x-merchant': str(user1.merchant1.lid),
-                                    'x-signature': create_sign(user1.merchant1.akey, data['params'], time_sent),
-                                    'x-utc-now-ms': time_sent}, verify=False)
-        # pprint.pprint(loads(r.text))
-        assert loads(r.text)['error']['message'] == 'InvalidInputParams'
-        assert loads(r.text)['error']['data']['reason'] == "method 'transfer.create' missing 1 argument: 'tgt'"
-
-    def test_transfer_71(self): # Перевод суммы ниже технического минимума по таблице exchange
-        """ Amount transfer below the technical minimum in the exchange table transfer_create
-        Transfer 1 USD the same owner: UAH to USD by MERCHANT with internal exchange
-        and with common percent fee 1% for exchange. """
-        admin.set_wallet_amount(balance=bl(30), currency='UAH', merch_lid=user1.merchant1.lid)
-        admin.set_wallet_amount(balance=bl(1), currency='USD', merch_lid=user1.merchant2.lid)
-        admin.set_rate_exchange(rate=28199900000, fee=10000000, in_currency='UAH', out_currency='USD',
-                                tech_min=bl(30), tech_max=bl(10000))
-        admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=30, currency_id=admin.currency['USD'],
-                      is_active=False, merchant_id=user1.merchant1.id)
-        admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=30, currency_id=admin.currency['USD'],
-                      is_active=False)
-        user1.merchant1.transfer_create(tgt=user1.merchant2.lid, amount='1', in_curr='UAH', out_curr='USD')
-        # pprint.pprint(user1.merchant1.resp_transfer_create)
-        assert user1.merchant1.resp_transfer_create['error']['message'] == 'AmountTooSmall'
-        assert user1.merchant1.resp_transfer_create['error']['data']['reason'] == '28.49'
-        admin.set_rate_exchange(rate=28199900000, fee=10000000, in_currency='UAH', out_currency='USD',
-                                tech_min=bl(0.1), tech_max=bl(10000))
-
-    def test_transfer_72(self, _custom_fee, _disable_personal_operation_fee_transfer_USD):
-        """ Перевод суммы ниже технического минимума по таблице exchange
-        Amount transfer below the technical minimum in the exchange table delegate
-        Transfer 10.05 USD to another owner: UAH to USD by OWNER  with internal exchange
-        and with common fee 5% for exchange and with personal fee 3.5 % for exchange
-        and with common percent fee 10% for transfer and with common absolute fee 1 USD for transfer
-        and with personal percent fee 5% for transfer and with personal absolute fee 0.5 USD for transfer. """
-        admin.set_wallet_amount(balance=bl(400), currency='UAH', merch_lid=user1.merchant1.lid)
-        admin.set_wallet_amount(balance=bl(10), currency='USD', merch_lid=user2.merchant1.lid)
-        admin.set_rate_exchange(rate=28199900000, fee=50000000, in_currency='UAH', out_currency='USD',
-                                tech_min=bl(400), tech_max=bl(10000))
-        admin.set_personal_exchange_fee(in_curr=admin.currency['UAH'], out_curr=admin.currency['USD'],
-                                        is_active=True, merchant_id=user1.merchant1.id, fee=35000000)
-        admin.set_fee(mult=100000000, add=1000000000, _min=0, _max=0, around='ceil', tp=30,
-                      currency_id=admin.currency['USD'], is_active=True)
-        admin.set_fee(mult=50000000, add=500000000, _min=0, _max=0, around='ceil', tp=30,
-                      currency_id=admin.currency['USD'], is_active=True, merchant_id=user1.merchant1.id)
-        user1.delegate(params={'merch_model': 'transfer', 'merch_method': 'create', 'externalid': user1.ex_id(),
-                               'm_lid': str(user1.merchant1.lid), 'tgt': str(user2.merchant1.lid),
-                               'amount': '10.05', 'in_curr': 'UAH', 'out_curr': 'USD'})
-        # pprint.pprint(user1.resp_delegate)
-        assert user1.resp_delegate['message'] == 'AmountTooSmall'
-        assert user1.resp_delegate['data']['reason'] == '293.33'
-        admin.set_rate_exchange(rate=28199900000, fee=50000000, in_currency='UAH', out_currency='USD',
-                                tech_min=bl(0.1), tech_max=bl(10000))
-
-    def test_transfer_73(self): # Перевод суммы выше технического максимума по таблице exchange
-        """ Amount transfer above the technical maximum in the exchange table transfer_create
-        Transfer 1 USD the same owner: UAH to USD by MERCHANT with internal exchange
-        and with common percent fee 1% for exchange. """
-        admin.set_wallet_amount(balance=bl(30), currency='UAH', merch_lid=user1.merchant1.lid)
-        admin.set_wallet_amount(balance=bl(1), currency='USD', merch_lid=user1.merchant2.lid)
-        admin.set_rate_exchange(rate=28199900000, fee=10000000, in_currency='UAH', out_currency='USD',
-                                tech_min=bl(0.1), tech_max=bl(20))
-        admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=30, currency_id=admin.currency['USD'],
-                      is_active=False, merchant_id=user1.merchant1.id)
-        admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=30, currency_id=admin.currency['USD'],
-                      is_active=False)
-        user1.merchant1.transfer_create(tgt=user1.merchant2.lid, amount='1', in_curr='UAH', out_curr='USD')
-        # pprint.pprint(user1.merchant1.resp_transfer_create)
-        assert user1.merchant1.resp_transfer_create['error']['message'] == 'AmountTooBig'
-        assert user1.merchant1.resp_transfer_create['error']['data']['reason'] == '28.49'
-        admin.set_rate_exchange(rate=28199900000, fee=10000000, in_currency='UAH', out_currency='USD',
-                                tech_min=bl(0.1), tech_max=bl(10000))
-
-    def test_transfer_74(self, _custom_fee, _disable_personal_operation_fee_transfer_USD):
-        """ Перевод суммы выше технического максимума по таблице exchange
-        Amount transfer above the technical maximum in the exchange table delegate
-        Transfer 10.05 USD to another owner: UAH to USD by OWNER  with internal exchange
-        and with common fee 5% for exchange and with personal fee 3.5 % for exchange
-        and with common percent fee 10% for transfer and with common absolute fee 1 USD for transfer
-        and with personal percent fee 5% for transfer and with personal absolute fee 0.5 USD for transfer. """
-        admin.set_wallet_amount(balance=bl(400), currency='UAH', merch_lid=user1.merchant1.lid)
-        admin.set_wallet_amount(balance=bl(10), currency='USD', merch_lid=user2.merchant1.lid)
-        admin.set_rate_exchange(rate=28199900000, fee=50000000, in_currency='UAH', out_currency='USD',
-                                tech_min=bl(0.1), tech_max=bl(200))
-        admin.set_personal_exchange_fee(in_curr=admin.currency['UAH'], out_curr=admin.currency['USD'],
-                                        is_active=True, merchant_id=user1.merchant1.id, fee=35000000)
-        admin.set_fee(mult=100000000, add=1000000000, _min=0, _max=0, around='ceil', tp=30,
-                      currency_id=admin.currency['USD'], is_active=True)
-        admin.set_fee(mult=50000000, add=500000000, _min=0, _max=0, around='ceil', tp=30,
-                      currency_id=admin.currency['USD'], is_active=True, merchant_id=user1.merchant1.id)
-        user1.delegate(params={'merch_model': 'transfer', 'merch_method': 'create', 'externalid': user1.ex_id(),
-                               'm_lid': str(user1.merchant1.lid), 'tgt': str(user2.merchant1.lid),
-                               'amount': '10.05', 'in_curr': 'UAH', 'out_curr': 'USD'})
-        # pprint.pprint(user1.resp_delegate)
-        assert user1.resp_delegate['message'] == 'AmountTooBig'
-        assert user1.resp_delegate['data']['reason'] == '293.33'
-        admin.set_rate_exchange(rate=28199900000, fee=50000000, in_currency='UAH', out_currency='USD',
-                                tech_min=bl(0.1), tech_max=bl(10000))
-
-    def test_transfer_75(self): # Перевод суммы равной техническому минимуму по таблице exchange
-        """ Transfer of the amount equal to the technical maximum in the exchange table transfer_create
-        Transfer 1 USD the same owner: UAH to USD by MERCHANT with internal exchange
-        and with common percent fee 1% for exchange. """
-        admin.set_wallet_amount(balance=bl(30), currency='UAH', merch_lid=user1.merchant1.lid)
-        admin.set_wallet_amount(balance=bl(1), currency='USD', merch_lid=user1.merchant2.lid)
-        admin.set_rate_exchange(rate=28199900000, fee=10000000, in_currency='UAH', out_currency='USD',
-                                tech_min=bl(28.49), tech_max=bl(10000))
-        admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=30, currency_id=admin.currency['USD'],
-                      is_active=False, merchant_id=user1.merchant1.id)
-        admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=30, currency_id=admin.currency['USD'],
-                      is_active=False)
-        user1.merchant1.transfer_create(tgt=user1.merchant2.lid, amount='1', in_curr='UAH', out_curr='USD')
-        # pprint.pprint(user1.merchant1.resp_transfer_create)
-        assert user1.merchant1.resp_transfer_create['result']['account_amount'] == '28.49'
-        assert user1.merchant1.resp_transfer_create['result']['in_amount'] == '28.49'
-        assert user1.merchant1.resp_transfer_create['result']['out_amount'] == '1'
-        assert user1.merchant1.resp_transfer_create['result']['out_fee_amount'] == '0'
-        assert user1.merchant1.resp_transfer_create['result']['rate'] == ['28.4819', '1']
-        assert user1.merchant1.resp_transfer_create['result']['status'] == 'new'
-        assert user1.merchant1.balance(curr='UAH') == '1.51'
-        # user1.merchant1.order_get(o_lid=user1.merchant1.resp_transfer_create['id'])
-        # time.sleep(2)
-        # assert user1.merchant2.balance(curr='USD') == '2'
-        admin.set_rate_exchange(rate=28199900000, fee=10000000, in_currency='UAH', out_currency='USD',
-                                tech_min=bl(0.1), tech_max=bl(10000))
+    #
+    # def test_transfer_66(self): # Перевод суммы не существующим мерчантом
+    #     """ Transfer of non-existent merchant """
+    #     user1.delegate(params={'merch_model': 'transfer', 'merch_method': 'create', 'externalid': user1.ex_id(),
+    #                            'm_lid': '11111', 'tgt': str(user1.merchant2.lid),
+    #                            'amount': '0.01', 'out_curr': 'UAH'})
+    #     # pprint.pprint(user1.resp_delegate)
+    #     assert user1.resp_delegate['code'] == -32090
+    #     assert user1.resp_delegate['message'] == 'EParamNotFound'
+    #     assert user1.resp_delegate['data']['field'] == 'merchant'
+    #     assert user1.resp_delegate['data']['reason'] == 'Not found'
+    #
+    # def test_transfer_67(self): # Запрос tgt=None
+    #     """ tgt=None """
+    #     user1.delegate(params={'merch_model': 'transfer', 'merch_method': 'create', 'externalid': user1.ex_id(),
+    #                            'm_lid': str(user1.merchant1.lid), 'tgt': None,
+    #                            'amount': '0.01', 'out_curr': 'UAH'})
+    #     # pprint.pprint(user1.resp_delegate)
+    #     assert user1.resp_delegate['code'] == -32002
+    #     assert user1.resp_delegate['message'] == 'EParamInvalid'
+    #     assert user1.resp_delegate['data']['field'] == 'tgt'
+    #     assert user1.resp_delegate['data']['reason'] == 'Should be provided'
+    #
+    # def test_transfer_68(self): # Запрос tgt=None
+    #     """ tgt=None """
+    #     admin.set_wallet_amount(balance=bl(5), currency='USD', merch_lid=user1.merchant1.lid)
+    #     admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=30, currency_id=admin.currency['USD'],
+    #                   is_active=True, merchant_id=user1.merchant1.id)
+    #     admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=30, currency_id=admin.currency['USD'],
+    #                   is_active=True)
+    #     user1.merchant1.transfer_create(tgt=None, amount='5', out_curr='USD')
+    #     # pprint.pprint(user1.merchant1.resp_transfer_create)
+    #     assert user1.merchant1.resp_transfer_create['error']['code'] == -32003
+    #     assert user1.merchant1.resp_transfer_create['error']['message'] == 'EParamType'
+    #     assert user1.merchant1.resp_transfer_create['error']['data']['field'] == 'tgt'
+    #     assert user1.merchant1.resp_transfer_create['error']['data']['reason'] == 'Should be an Integer'
+    #     admin.set_fee(tp=30, currency_id=admin.currency['USD'], is_active=False, merchant_id=user1.merchant1.id)
+    #
+    # def test_transfer_69(self): # Запрос без tgt
+    #     """ Request without tgt """
+    #     user1.delegate(params={'merch_model': 'transfer', 'merch_method': 'create', 'externalid': user1.ex_id(),
+    #                            'm_lid': str(user1.merchant1.lid), 'amount': '0.01', 'out_curr': 'UAH'})
+    #     # pprint.pprint(user1.resp_delegate)
+    #     assert user1.resp_delegate['code'] == -32002
+    #     assert user1.resp_delegate['message'] == 'EParamInvalid'
+    #     assert user1.resp_delegate['data']['field'] == 'tgt'
+    #     assert user1.resp_delegate['data']['reason'] == 'Should be provided'
+    #
+    # def test_transfer_70(self): # Запрос без tgt
+    #     """ Request without tgt """
+    #     ex_id = user1.merchant1._id()
+    #     data = {'method': 'transfer.create',
+    #             'params': {'amount': '5', 'out_curr': 'USD', 'externalid': ex_id},
+    #             'jsonrpc': 2.0, 'id': ex_id}
+    #     time_sent = user1.merchant1.time_sent()
+    #     r = requests.post(url=user1.merchant1.japi_url, json=data,
+    #                         headers={'x-merchant': str(user1.merchant1.lid),
+    #                                 'x-signature': create_sign(user1.merchant1.akey, data['params'], time_sent),
+    #                                 'x-utc-now-ms': time_sent}, verify=False)
+    #     # pprint.pprint(loads(r.text))
+    #     assert loads(r.text)['error']['code'] == -32002
+    #     assert loads(r.text)['error']['message'] == 'EParamInvalid'
+    #     assert loads(r.text)['error']['data']['field'] == 'tgt'
+    #     assert loads(r.text)['error']['data']['reason'] == 'Should be provided'
+    #
+    # def test_transfer_71(self): # Перевод суммы ниже технического минимума по таблице exchange
+    #     """ Amount transfer below the technical minimum in the exchange table transfer_create
+    #     Transfer 1 USD the same owner: UAH to USD by MERCHANT with internal exchange
+    #     and with common percent fee 1% for exchange. """
+    #     admin.set_wallet_amount(balance=bl(30), currency='UAH', merch_lid=user1.merchant1.lid)
+    #     admin.set_wallet_amount(balance=bl(1), currency='USD', merch_lid=user1.merchant2.lid)
+    #     admin.set_rate_exchange(rate=28199900000, fee=10000000, in_currency='UAH', out_currency='USD',
+    #                             tech_min=bl(30), tech_max=bl(10000))
+    #     admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=30, currency_id=admin.currency['USD'],
+    #                   is_active=False, merchant_id=user1.merchant1.id)
+    #     admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=30, currency_id=admin.currency['USD'],
+    #                   is_active=False)
+    #     user1.merchant1.transfer_create(tgt=user1.merchant2.lid, amount='1', in_curr='UAH', out_curr='USD')
+    #     # pprint.pprint(user1.merchant1.resp_transfer_create)
+    #     assert user1.merchant1.resp_transfer_create['error']['code'] == -32074
+    #     assert user1.merchant1.resp_transfer_create['error']['message'] == 'EParamAmountTooSmall'
+    #     assert user1.merchant1.resp_transfer_create['error']['data']['field'] == 'in_amount'
+    #     assert user1.merchant1.resp_transfer_create['error']['data']['reason'] == 'Amount is too small'
+    #     assert user1.merchant1.resp_transfer_create['error']['data']['value'] == '28.49'
+    #     admin.set_rate_exchange(rate=28199900000, fee=10000000, in_currency='UAH', out_currency='USD',
+    #                             tech_min=bl(0.1), tech_max=bl(10000))
+    #
+    # def test_transfer_72(self, _custom_fee, _disable_personal_operation_fee_transfer_USD):
+    #     """ Перевод суммы ниже технического минимума по таблице exchange
+    #     Amount transfer below the technical minimum in the exchange table delegate
+    #     Transfer 10.05 USD to another owner: UAH to USD by OWNER  with internal exchange
+    #     and with common fee 5% for exchange and with personal fee 3.5 % for exchange
+    #     and with common percent fee 10% for transfer and with common absolute fee 1 USD for transfer
+    #     and with personal percent fee 5% for transfer and with personal absolute fee 0.5 USD for transfer. """
+    #     admin.set_wallet_amount(balance=bl(400), currency='UAH', merch_lid=user1.merchant1.lid)
+    #     admin.set_wallet_amount(balance=bl(10), currency='USD', merch_lid=user2.merchant1.lid)
+    #     admin.set_rate_exchange(rate=28199900000, fee=50000000, in_currency='UAH', out_currency='USD',
+    #                             tech_min=bl(400), tech_max=bl(10000))
+    #     admin.set_personal_exchange_fee(in_curr=admin.currency['UAH'], out_curr=admin.currency['USD'],
+    #                                     is_active=True, merchant_id=user1.merchant1.id, fee=35000000)
+    #     admin.set_fee(mult=100000000, add=1000000000, _min=0, _max=0, around='ceil', tp=30,
+    #                   currency_id=admin.currency['USD'], is_active=True)
+    #     admin.set_fee(mult=50000000, add=500000000, _min=0, _max=0, around='ceil', tp=30,
+    #                   currency_id=admin.currency['USD'], is_active=True, merchant_id=user1.merchant1.id)
+    #     user1.delegate(params={'merch_model': 'transfer', 'merch_method': 'create', 'externalid': user1.ex_id(),
+    #                            'm_lid': str(user1.merchant1.lid), 'tgt': str(user2.merchant1.lid),
+    #                            'amount': '10.05', 'in_curr': 'UAH', 'out_curr': 'USD'})
+    #     # pprint.pprint(user1.resp_delegate)
+    #     assert user1.resp_delegate['code'] == -32074
+    #     assert user1.resp_delegate['message'] == 'EParamAmountTooSmall'
+    #     assert user1.resp_delegate['data']['field'] == 'in_amount'
+    #     assert user1.resp_delegate['data']['reason'] == 'Amount is too small'
+    #     assert user1.resp_delegate['data']['value'] == '293.33'
+    #     admin.set_rate_exchange(rate=28199900000, fee=50000000, in_currency='UAH', out_currency='USD',
+    #                             tech_min=bl(0.1), tech_max=bl(10000))
+    #
+    # def test_transfer_73(self): # Перевод суммы выше технического максимума по таблице exchange
+    #     """ Amount transfer above the technical maximum in the exchange table transfer_create
+    #     Transfer 1 USD the same owner: UAH to USD by MERCHANT with internal exchange
+    #     and with common percent fee 1% for exchange. """
+    #     admin.set_wallet_amount(balance=bl(30), currency='UAH', merch_lid=user1.merchant1.lid)
+    #     admin.set_wallet_amount(balance=bl(1), currency='USD', merch_lid=user1.merchant2.lid)
+    #     admin.set_rate_exchange(rate=28199900000, fee=10000000, in_currency='UAH', out_currency='USD',
+    #                             tech_min=bl(0.1), tech_max=bl(20))
+    #     admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=30, currency_id=admin.currency['USD'],
+    #                   is_active=False, merchant_id=user1.merchant1.id)
+    #     admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=30, currency_id=admin.currency['USD'],
+    #                   is_active=False)
+    #     user1.merchant1.transfer_create(tgt=user1.merchant2.lid, amount='1', in_curr='UAH', out_curr='USD')
+    #     # pprint.pprint(user1.merchant1.resp_transfer_create)
+    #     assert user1.merchant1.resp_transfer_create['error']['code'] == -32073
+    #     assert user1.merchant1.resp_transfer_create['error']['message'] == 'EParamAmountTooBig'
+    #     assert user1.merchant1.resp_transfer_create['error']['data']['field'] == 'in_amount'
+    #     assert user1.merchant1.resp_transfer_create['error']['data']['reason'] == 'Amount is too big'
+    #     assert user1.merchant1.resp_transfer_create['error']['data']['value'] == '28.49'
+    #     admin.set_rate_exchange(rate=28199900000, fee=10000000, in_currency='UAH', out_currency='USD',
+    #                             tech_min=bl(0.1), tech_max=bl(10000))
+    #
+    # def test_transfer_74(self, _custom_fee, _disable_personal_operation_fee_transfer_USD):
+    #     """ Перевод суммы выше технического максимума по таблице exchange
+    #     Amount transfer above the technical maximum in the exchange table delegate
+    #     Transfer 10.05 USD to another owner: UAH to USD by OWNER  with internal exchange
+    #     and with common fee 5% for exchange and with personal fee 3.5 % for exchange
+    #     and with common percent fee 10% for transfer and with common absolute fee 1 USD for transfer
+    #     and with personal percent fee 5% for transfer and with personal absolute fee 0.5 USD for transfer. """
+    #     admin.set_wallet_amount(balance=bl(400), currency='UAH', merch_lid=user1.merchant1.lid)
+    #     admin.set_wallet_amount(balance=bl(10), currency='USD', merch_lid=user2.merchant1.lid)
+    #     admin.set_rate_exchange(rate=28199900000, fee=50000000, in_currency='UAH', out_currency='USD',
+    #                             tech_min=bl(0.1), tech_max=bl(200))
+    #     admin.set_personal_exchange_fee(in_curr=admin.currency['UAH'], out_curr=admin.currency['USD'],
+    #                                     is_active=True, merchant_id=user1.merchant1.id, fee=35000000)
+    #     admin.set_fee(mult=100000000, add=1000000000, _min=0, _max=0, around='ceil', tp=30,
+    #                   currency_id=admin.currency['USD'], is_active=True)
+    #     admin.set_fee(mult=50000000, add=500000000, _min=0, _max=0, around='ceil', tp=30,
+    #                   currency_id=admin.currency['USD'], is_active=True, merchant_id=user1.merchant1.id)
+    #     user1.delegate(params={'merch_model': 'transfer', 'merch_method': 'create', 'externalid': user1.ex_id(),
+    #                            'm_lid': str(user1.merchant1.lid), 'tgt': str(user2.merchant1.lid),
+    #                            'amount': '10.05', 'in_curr': 'UAH', 'out_curr': 'USD'})
+    #     # pprint.pprint(user1.resp_delegate)
+    #     assert user1.resp_delegate['code'] == -32073
+    #     assert user1.resp_delegate['message'] == 'EParamAmountTooBig'
+    #     assert user1.resp_delegate['data']['field'] == 'in_amount'
+    #     assert user1.resp_delegate['data']['reason'] == 'Amount is too big'
+    #     assert user1.resp_delegate['data']['value'] == '293.33'
+    #     admin.set_rate_exchange(rate=28199900000, fee=50000000, in_currency='UAH', out_currency='USD',
+    #                             tech_min=bl(0.1), tech_max=bl(10000))
+    #
+    # def test_transfer_75(self): # Перевод суммы равной техническому минимуму по таблице exchange
+    #     """ Transfer of the amount equal to the technical maximum in the exchange table transfer_create
+    #     Transfer 1 USD the same owner: UAH to USD by MERCHANT with internal exchange
+    #     and with common percent fee 1% for exchange. """
+    #     admin.set_wallet_amount(balance=bl(30), currency='UAH', merch_lid=user1.merchant1.lid)
+    #     admin.set_wallet_amount(balance=bl(1), currency='USD', merch_lid=user1.merchant2.lid)
+    #     admin.set_rate_exchange(rate=28199900000, fee=10000000, in_currency='UAH', out_currency='USD',
+    #                             tech_min=bl(28.49), tech_max=bl(10000))
+    #     admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=30, currency_id=admin.currency['USD'],
+    #                   is_active=False, merchant_id=user1.merchant1.id)
+    #     admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=30, currency_id=admin.currency['USD'],
+    #                   is_active=False)
+    #     user1.merchant1.transfer_create(tgt=user1.merchant2.lid, amount='1', in_curr='UAH', out_curr='USD')
+    #     # pprint.pprint(user1.merchant1.resp_transfer_create)
+    #     assert user1.merchant1.resp_transfer_create['result']['account_amount'] == '28.49'
+    #     assert user1.merchant1.resp_transfer_create['result']['in_amount'] == '28.49'
+    #     assert user1.merchant1.resp_transfer_create['result']['out_amount'] == '1'
+    #     assert user1.merchant1.resp_transfer_create['result']['out_fee_amount'] == '0'
+    #     assert user1.merchant1.resp_transfer_create['result']['rate'] == ['28.4819', '1']
+    #     assert user1.merchant1.resp_transfer_create['result']['status'] == 'new'
+    #     assert user1.merchant1.balance(curr='UAH') == '1.51'
+    #     # user1.merchant1.order_get(o_lid=user1.merchant1.resp_transfer_create['id'])
+    #     # time.sleep(2)
+    #     # assert user1.merchant2.balance(curr='USD') == '2'
+    #     admin.set_rate_exchange(rate=28199900000, fee=10000000, in_currency='UAH', out_currency='USD',
+    #                             tech_min=bl(0.1), tech_max=bl(10000))
 
     def test_transfer_76(self, _custom_fee, _disable_personal_operation_fee_transfer_USD):
         """ Перевод суммы равной техническому минимуму по таблице exchange
@@ -1243,7 +1330,6 @@ class TestTransfer:
         admin.set_rate_exchange(rate=28199900000, fee=50000000, in_currency='UAH', out_currency='USD',
                                 tech_min=bl(0.1), tech_max=bl(10000))
 
-
 @pytest.mark.usefixtures('_transfer_fee', '_personal_exchange_fee')
 class TestParams:
     """ Testing transfer params method. """
@@ -1260,8 +1346,11 @@ class TestParams:
     #     admin.set_wallet_amount(balance=bl(0.01), currency='UAH', merch_lid=user1.merchant1.lid)
     #     admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=30, currency_id=admin.currency['UAH'],
     #                   is_active=False, merchant_id=user1.merchant1.id)
-    #     admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=30, currency_id=admin.currency['UAH'], is_active=False)
-    #     user1.delegate(params={'merch_model': 'transfer', 'merch_method': 'params',  'm_lid': str(user1.merchant1.lid), 'out_curr': 'UAH'})
+    #     admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=30, currency_id=admin.currency['UAH'],
+    #                   is_active=False)
+    #     user1.delegate(params={'merch_model': 'transfer', 'merch_method': 'params',  'm_lid': str(user1.merchant1.lid),
+    #                            'out_curr': 'UAH'})
+    #     # pprint.pprint(user1.resp_delegate)
     #     assert user1.resp_delegate['in_curr'] == 'UAH'
     #     assert user1.resp_delegate['in_curr_balance'] == '0.01'
     #     assert user1.resp_delegate['is_convert'] == False
@@ -1269,7 +1358,7 @@ class TestParams:
     #     assert user1.resp_delegate['min'] == '0.01'
     #     assert user1.resp_delegate['min_balance_limit'] == '0.01'
     #     assert user1.resp_delegate['out_curr'] == 'UAH'
-    #     assert user1.resp_delegate['out_fee'] == {}
+    #     assert user1.resp_delegate['out_fee'] == {'add': '0', 'max': '0', 'method': None, 'min': '0', 'mult': '0'}
     #     assert user1.resp_delegate['rate'] == ['1', '1']
     #
     # def test_params_2(self):
@@ -1281,6 +1370,7 @@ class TestParams:
     #     admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=30, currency_id=admin.currency['USD'],
     #     is_active=False)
     #     user1.merchant1.transfer_params(out_curr='USD')
+    #     # pprint.pprint(user1.merchant1.resp_transfer_params)
     #     assert user1.merchant1.resp_transfer_params['in_curr'] == 'USD'
     #     assert user1.merchant1.resp_transfer_params['in_curr_balance'] == '5'
     #     assert user1.merchant1.resp_transfer_params['is_convert'] == False
@@ -1288,7 +1378,8 @@ class TestParams:
     #     assert user1.merchant1.resp_transfer_params['min'] == '5'
     #     assert user1.merchant1.resp_transfer_params['min_balance_limit'] == '5'
     #     assert user1.merchant1.resp_transfer_params['out_curr'] == 'USD'
-    #     assert user1.merchant1.resp_transfer_params['out_fee'] == {}
+    #     assert user1.merchant1.resp_transfer_params['out_fee'] == \
+    #            {'add': '0', 'max': '0', 'method': None, 'min': '0', 'mult': '0'}
     #     assert user1.merchant1.resp_transfer_params['rate'] == ['1', '1']
     #
     # def test_params_3(self):
@@ -1298,6 +1389,7 @@ class TestParams:
     #                   is_active=False, merchant_id=user1.merchant1.id)
     #     admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=30, currency_id=admin.currency['BTC'], is_active=False)
     #     user1.merchant1.transfer_params(out_curr='BTC')
+    #     # pprint.pprint(user1.merchant1.resp_transfer_params)
     #     assert user1.merchant1.resp_transfer_params['in_curr'] == 'BTC'
     #     assert user1.merchant1.resp_transfer_params['in_curr_balance'] == '0.00999'
     #     assert user1.merchant1.resp_transfer_params['is_convert'] == False
@@ -1305,7 +1397,8 @@ class TestParams:
     #     assert user1.merchant1.resp_transfer_params['min'] == '0.000001'
     #     assert user1.merchant1.resp_transfer_params['min_balance_limit'] == '0.000001'
     #     assert user1.merchant1.resp_transfer_params['out_curr'] == 'BTC'
-    #     assert user1.merchant1.resp_transfer_params['out_fee'] == {}
+    #     assert user1.merchant1.resp_transfer_params['out_fee'] == \
+    #            {'add': '0', 'max': '0', 'method': None, 'min': '0', 'mult': '0'}
     #     assert user1.merchant1.resp_transfer_params['rate'] == ['1', '1']
     #
     # def test_params_4(self):
@@ -1318,6 +1411,7 @@ class TestParams:
     #     admin.set_fee(mult=bl(0.01), add=bl(0.5), _min=0, _max=0, around='ceil', tp=30,
     #     currency_id=admin.currency['USD'], is_active=True)
     #     user1.delegate(params={'merch_model': 'transfer', 'merch_method': 'params',  'm_lid': str(user1.merchant1.lid), 'out_curr': 'USD'})
+    #     # pprint.pprint(user1.resp_delegate)
     #     assert user1.resp_delegate['in_curr'] == 'USD'
     #     assert user1.resp_delegate['in_curr_balance'] == '10'
     #     assert user1.resp_delegate['is_convert'] == False
@@ -1411,7 +1505,8 @@ class TestParams:
     #     assert user1.merchant1.resp_transfer_params['min'] == '0.01'
     #     assert user1.merchant1.resp_transfer_params['min_balance_limit'] == '2.85'
     #     assert user1.merchant1.resp_transfer_params['out_curr'] == 'USD'
-    #     assert user1.merchant1.resp_transfer_params['out_fee'] == {}
+    #     assert user1.merchant1.resp_transfer_params['out_fee'] == \
+    #            {'add': '0', 'max': '0', 'method': None, 'min': '0', 'mult': '0'}
     #     assert user1.merchant1.resp_transfer_params['rate'] == ['28.4819', '1']
     #
     # def test_params_9(self):
@@ -1436,7 +1531,7 @@ class TestParams:
     #     assert user1.resp_delegate['min'] == '0.00027914'
     #     assert user1.resp_delegate['min_balance_limit'] == '3582.44443'
     #     assert user1.resp_delegate['out_curr'] == 'BTC'
-    #     assert user1.resp_delegate['out_fee'] == {}
+    #     assert user1.resp_delegate['out_fee'] == {'add': '0', 'max': '0', 'method': None, 'min': '0', 'mult': '0'}
     #     assert user1.resp_delegate['rate'] == ['3582.44443', '1']
     #
     # def test_params_10(self, _custom_fee, _disable_personal_operation_fee_transfer_USD):
@@ -1517,10 +1612,10 @@ class TestParams:
     #     user1.delegate(params={'merch_model': 'transfer', 'merch_method': 'params',  'm_lid': str(user1.merchant1.lid),
     #                            'out_curr': 'UAH'})
     #     # pprint.pprint(user1.resp_delegate)
-    #     assert user1.resp_delegate['message'] == 'InvalidMerchant'
-    #     assert user1.resp_delegate['data']['reason'] == f'Active merchant with lid {user1.merchant1.lid} was not found'
-    #     assert user1.resp_delegate['data']['reason'] == \
-    #            'Active merchant with lid {} was not found'.format(user1.merchant1.lid)
+    #     assert user1.resp_delegate['code'] == -32015
+    #     assert user1.resp_delegate['message'] == 'EParamMerchantInvalid'
+    #     assert user1.resp_delegate['data']['field'] == 'merchant'
+    #     assert user1.resp_delegate['data']['reason'] == 'Improper merchant'
     #     admin.set_fee(tp=30, currency_id=admin.currency['UAH'], is_active=False, merchant_id=user1.merchant1.id)
     #
     # def test_params_13(self, _enable_merchant_is_active): # Перевод суммы не активным мерчантом
@@ -1534,8 +1629,10 @@ class TestParams:
     #     admin.set_merchant(lid=user1.merchant1.lid, is_active=False)
     #     user1.merchant1.transfer_params(out_curr='USD')
     #     # pprint.pprint(user1.merchant1.resp_transfer_params)
-    #     assert user1.merchant1.resp_transfer_params['error']['message'] == 'InvalidMerchant'
-    #     assert user1.merchant1.resp_transfer_params['error']['data']['reason'] == 'Merchant Is Not Active'
+    #     assert user1.merchant1.resp_transfer_params['error']['code'] == -32031
+    #     assert user1.merchant1.resp_transfer_params['error']['message'] == 'EStateMerchantInactive'
+    #     assert user1.merchant1.resp_transfer_params['error']['data']['field'] == 'x-merchant'
+    #     assert user1.merchant1.resp_transfer_params['error']['data']['reason'] == 'Merchant inactive'
     #     admin.set_fee(tp=30, currency_id=admin.currency['USD'], is_active=True, merchant_id=user1.merchant1.id)
     #
     # def test_params_14(self): # Перевод по несуществующей валюте out_curr
@@ -1548,7 +1645,8 @@ class TestParams:
     #     user1.delegate(params={'merch_model': 'transfer', 'merch_method': 'params',  'm_lid': str(user1.merchant1.lid),
     #                            'out_curr': 'TST'})
     #     # pprint.pprint(user1.resp_delegate)
-    #     assert user1.resp_delegate['message'] == 'InvalidCurrency'
+    #     assert user1.resp_delegate['code'] == -32014
+    #     assert user1.resp_delegate['message'] == 'EParamCurrencyInvalid'
     #     assert user1.resp_delegate['data']['field'] == 'out_curr'
     #     assert user1.resp_delegate['data']['reason'] == 'Invalid currency name'
     #     admin.set_fee(tp=30, currency_id=admin.currency['UAH'], is_active=False, merchant_id=user1.merchant1.id)
@@ -1562,7 +1660,8 @@ class TestParams:
     #                   is_active=True)
     #     user1.merchant1.transfer_params(out_curr='TST')
     #     # pprint.pprint(user1.merchant1.resp_transfer_params)
-    #     assert user1.merchant1.resp_transfer_params['error']['message'] == 'InvalidCurrency'
+    #     assert user1.merchant1.resp_transfer_params['error']['code'] == -32014
+    #     assert user1.merchant1.resp_transfer_params['error']['message'] == 'EParamCurrencyInvalid'
     #     assert user1.merchant1.resp_transfer_params['error']['data']['field'] == 'out_curr'
     #     assert user1.merchant1.resp_transfer_params['error']['data']['reason'] == 'Invalid currency name'
     #     admin.set_fee(tp=30, currency_id=admin.currency['USD'], is_active=False, merchant_id=user1.merchant1.id)
@@ -1578,7 +1677,8 @@ class TestParams:
     #     user1.delegate(params={'merch_model': 'transfer', 'merch_method': 'params',  'm_lid': str(user1.merchant1.lid),
     #                            'out_curr': 'UAH'})
     #     # pprint.pprint(user1.resp_delegate)
-    #     assert user1.resp_delegate['message'] == 'InactiveCurrency'
+    #     assert user1.resp_delegate['code'] == -32033
+    #     assert user1.resp_delegate['message'] == 'EStateCurrencyInactive'
     #     assert user1.resp_delegate['data']['field'] == 'out_curr'
     #     assert user1.resp_delegate['data']['reason'] == 'Inactive'
     #     admin.set_fee(tp=30, currency_id=admin.currency['UAH'], is_active=False, merchant_id=user1.merchant1.id)
@@ -1593,7 +1693,8 @@ class TestParams:
     #     admin.set_currency_activity(name='USD', is_disabled=False, is_active=False)
     #     user1.merchant1.transfer_params(out_curr='USD')
     #     # pprint.pprint(user1.merchant1.resp_transfer_params)
-    #     assert user1.merchant1.resp_transfer_params['error']['message'] == 'InactiveCurrency'
+    #     assert user1.merchant1.resp_transfer_params['error']['code'] == -32033
+    #     assert user1.merchant1.resp_transfer_params['error']['message'] == 'EStateCurrencyInactive'
     #     assert user1.merchant1.resp_transfer_params['error']['data']['field'] == 'out_curr'
     #     assert user1.merchant1.resp_transfer_params['error']['data']['reason'] == 'Inactive'
     #     admin.set_fee(tp=30, currency_id=admin.currency['USD'], is_active=True, merchant_id=user1.merchant1.id)
@@ -1609,7 +1710,8 @@ class TestParams:
     #     user1.delegate(params={'merch_model': 'transfer', 'merch_method': 'params',  'm_lid': str(user1.merchant1.lid),
     #                            'out_curr': 'UAH'})
     #     # pprint.pprint(user1.resp_delegate)
-    #     assert user1.resp_delegate['message'] == 'InactiveCurrency'
+    #     assert user1.resp_delegate['code'] == -32033
+    #     assert user1.resp_delegate['message'] == 'EStateCurrencyInactive'
     #     assert user1.resp_delegate['data']['field'] == 'out_curr'
     #     assert user1.resp_delegate['data']['reason'] == 'Inactive'
     #     admin.set_fee(tp=30, currency_id=admin.currency['UAH'], is_active=False, merchant_id=user1.merchant1.id)
@@ -1624,7 +1726,8 @@ class TestParams:
     #     admin.set_currency_activity(name='USD', is_disabled=True, is_active=True)
     #     user1.merchant1.transfer_params(out_curr='USD')
     #     # pprint.pprint(user1.merchant1.resp_transfer_params)
-    #     assert user1.merchant1.resp_transfer_params['error']['message'] == 'InactiveCurrency'
+    #     assert user1.merchant1.resp_transfer_params['error']['code'] == -32033
+    #     assert user1.merchant1.resp_transfer_params['error']['message'] == 'EStateCurrencyInactive'
     #     assert user1.merchant1.resp_transfer_params['error']['data']['field'] == 'out_curr'
     #     assert user1.merchant1.resp_transfer_params['error']['data']['reason'] == 'Inactive'
     #     admin.set_fee(tp=30, currency_id=admin.currency['USD'], is_active=True, merchant_id=user1.merchant1.id)
@@ -1640,7 +1743,8 @@ class TestParams:
     #     user1.delegate(params={'merch_model': 'transfer', 'merch_method': 'params',  'm_lid': str(user1.merchant1.lid),
     #                            'out_curr': 'UAH', 'in_curr': 'TST'})
     #     # pprint.pprint(user1.resp_delegate)
-    #     assert user1.resp_delegate['message'] == 'InvalidCurrency'
+    #     assert user1.resp_delegate['code'] == -32014
+    #     assert user1.resp_delegate['message'] == 'EParamCurrencyInvalid'
     #     assert user1.resp_delegate['data']['field'] == 'in_curr'
     #     assert user1.resp_delegate['data']['reason'] == 'Invalid currency name'
     #     admin.set_fee(tp=30, currency_id=admin.currency['UAH'], is_active=False, merchant_id=user1.merchant1.id)
@@ -1654,7 +1758,8 @@ class TestParams:
     #                   is_active=True)
     #     user1.merchant1.transfer_params(out_curr='USD', in_curr='TST')
     #     # pprint.pprint(user1.merchant1.resp_transfer_params)
-    #     assert user1.merchant1.resp_transfer_params['error']['message'] == 'InvalidCurrency'
+    #     assert user1.merchant1.resp_transfer_params['error']['code'] == -32014
+    #     assert user1.merchant1.resp_transfer_params['error']['message'] == 'EParamCurrencyInvalid'
     #     assert user1.merchant1.resp_transfer_params['error']['data']['field'] == 'in_curr'
     #     assert user1.merchant1.resp_transfer_params['error']['data']['reason'] == 'Invalid currency name'
     #     admin.set_fee(tp=30, currency_id=admin.currency['USD'], is_active=True, merchant_id=user1.merchant1.id)
@@ -1670,7 +1775,8 @@ class TestParams:
     #     user1.delegate(params={'merch_model': 'transfer', 'merch_method': 'params',  'm_lid': str(user1.merchant1.lid),
     #                            'out_curr': 'UAH', 'in_curr': 'TST'})
     #     # pprint.pprint(user1.resp_delegate)
-    #     assert user1.resp_delegate['message'] == 'InvalidCurrency'
+    #     assert user1.resp_delegate['code'] == -32014
+    #     assert user1.resp_delegate['message'] == 'EParamCurrencyInvalid'
     #     assert user1.resp_delegate['data']['field'] == 'in_curr'
     #     assert user1.resp_delegate['data']['reason'] == 'Invalid currency name'
     #     admin.set_fee(tp=30, currency_id=admin.currency['UAH'], is_active=False, merchant_id=user1.merchant1.id)
@@ -1686,7 +1792,8 @@ class TestParams:
     #     admin.set_currency_activity(name='UAH', is_disabled=False, is_active=False)
     #     user1.merchant1.transfer_params(out_curr='USD', in_curr='UAH')
     #     # pprint.pprint(user1.merchant1.resp_transfer_params)
-    #     assert user1.merchant1.resp_transfer_params['error']['message'] == 'InactiveCurrency'
+    #     assert user1.merchant1.resp_transfer_params['error']['code'] == -32033
+    #     assert user1.merchant1.resp_transfer_params['error']['message'] == 'EStateCurrencyInactive'
     #     assert user1.merchant1.resp_transfer_params['error']['data']['field'] == 'in_curr'
     #     assert user1.merchant1.resp_transfer_params['error']['data']['reason'] == 'Inactive'
     #     admin.set_fee(tp=30, currency_id=admin.currency['USD'], is_active=True, merchant_id=user1.merchant1.id)
@@ -1703,7 +1810,8 @@ class TestParams:
     #     user1.delegate(params={'merch_model': 'transfer', 'merch_method': 'params',  'm_lid': str(user1.merchant1.lid),
     #                            'out_curr': 'USD', 'in_curr': 'UAH'})
     #     # pprint.pprint(user1.resp_delegate)
-    #     assert user1.resp_delegate['message'] == 'InactiveCurrency'
+    #     assert user1.resp_delegate['code'] == -32033
+    #     assert user1.resp_delegate['message'] == 'EStateCurrencyInactive'
     #     assert user1.resp_delegate['data']['field'] == 'in_curr'
     #     assert user1.resp_delegate['data']['reason'] == 'Inactive'
     #     admin.set_fee(tp=30, currency_id=admin.currency['UAH'], is_active=False, merchant_id=user1.merchant1.id)
@@ -1719,7 +1827,8 @@ class TestParams:
     #     admin.set_currency_activity(name='UAH', is_disabled=True, is_active=True)
     #     user1.merchant1.transfer_params(out_curr='USD', in_curr='UAH')
     #     # pprint.pprint(user1.merchant1.resp_transfer_params)
-    #     assert user1.merchant1.resp_transfer_params['error']['message'] == 'InactiveCurrency'
+    #     assert user1.merchant1.resp_transfer_params['error']['code'] == -32033
+    #     assert user1.merchant1.resp_transfer_params['error']['message'] == 'EStateCurrencyInactive'
     #     assert user1.merchant1.resp_transfer_params['error']['data']['field'] == 'in_curr'
     #     assert user1.merchant1.resp_transfer_params['error']['data']['reason'] == 'Inactive'
     #     admin.set_fee(tp=30, currency_id=admin.currency['USD'], is_active=False, merchant_id=user1.merchant1.id)
@@ -1733,8 +1842,10 @@ class TestParams:
     #                   is_active=True)
     #     user1.delegate(params={'merch_model': 'transfer', 'merch_method': 'params',  'm_lid': str(user1.merchant1.lid)})
     #     # pprint.pprint(user1.resp_delegate)
-    #     assert user1.resp_delegate['message'] == 'InvalidInputParams'
-    #     assert user1.resp_delegate['data']['reason'] == "method 'merchant.delegate' missing 1 argument: 'out_curr'"
+    #     assert user1.resp_delegate['code'] == -32002
+    #     assert user1.resp_delegate['message'] == 'EParamInvalid'
+    #     assert user1.resp_delegate['data']['field'] == 'out_curr'
+    #     assert user1.resp_delegate['data']['reason'] == 'Should be provided'
     #     admin.set_fee(tp=30, currency_id=admin.currency['UAH'], is_active=False, merchant_id=user1.merchant1.id)
     #
     # def test_params_27(self): # Запрос без out_curr
@@ -1754,8 +1865,10 @@ class TestParams:
     #                                'x-signature': create_sign(user1.merchant1.akey, data['params'], time_sent),
     #                                'x-utc-now-ms': time_sent}, verify=False)
     #     # print(r.text)
-    #     assert loads(r.text)['error']['message'] == 'InvalidInputParams'
-    #     assert loads(r.text)['error']['data']['reason'] == "method 'transfer.params' missing 1 argument: 'out_curr'"
+    #     assert loads(r.text)['error']['code'] == -32002
+    #     assert loads(r.text)['error']['message'] == 'EParamInvalid'
+    #     assert loads(r.text)['error']['data']['field'] == 'out_curr'
+    #     assert loads(r.text)['error']['data']['reason'] == 'Should be provided'
     #     admin.set_fee(tp=30, currency_id=admin.currency['USD'], is_active=False, merchant_id=user1.merchant1.id)
     #
     # def test_params_28(self): # Запрос out_curr = None
@@ -1766,57 +1879,64 @@ class TestParams:
     #     admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=30, currency_id=admin.currency['UAH'], is_active=True)
     #     user1.delegate(params={'merch_model': 'transfer', 'merch_method': 'params',  'm_lid': str(user1.merchant1.lid),
     #                            'out_curr': None})
-    #     pprint.pprint(user1.resp_delegate)
-    #     assert user1.resp_delegate['message'] == 'InvalidInputParams'
-    #     assert user1.resp_delegate['data']['reason'] ==  "method 'merchant.delegate' missing 1 argument: 'out_curr'"
+    #     # pprint.pprint(user1.resp_delegate)
+    #     assert user1.resp_delegate['code'] == -32002
+    #     assert user1.resp_delegate['message'] == 'EParamInvalid'
+    #     assert user1.resp_delegate['data']['field'] == 'out_curr'
+    #     assert user1.resp_delegate['data']['reason'] == 'Should be provided'
     #     admin.set_fee(tp=30, currency_id=admin.currency['UAH'], is_active=False, merchant_id=user1.merchant1.id)
-
-    def test_params_29(self, _enable_currency): # Запрос out_curr = None
-        """ Request out_curr = None """
-        user1.merchant1.transfer_params(out_curr=None)
-        # pprint.pprint(user1.merchant1.resp_transfer_params)
-        assert user1.merchant1.resp_transfer_params['error']['message'] == 'InvalidInputParams'
-        assert user1.merchant1.resp_transfer_params['error']['data']['reason'] == \
-               "method 'transfer.params' missing 1 argument: 'out_curr'"
-
-    def test_params_30(self): # Запрос с лишним параметром 'par': '123'
-        """ Request with extra parameter 'par': '123' """
-        user1.delegate(params={'merch_model': 'transfer', 'merch_method': 'params',  'm_lid': str(user1.merchant1.lid),
-                               'out_curr': 'UAH', 'par': '123'})
-        # pprint.pprint(user1.resp_delegate)
-        assert user1.resp_delegate['message'] == 'InvalidInputParams'
-        assert user1.resp_delegate['data']['reason'] ==  \
-               "method 'merchant.delegate' received a redundant argument 'par'"
-
-    def test_params_31(self): # Запрос с лишним параметром 'par': '123'
-        """ Request with extra parameter 'par': '123' """
-        ex_id = user1.merchant1._id()
-        data = {'method': 'transfer.params',
-                'params': {'out_curr': 'USD', 'par': '123'},
-                'jsonrpc': 2.0, 'id': ex_id}
-        time_sent = user1.merchant1.time_sent()
-        r = requests.post(url=user1.merchant1.japi_url, json=data,
-                          headers={'x-merchant': str(user1.merchant1.lid),
-                                   'x-signature': create_sign(user1.merchant1.akey, data['params'], time_sent),
-                                   'x-utc-now-ms': time_sent}, verify=False)
-        # print(r.text)
-        assert loads(r.text)['error']['message'] == 'InvalidInputParams'
-        assert loads(r.text)['error']['data']['reason'] == \
-               "method 'transfer.params' received a redundant argument 'par'"
-
-    def test_params_32(self): # Запрос без подписи
-        """ Unsigned request """
-        ex_id = user1.merchant1._id()
-        data = {'method': 'transfer.params',
-                'params': {'out_curr': 'USD'},
-                'jsonrpc': 2.0, 'id': ex_id}
-        time_sent = user1.merchant1.time_sent()
-        r = requests.post(url=user1.merchant1.japi_url, json=data,
-                          headers={'x-merchant': str(user1.merchant1.lid),
-                                   'x-utc-now-ms': time_sent}, verify=False)
-        # print(r.text)
-        assert loads(r.text)['error']['message'] == 'InvalidHeaders'
-        assert loads(r.text)['error']['data']['reason'] == 'Add x-signature to headers'
+    #
+    # def test_params_29(self, _enable_currency): # Запрос out_curr = None
+    #     """ Request out_curr = None """
+    #     user1.merchant1.transfer_params(out_curr=None)
+    #     # pprint.pprint(user1.merchant1.resp_transfer_params)
+    #     assert user1.merchant1.resp_transfer_params['error']['code'] == -32002
+    #     assert user1.merchant1.resp_transfer_params['error']['message'] == 'EParamInvalid'
+    #     assert user1.merchant1.resp_transfer_params['error']['data']['field'] == 'out_curr'
+    #     assert user1.merchant1.resp_transfer_params['error']['data']['reason'] == 'Should be provided'
+    #
+    # def test_params_30(self): # Запрос с лишним параметром 'par': '123'
+    #     """ Request with extra parameter 'par': '123' """
+    #     user1.delegate(params={'merch_model': 'transfer', 'merch_method': 'params',  'm_lid': str(user1.merchant1.lid),
+    #                            'out_curr': 'UAH', 'par': '123'})
+    #     # pprint.pprint(user1.resp_delegate)
+    #     assert user1.resp_delegate['code'] == -32002
+    #     assert user1.resp_delegate['message'] == 'EParamInvalid'
+    #     assert user1.resp_delegate['data']['field'] == 'par'
+    #     assert user1.resp_delegate['data']['reason'] == 'Should not be provided'
+    #
+    # def test_params_31(self): # Запрос с лишним параметром 'par': '123'
+    #     """ Request with extra parameter 'par': '123' """
+    #     ex_id = user1.merchant1._id()
+    #     data = {'method': 'transfer.params',
+    #             'params': {'out_curr': 'USD', 'par': '123'},
+    #             'jsonrpc': 2.0, 'id': ex_id}
+    #     time_sent = user1.merchant1.time_sent()
+    #     r = requests.post(url=user1.merchant1.japi_url, json=data,
+    #                       headers={'x-merchant': str(user1.merchant1.lid),
+    #                                'x-signature': create_sign(user1.merchant1.akey, data['params'], time_sent),
+    #                                'x-utc-now-ms': time_sent}, verify=False)
+    #     # print(r.text)
+    #     assert loads(r.text)['error']['code'] == -32002
+    #     assert loads(r.text)['error']['message'] == 'EParamInvalid'
+    #     assert loads(r.text)['error']['data']['field'] == 'par'
+    #     assert loads(r.text)['error']['data']['reason'] == 'Should not be provided'
+    #
+    # def test_params_32(self): # Запрос без подписи
+    #     """ Unsigned request """
+    #     ex_id = user1.merchant1._id()
+    #     data = {'method': 'transfer.params',
+    #             'params': {'out_curr': 'USD'},
+    #             'jsonrpc': 2.0, 'id': ex_id}
+    #     time_sent = user1.merchant1.time_sent()
+    #     r = requests.post(url=user1.merchant1.japi_url, json=data,
+    #                       headers={'x-merchant': str(user1.merchant1.lid),
+    #                                'x-utc-now-ms': time_sent}, verify=False)
+    #     # print(r.text)
+    #     assert loads(r.text)['error']['code'] == -32012
+    #     assert loads(r.text)['error']['message'] == 'EParamHeadersInvalid'
+    #     assert loads(r.text)['error']['data']['field'] == 'x-signature'
+    #     assert loads(r.text)['error']['data']['reason'] == 'Not present'
 
     def test_params_33(self): # Запрос с невалидной подписью
         """ Request with invalid sign """
@@ -1830,26 +1950,19 @@ class TestParams:
                                    'x-signature': create_sign(user2.merchant1.akey, data['params'], time_sent),
                                    'x-utc-now-ms': time_sent}, verify=False)
         # print(r.text)
-        assert loads(r.text)['error']['message'] == 'InvalidSign'
+        assert loads(r.text)['error']['code'] == -32010
+        assert loads(r.text)['error']['message'] == 'EParamSignInvalid'
         assert loads(r.text)['error']['data']['reason'] == 'Invalid signature'
-
-    def test_transfer_66(self): # Перевод суммы не существующим мерчантом
-        """ Transfer of non-existent merchant """
-        user1.delegate(params={'merch_model': 'transfer', 'merch_method': 'create', 'externalid': user1.ex_id(),
-                               'm_lid': '11111', 'tgt': str(user1.merchant2.lid),
-                               'amount': '0.01', 'out_curr': 'UAH'})
-        # pprint.pprint(user1.resp_delegate)
-        assert user1.resp_delegate['message'] == 'NotFound'
-        assert user1.resp_delegate['data']['reason'] == 'Merchant with lid 11111 was not found'
 
     def test_params_34(self): # Перевод суммы не существующим мерчантом
         """ Transfer of non-existent merchant """
         user1.delegate(params={'merch_model': 'transfer', 'merch_method': 'params',  'm_lid': '11111',
                                'out_curr': 'UAH'})
         # pprint.pprint(user1.resp_delegate)
-        assert user1.resp_delegate['message'] == 'NotFound'
-        assert user1.resp_delegate['data']['reason'] ==  'Merchant with lid 11111 was not found'
-
+        assert user1.resp_delegate['code'] == -32090
+        assert user1.resp_delegate['message'] == 'EParamNotFound'
+        assert user1.resp_delegate['data']['field'] == 'merchant'
+        assert user1.resp_delegate['data']['reason'] == 'Not found'
 
 class TestTransferGet:
     """ Testing transfer get method. """
@@ -1872,7 +1985,7 @@ class TestTransferGet:
                                'amount': '0.01', 'out_curr': 'UAH'})
         # print('o_lid', user1.resp_delegate['lid'])
         # pprint.pprint(user1.resp_delegate)
-        user1.delegate(params={'merch_model': 'transfer', 'merch_method': 'get', 'o_lid': user1.resp_delegate['lid'],
+        user1.delegate(params={'merch_model': 'transfer', 'merch_method': 'get', 'o_lid': str(user1.resp_delegate['lid']),
                                'm_lid': str(user1.merchant1.lid)})
         # pprint.pprint(user1.resp_delegate)
         assert user1.resp_delegate['account_amount'] == '0.01'
@@ -1924,7 +2037,8 @@ class TestTransferGet:
         admin.set_wallet_amount(balance=bl(30), currency='UAH', merch_lid=user1.merchant1.lid)
         admin.set_wallet_amount(balance=bl(1), currency='USD', merch_lid=user1.merchant2.lid)
         admin.set_currency_precision(is_crypto=False, admin_min=bl(0.01), admin_max=bl(3000), precision=2)
-        admin.set_rate_exchange(rate=bl(28.1999), fee=bl(0.01), in_currency='UAH', out_currency='USD')
+        admin.set_rate_exchange(rate=bl(28.1999), fee=bl(0.01), in_currency='UAH', out_currency='USD',
+                                tech_min=bl(0.01), tech_max=bl(3000))
         admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=30, currency_id=admin.currency['USD'],
                       is_active=False, merchant_id=user1.merchant1.id)
         admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=30, currency_id=admin.currency['USD'],
@@ -1933,14 +2047,14 @@ class TestTransferGet:
         # pprint.pprint(user1.merchant1.resp_transfer_create)
         user1.merchant1.transfer_get(o_lid=user1.merchant1.resp_transfer_create['result']['lid'])
         # pprint.pprint(user1.merchant1.resp_transfer_get)
-        assert user1.merchant1.resp_transfer_get['account_amount'] == '28.77'
-        assert user1.merchant1.resp_transfer_get['in_amount'] == '28.77'
+        assert user1.merchant1.resp_transfer_get['account_amount'] == '28.49'
+        assert user1.merchant1.resp_transfer_get['in_amount'] == '28.49'
         assert user1.merchant1.resp_transfer_get['in_curr'] == 'UAH'
         assert user1.merchant1.resp_transfer_get['in_fee_amount'] == '0'
         assert user1.merchant1.resp_transfer_get['out_amount'] == '1'
         assert user1.merchant1.resp_transfer_get['out_curr'] == 'USD'
         assert user1.merchant1.resp_transfer_get['out_fee_amount'] == '0'
-        assert user1.merchant1.resp_transfer_get['rate'] == ['28.7639', '1']
+        assert user1.merchant1.resp_transfer_get['rate'] == ['28.4819', '1']
         assert user1.merchant1.resp_transfer_get['reqdata']['amount'] == '1'
 
     def test_get_transfer_4(self):
@@ -1948,17 +2062,33 @@ class TestTransferGet:
         user1.delegate(params={'merch_model': 'transfer', 'merch_method': 'get', 'o_lid': 99999,
                                'm_lid': str(user1.merchant1.lid)})
         # pprint.pprint(user1.resp_delegate)
-        assert user1.resp_delegate['message'] == 'NotFound'
-        assert user1.resp_delegate['data']['reason'] == 'Not found order with params'
+        assert user1.resp_delegate['code'] == -32003
+        assert user1.resp_delegate['message'] == 'EParamType'
+        assert user1.resp_delegate['data']['field'] == 'o_lid'
+        assert user1.resp_delegate['data']['reason'] == "'o_lid' must not be of 'int' type"
+        assert user1.resp_delegate['data']['value'] == 99999
 
     def test_get_transfer_5(self):
+        """ NotFound    не найден ордер c соответствующим o_lid """
+        user1.delegate(params={'merch_model': 'transfer', 'merch_method': 'get', 'o_lid': '99999',
+                               'm_lid': str(user1.merchant1.lid)})
+        # pprint.pprint(user1.resp_delegate)
+        assert user1.resp_delegate['code'] == -32090
+        assert user1.resp_delegate['message'] == 'EParamNotFound'
+        assert user1.resp_delegate['data']['field'] == 'order'
+        assert user1.resp_delegate['data']['reason'] == 'Not found'
+
+    def test_get_transfer_6(self):
         """ InvalidParam    передан o_lid несоответствующего формата """
         user1.merchant1.transfer_get(o_lid='test')
         # pprint.pprint(user1.merchant1.resp_transfer_get)
-        assert user1.merchant1.resp_transfer_get['message'] == 'InvalidParam'
-        assert user1.merchant1.resp_transfer_get['data']['reason'] == 'test'
+        assert user1.merchant1.resp_transfer_get['code'] == -32003
+        assert user1.merchant1.resp_transfer_get['message'] == 'EParamType'
+        assert user1.merchant1.resp_transfer_get['data']['field'] == 'o_lid'
+        assert user1.merchant1.resp_transfer_get['data']['reason'] == 'Should be a Number'
+        assert user1.merchant1.resp_transfer_get['data']['value'] == 'test'
 
-
+@pytest.mark.usefixtures('_transfer_fee', '_personal_exchange_fee')
 class TestTransferCalc:
     """ Testing transfer calc method. """
 
@@ -2199,8 +2329,9 @@ class TestTransferCalc:
     #     user1.delegate(params={'merch_model': 'transfer', 'merch_method': 'calc', 'm_lid': str(user1.merchant1.lid),
     #                            'amount': '0.02', 'out_curr': 'UAH'})
     #     # pprint.pprint(user1.resp_delegate)
-    #     assert user1.resp_delegate['message'] == 'InsufficientFunds'
-    #     assert user1.resp_delegate['data']['reason'] == 'Amount 0.02 less then balance 0.01 in UAH'
+    #     assert user1.resp_delegate['code'] == -32056
+    #     assert user1.resp_delegate['message'] == 'EStateInsufficientFunds'
+    #     assert user1.resp_delegate['data']['reason'] == 'Balance 0.01 less then amount 0.02'
     #     admin.set_fee(tp=30, currency_id=admin.currency['UAH'], is_active=False, merchant_id=user1.merchant1.id)
     #
     # def test_transfer_calc_13(self): # Перевод суммы больше чем на счету списания
@@ -2213,8 +2344,9 @@ class TestTransferCalc:
     #                   is_active=True)
     #     user1.merchant1.transfer_calc(amount='10', out_curr='USD')
     #     # pprint.pprint(user1.merchant1.resp_transfer_calc)
-    #     assert user1.merchant1.resp_transfer_calc['message'] == 'InsufficientFunds'
-    #     assert user1.merchant1.resp_transfer_calc['data']['reason'] == 'Amount 10 less then balance 5 in USD'
+    #     assert user1.merchant1.resp_transfer_calc['code'] == -32056
+    #     assert user1.merchant1.resp_transfer_calc['message'] == 'EStateInsufficientFunds'
+    #     assert user1.merchant1.resp_transfer_calc['data']['reason'] == 'Balance 5 less then amount 10'
     #     admin.set_fee(tp=30, currency_id=admin.currency['USD'], is_active=False, merchant_id=user1.merchant1.id)
     #
     # def test_transfer_calc_14(self, _enable_merchant_is_active): # Перевод суммы не активным мерчантом
@@ -2227,10 +2359,10 @@ class TestTransferCalc:
     #     user1.delegate(params={'merch_model': 'transfer', 'merch_method': 'calc', 'm_lid': str(user1.merchant1.lid),
     #                            'amount': '0.01', 'out_curr': 'UAH'})
     #     # pprint.pprint(user1.resp_delegate)
-    #     assert user1.resp_delegate['message'] == 'InvalidMerchant'
-    #     assert user1.resp_delegate['data']['reason'] == f'Active merchant with lid {user1.merchant1.lid} was not found'
-    #     assert user1.resp_delegate['data']['reason'] == \
-    #            'Active merchant with lid {} was not found'.format(user1.merchant1.lid)
+    #     assert user1.resp_delegate['code'] == -32015
+    #     assert user1.resp_delegate['message'] == 'EParamMerchantInvalid'
+    #     assert user1.resp_delegate['data']['field'] == 'merchant'
+    #     assert user1.resp_delegate['data']['reason'] == 'Improper merchant'
     #     admin.set_fee(tp=30, currency_id=admin.currency['UAH'], is_active=False, merchant_id=user1.merchant1.id)
     #
     # def test_transfer_calc_15(self, _enable_merchant_is_active): # Перевод суммы не активным мерчантом
@@ -2244,8 +2376,10 @@ class TestTransferCalc:
     #     admin.set_merchant(lid=user1.merchant1.lid, is_active=False)
     #     user1.merchant1.transfer_calc(amount='5', out_curr='USD')
     #     # pprint.pprint(user1.merchant1.resp_transfer_calc)
-    #     assert user1.merchant1.resp_transfer_calc['message'] == 'InvalidMerchant'
-    #     assert user1.merchant1.resp_transfer_calc['data']['reason'] == 'Merchant Is Not Active'
+    #     assert user1.merchant1.resp_transfer_calc['code'] == -32031
+    #     assert user1.merchant1.resp_transfer_calc['message'] == 'EStateMerchantInactive'
+    #     assert user1.merchant1.resp_transfer_calc['data']['field'] == 'x-merchant'
+    #     assert user1.merchant1.resp_transfer_calc['data']['reason'] == 'Merchant inactive'
     #     admin.set_fee(tp=30, currency_id=admin.currency['USD'], is_active=True, merchant_id=user1.merchant1.id)
     #
     # def test_transfer_calc_16(self): # Перевод без суммы (amount = None)
@@ -2257,8 +2391,10 @@ class TestTransferCalc:
     #     user1.delegate(params={'merch_model': 'transfer', 'merch_method': 'calc', 'm_lid': str(user1.merchant1.lid),
     #                            'amount': None, 'out_curr': 'UAH'})
     #     # pprint.pprint(user1.resp_delegate)
-    #     assert user1.resp_delegate['message'] == 'InvalidInputParams'
-    #     assert user1.resp_delegate['data']['reason'] == "method 'merchant.delegate' missing 1 argument: 'amount'"
+    #     assert user1.resp_delegate['code'] == -32002
+    #     assert user1.resp_delegate['message'] == 'EParamInvalid'
+    #     assert user1.resp_delegate['data']['field'] == 'amount'
+    #     assert user1.resp_delegate['data']['reason'] == 'Should be provided'
     #     admin.set_fee(tp=30, currency_id=admin.currency['UAH'], is_active=False, merchant_id=user1.merchant1.id)
     #
     # def test_transfer_calc_17(self): # Перевод без суммы (amount = None)
@@ -2270,9 +2406,10 @@ class TestTransferCalc:
     #                   is_active=True)
     #     user1.merchant1.transfer_calc(amount=None, out_curr='USD')
     #     # pprint.pprint(user1.merchant1.resp_transfer_calc)
-    #     assert user1.merchant1.resp_transfer_calc['message'] == 'InvalidInputParams'
-    #     assert user1.merchant1.resp_transfer_calc['data']['reason'] == \
-    #            "method 'transfer.calc' missing 1 argument: 'amount'"
+    #     assert user1.merchant1.resp_transfer_calc['code'] == -32002
+    #     assert user1.merchant1.resp_transfer_calc['message'] == 'EParamInvalid'
+    #     assert user1.merchant1.resp_transfer_calc['data']['field'] == 'amount'
+    #     assert user1.merchant1.resp_transfer_calc['data']['reason'] == 'Should be provided'
     #     admin.set_fee(tp=30, currency_id=admin.currency['USD'], is_active=True, merchant_id=user1.merchant1.id)
     #
     # def test_transfer_calc_18(self): # Неверное значение параметра amount (буква вместо цифры)
@@ -2284,8 +2421,10 @@ class TestTransferCalc:
     #     user1.delegate(params={'merch_model': 'transfer', 'merch_method': 'calc', 'm_lid': str(user1.merchant1.lid),
     #                            'amount': 'Test', 'out_curr': 'UAH'})
     #     # pprint.pprint(user1.resp_delegate)
-    #     assert user1.resp_delegate['message'] == 'InvalidAmountFormat'
-    #     assert user1.resp_delegate['data']['reason'] == 'Invalid format Test for UAH'
+    #     assert user1.resp_delegate['code'] == -32002
+    #     assert user1.resp_delegate['message'] == 'EParamInvalid'
+    #     assert user1.resp_delegate['data']['field'] == 'amount'
+    #     assert user1.resp_delegate['data']['reason'] == 'Should be a Number'
     #     admin.set_fee(tp=30, currency_id=admin.currency['UAH'], is_active=False, merchant_id=user1.merchant1.id)
     #
     # def test_transfer_calc_19(self): # Неверное значение параметра amount (буква вместо цифры)
@@ -2297,8 +2436,10 @@ class TestTransferCalc:
     #                   is_active=True)
     #     user1.merchant1.transfer_calc(amount='Test', out_curr='USD')
     #     # pprint.pprint(user1.merchant1.resp_transfer_calc)
-    #     assert user1.merchant1.resp_transfer_calc['message'] == 'InvalidAmountFormat'
-    #     assert user1.merchant1.resp_transfer_calc['data']['reason'] == 'Invalid format Test for USD'
+    #     assert user1.merchant1.resp_transfer_calc['code'] == -32002
+    #     assert user1.merchant1.resp_transfer_calc['message'] == 'EParamInvalid'
+    #     assert user1.merchant1.resp_transfer_calc['data']['field'] == 'amount'
+    #     assert user1.merchant1.resp_transfer_calc['data']['reason'] == 'Should be a Number'
     #     admin.set_fee(tp=30, currency_id=admin.currency['USD'], is_active=True, merchant_id=user1.merchant1.id)
     #
     # def test_transfer_calc_20(self): # Неверный формат параметра amount (фиатная 0.111)
@@ -2311,8 +2452,9 @@ class TestTransferCalc:
     #     user1.delegate(params={'merch_model': 'transfer', 'merch_method': 'calc', 'm_lid': str(user1.merchant1.lid),
     #                            'amount': '0.111', 'out_curr': 'UAH'})
     #     # pprint.pprint(user1.resp_delegate)
-    #     assert user1.resp_delegate['message'] == 'InvalidAmountFormat'
-    #     assert user1.resp_delegate['data']['reason'] == 'Invalid format 0.111 for UAH'
+    #     assert user1.resp_delegate['code'] == -32082
+    #     assert user1.resp_delegate['message'] == 'EParamAmountFormatInvalid'
+    #     assert user1.resp_delegate['data']['field'] == 'amount'
     #     admin.set_fee(tp=30, currency_id=admin.currency['UAH'], is_active=False, merchant_id=user1.merchant1.id)
     #
     # def test_transfer_calc_21(self): # Неверный формат параметра amount (фиатная 0.111)
@@ -2324,8 +2466,9 @@ class TestTransferCalc:
     #                   is_active=True)
     #     user1.merchant1.transfer_calc(amount='0.111', out_curr='USD')
     #     # pprint.pprint(user1.merchant1.resp_transfer_calc)
-    #     assert user1.merchant1.resp_transfer_calc['message'] == 'InvalidAmountFormat'
-    #     assert user1.merchant1.resp_transfer_calc['data']['reason'] == 'Invalid format 0.111 for USD'
+    #     assert user1.merchant1.resp_transfer_calc['code'] == -32082
+    #     assert user1.merchant1.resp_transfer_calc['message'] == 'EParamAmountFormatInvalid'
+    #     assert user1.merchant1.resp_transfer_calc['data']['field'] == 'amount'
     #     admin.set_fee(tp=30, currency_id=admin.currency['USD'], is_active=True, merchant_id=user1.merchant1.id)
     #
     # def test_transfer_calc_22(self): # Перевод по несуществующей валюте out_curr
@@ -2338,8 +2481,10 @@ class TestTransferCalc:
     #     user1.delegate(params={'merch_model': 'transfer', 'merch_method': 'calc', 'm_lid': str(user1.merchant1.lid),
     #                            'amount': '0.01', 'out_curr': 'TST'})
     #     # pprint.pprint(user1.resp_delegate)
-    #     assert user1.resp_delegate['message'] == 'InvalidCurrency'
-    #     assert user1.resp_delegate['data']['reason'] == 'TST'
+    #     assert user1.resp_delegate['code'] == -32014
+    #     assert user1.resp_delegate['message'] == 'EParamCurrencyInvalid'
+    #     assert user1.resp_delegate['data']['field'] == 'out_curr'
+    #     assert user1.resp_delegate['data']['reason'] == 'Invalid currency name'
     #     admin.set_fee(tp=30, currency_id=admin.currency['UAH'], is_active=False, merchant_id=user1.merchant1.id)
     #
     # def test_transfer_calc_23(self): # Перевод по несуществующей валюте out_curr
@@ -2351,8 +2496,10 @@ class TestTransferCalc:
     #                   is_active=True)
     #     user1.merchant1.transfer_calc(amount='5', out_curr='TST')
     #     # pprint.pprint(user1.merchant1.resp_transfer_calc)
-    #     assert user1.merchant1.resp_transfer_calc['message'] == 'InvalidCurrency'
-    #     assert user1.merchant1.resp_transfer_calc['data']['reason'] == 'TST'
+    #     assert user1.merchant1.resp_transfer_calc['code'] == -32014
+    #     assert user1.merchant1.resp_transfer_calc['message'] == 'EParamCurrencyInvalid'
+    #     assert user1.merchant1.resp_transfer_calc['data']['field'] == 'out_curr'
+    #     assert user1.merchant1.resp_transfer_calc['data']['reason'] == 'Invalid currency name'
     #     admin.set_fee(tp=30, currency_id=admin.currency['USD'], is_active=False, merchant_id=user1.merchant1.id)
     #
     # def test_transfer_calc_24(self, _enable_currency): # Перевод по неактивной валюте out_curr
@@ -2366,8 +2513,10 @@ class TestTransferCalc:
     #     user1.delegate(params={'merch_model': 'transfer', 'merch_method': 'calc', 'm_lid': str(user1.merchant1.lid),
     #                            'amount': '0.01', 'out_curr': 'UAH'})
     #     # pprint.pprint(user1.resp_delegate)
-    #     assert user1.resp_delegate['message'] == 'InactiveCurrency'
-    #     assert user1.resp_delegate['data']['reason'] == 'UAH'
+    #     assert user1.resp_delegate['code'] == -32033
+    #     assert user1.resp_delegate['message'] == 'EStateCurrencyInactive'
+    #     assert user1.resp_delegate['data']['field'] == 'curr'
+    #     assert user1.resp_delegate['data']['reason'] == 'Inactive'
     #     admin.set_fee(tp=30, currency_id=admin.currency['UAH'], is_active=False, merchant_id=user1.merchant1.id)
     #
     # def test_transfer_calc_25(self, _enable_currency): # Перевод по неактивной валюте out_curr
@@ -2380,8 +2529,10 @@ class TestTransferCalc:
     #     admin.set_currency_activity(name='USD', is_disabled=False, is_active=False)
     #     user1.merchant1.transfer_calc(amount='5', out_curr='USD')
     #     # pprint.pprint(user1.merchant1.resp_transfer_calc)
-    #     assert user1.merchant1.resp_transfer_calc['message'] == 'InactiveCurrency'
-    #     assert user1.merchant1.resp_transfer_calc['data']['reason'] == 'USD'
+    #     assert user1.merchant1.resp_transfer_calc['code'] == -32033
+    #     assert user1.merchant1.resp_transfer_calc['message'] == 'EStateCurrencyInactive'
+    #     assert user1.merchant1.resp_transfer_calc['data']['field'] == 'curr'
+    #     assert user1.merchant1.resp_transfer_calc['data']['reason'] == 'Inactive'
     #     admin.set_fee(tp=30, currency_id=admin.currency['USD'], is_active=True, merchant_id=user1.merchant1.id)
     #
     # def test_transfer_calc_26(self, _enable_currency): # Валюта out_curr выкл
@@ -2395,8 +2546,10 @@ class TestTransferCalc:
     #     user1.delegate(params={'merch_model': 'transfer', 'merch_method': 'calc', 'm_lid': str(user1.merchant1.lid),
     #                            'amount': '0.01', 'out_curr': 'UAH'})
     #     # pprint.pprint(user1.resp_delegate)
-    #     assert user1.resp_delegate['message'] == 'InactiveCurrency'
-    #     assert user1.resp_delegate['data']['reason'] == 'UAH'
+    #     assert user1.resp_delegate['code'] == -32033
+    #     assert user1.resp_delegate['message'] == 'EStateCurrencyInactive'
+    #     assert user1.resp_delegate['data']['field'] == 'curr'
+    #     assert user1.resp_delegate['data']['reason'] == 'Inactive'
     #     admin.set_fee(tp=30, currency_id=admin.currency['UAH'], is_active=False, merchant_id=user1.merchant1.id)
     #
     # def test_transfer_calc_27(self, _enable_currency): # Валюта out_curr выкл
@@ -2409,8 +2562,10 @@ class TestTransferCalc:
     #     admin.set_currency_activity(name='USD', is_disabled=True, is_active=True)
     #     user1.merchant1.transfer_calc(amount='5', out_curr='USD')
     #     # pprint.pprint(user1.merchant1.resp_transfer_calc)
-    #     assert user1.merchant1.resp_transfer_calc['message'] == 'InactiveCurrency'
-    #     assert user1.merchant1.resp_transfer_calc['data']['reason'] == 'USD'
+    #     assert user1.merchant1.resp_transfer_calc['code'] == -32033
+    #     assert user1.merchant1.resp_transfer_calc['message'] == 'EStateCurrencyInactive'
+    #     assert user1.merchant1.resp_transfer_calc['data']['field'] == 'curr'
+    #     assert user1.merchant1.resp_transfer_calc['data']['reason'] == 'Inactive'
     #     admin.set_fee(tp=30, currency_id=admin.currency['USD'], is_active=True, merchant_id=user1.merchant1.id)
     #
     # def test_transfer_calc_28(self): # Перевод по несуществующей валюте in_curr
@@ -2424,8 +2579,10 @@ class TestTransferCalc:
     #     user1.delegate(params={'merch_model': 'transfer', 'merch_method': 'calc', 'm_lid': str(user1.merchant1.lid),
     #                            'amount': '0.01', 'out_curr': 'UAH', 'in_curr': 'TST'})
     #     # pprint.pprint(user1.resp_delegate)
-    #     assert user1.resp_delegate['message'] == 'InvalidCurrency'
-    #     assert user1.resp_delegate['data']['reason'] == 'TST'
+    #     assert user1.resp_delegate['code'] == -32014
+    #     assert user1.resp_delegate['message'] == 'EParamCurrencyInvalid'
+    #     assert user1.resp_delegate['data']['field'] == 'in_curr'
+    #     assert user1.resp_delegate['data']['reason'] == 'Invalid currency name'
     #     admin.set_fee(tp=30, currency_id=admin.currency['UAH'], is_active=False, merchant_id=user1.merchant1.id)
     #
     # def test_transfer_calc_29(self): # Перевод по несуществующей валюте in_curr
@@ -2437,8 +2594,10 @@ class TestTransferCalc:
     #                   is_active=True)
     #     user1.merchant1.transfer_calc(amount='5', out_curr='USD', in_curr='TST')
     #     # pprint.pprint(user1.merchant1.resp_transfer_calc)
-    #     assert user1.merchant1.resp_transfer_calc['message'] == 'InvalidCurrency'
-    #     assert user1.merchant1.resp_transfer_calc['data']['reason'] == 'TST'
+    #     assert user1.merchant1.resp_transfer_calc['code'] == -32014
+    #     assert user1.merchant1.resp_transfer_calc['message'] == 'EParamCurrencyInvalid'
+    #     assert user1.merchant1.resp_transfer_calc['data']['field'] == 'in_curr'
+    #     assert user1.merchant1.resp_transfer_calc['data']['reason'] == 'Invalid currency name'
     #     admin.set_fee(tp=30, currency_id=admin.currency['USD'], is_active=True, merchant_id=user1.merchant1.id)
     #
     # def test_transfer_calc_30(self, _enable_currency): # Перевод по неактивной валюте in_curr
@@ -2453,8 +2612,10 @@ class TestTransferCalc:
     #     user1.delegate(params={'merch_model': 'transfer', 'merch_method': 'calc', 'm_lid': str(user1.merchant1.lid),
     #                            'amount': '0.01', 'out_curr': 'UAH', 'in_curr': 'USD'})
     #     # pprint.pprint(user1.resp_delegate)
-    #     assert user1.resp_delegate['message'] == 'InactiveCurrency'
-    #     assert user1.resp_delegate['data']['reason'] == 'USD'
+    #     assert user1.resp_delegate['code'] == -32033
+    #     assert user1.resp_delegate['message'] == 'EStateCurrencyInactive'
+    #     assert user1.resp_delegate['data']['field'] == 'curr'
+    #     assert user1.resp_delegate['data']['reason'] == 'Inactive'
     #     admin.set_fee(tp=30, currency_id=admin.currency['UAH'], is_active=False, merchant_id=user1.merchant1.id)
     #
     # def test_transfer_calc_31(self, _enable_currency): # Перевод по неактивной валюте in_curr
@@ -2468,8 +2629,10 @@ class TestTransferCalc:
     #     admin.set_currency_activity(name='UAH', is_disabled=False, is_active=False)
     #     user1.merchant1.transfer_calc(amount='5', out_curr='USD', in_curr='UAH')
     #     # pprint.pprint(user1.merchant1.resp_transfer_calc)
-    #     assert user1.merchant1.resp_transfer_calc['message'] == 'InactiveCurrency'
-    #     assert user1.merchant1.resp_transfer_calc['data']['reason'] == 'UAH'
+    #     assert user1.merchant1.resp_transfer_calc['code'] == -32033
+    #     assert user1.merchant1.resp_transfer_calc['message'] == 'EStateCurrencyInactive'
+    #     assert user1.merchant1.resp_transfer_calc['data']['field'] == 'curr'
+    #     assert user1.merchant1.resp_transfer_calc['data']['reason'] == 'Inactive'
     #     admin.set_fee(tp=30, currency_id=admin.currency['USD'], is_active=True, merchant_id=user1.merchant1.id)
     #
     # def test_transfer_calc_32(self, _enable_currency): # Валюта in_curr выкл
@@ -2484,8 +2647,10 @@ class TestTransferCalc:
     #     user1.delegate(params={'merch_model': 'transfer', 'merch_method': 'calc', 'm_lid': str(user1.merchant1.lid),
     #                            'amount': '0.01', 'out_curr': 'USD', 'in_curr': 'UAH'})
     #     # pprint.pprint(user1.resp_delegate)
-    #     assert user1.resp_delegate['message'] == 'InactiveCurrency'
-    #     assert user1.resp_delegate['data']['reason'] == 'UAH'
+    #     assert user1.resp_delegate['code'] == -32033
+    #     assert user1.resp_delegate['message'] == 'EStateCurrencyInactive'
+    #     assert user1.resp_delegate['data']['field'] == 'curr'
+    #     assert user1.resp_delegate['data']['reason'] == 'Inactive'
     #     admin.set_fee(tp=30, currency_id=admin.currency['UAH'], is_active=False, merchant_id=user1.merchant1.id)
     #
     # def test_transfer_calc_33(self, _enable_currency): # Валюта in_curr выкл
@@ -2499,8 +2664,10 @@ class TestTransferCalc:
     #     admin.set_currency_activity(name='UAH', is_disabled=True, is_active=True)
     #     user1.merchant1.transfer_calc(amount='5', out_curr='USD', in_curr='UAH')
     #     # pprint.pprint(user1.merchant1.resp_transfer_calc)
-    #     assert user1.merchant1.resp_transfer_calc['message'] == 'InactiveCurrency'
-    #     assert user1.merchant1.resp_transfer_calc['data']['reason'] == 'UAH'
+    #     assert user1.merchant1.resp_transfer_calc['code'] == -32033
+    #     assert user1.merchant1.resp_transfer_calc['message'] == 'EStateCurrencyInactive'
+    #     assert user1.merchant1.resp_transfer_calc['data']['field'] == 'curr'
+    #     assert user1.merchant1.resp_transfer_calc['data']['reason'] == 'Inactive'
     #     admin.set_fee(tp=30, currency_id=admin.currency['USD'], is_active=False, merchant_id=user1.merchant1.id)
     #
     # def test_transfer_calc_34(self): # Перевод суммы ниже технического минимума по таблице currency
@@ -2514,8 +2681,11 @@ class TestTransferCalc:
     #     user1.delegate(params={'merch_model': 'transfer', 'merch_method': 'calc', 'm_lid': str(user1.merchant1.lid),
     #                            'amount': '0.01', 'out_curr': 'UAH'})
     #     # pprint.pprint(user1.resp_delegate)
-    #     assert user1.resp_delegate['message'] == 'AmountTooSmall'
-    #     assert user1.resp_delegate['data']['reason'] == '0.01'
+    #     assert user1.resp_delegate['code'] == -32074
+    #     assert user1.resp_delegate['message'] == 'EParamAmountTooSmall'
+    #     assert user1.resp_delegate['data']['field'] == 'amount'
+    #     assert user1.resp_delegate['data']['reason'] == 'Amount is too small'
+    #     assert user1.resp_delegate['data']['value'] == '0.01'
     #     admin.set_fee(tp=30, currency_id=admin.currency['UAH'], is_active=False, merchant_id=user1.merchant1.id)
     #     admin.set_currency_precision(is_crypto=False, admin_min=bl(0.01), admin_max=bl(3000), precision=2)
     #
@@ -2529,8 +2699,11 @@ class TestTransferCalc:
     #                   is_active=True)
     #     user1.merchant1.transfer_calc(amount='5', out_curr='USD')
     #     # pprint.pprint(user1.merchant1.resp_transfer_calc)
-    #     assert user1.merchant1.resp_transfer_calc['message'] == 'AmountTooSmall'
-    #     assert user1.merchant1.resp_transfer_calc['data']['reason'] == '5'
+    #     assert user1.merchant1.resp_transfer_calc['code'] == -32074
+    #     assert user1.merchant1.resp_transfer_calc['message'] == 'EParamAmountTooSmall'
+    #     assert user1.merchant1.resp_transfer_calc['data']['field'] == 'amount'
+    #     assert user1.merchant1.resp_transfer_calc['data']['reason'] == 'Amount is too small'
+    #     assert user1.merchant1.resp_transfer_calc['data']['value'] == '5'
     #     admin.set_fee(tp=30, currency_id=admin.currency['USD'], is_active=False, merchant_id=user1.merchant1.id)
     #     admin.set_currency_precision(is_crypto=False, admin_min=bl(0.01), admin_max=bl(3000), precision=2)
     #
@@ -2545,8 +2718,11 @@ class TestTransferCalc:
     #     user1.delegate(params={'merch_model': 'transfer', 'merch_method': 'calc', 'm_lid': str(user1.merchant1.lid),
     #                            'amount': '5', 'out_curr': 'UAH'})
     #     # pprint.pprint(user1.resp_delegate)
-    #     assert user1.resp_delegate['message'] == 'AmountTooBig'
-    #     assert user1.resp_delegate['data']['reason'] == '5'
+    #     assert user1.resp_delegate['code'] == -32073
+    #     assert user1.resp_delegate['message'] == 'EParamAmountTooBig'
+    #     assert user1.resp_delegate['data']['field'] == 'amount'
+    #     assert user1.resp_delegate['data']['reason'] == 'Amount is too big'
+    #     assert user1.resp_delegate['data']['value'] == '5'
     #     admin.set_fee(tp=30, currency_id=admin.currency['UAH'], is_active=False, merchant_id=user1.merchant1.id)
     #     admin.set_currency_precision(is_crypto=False, admin_min=bl(0.01), admin_max=bl(3000), precision=2)
     #
@@ -2560,8 +2736,11 @@ class TestTransferCalc:
     #                   is_active=True)
     #     user1.merchant1.transfer_calc(amount='5', out_curr='USD')
     #     # pprint.pprint(user1.merchant1.resp_transfer_calc)
-    #     assert user1.merchant1.resp_transfer_calc['message'] == 'AmountTooBig'
-    #     assert user1.merchant1.resp_transfer_calc['data']['reason'] == '5'
+    #     assert user1.merchant1.resp_transfer_calc['code'] == -32073
+    #     assert user1.merchant1.resp_transfer_calc['message'] == 'EParamAmountTooBig'
+    #     assert user1.merchant1.resp_transfer_calc['data']['field'] == 'amount'
+    #     assert user1.merchant1.resp_transfer_calc['data']['reason'] == 'Amount is too big'
+    #     assert user1.merchant1.resp_transfer_calc['data']['value'] == '5'
     #     admin.set_fee(tp=30, currency_id=admin.currency['USD'], is_active=False, merchant_id=user1.merchant1.id)
     #     admin.set_currency_precision(is_crypto=False, admin_min=bl(0.01), admin_max=bl(3000), precision=2)
     #
@@ -2616,8 +2795,9 @@ class TestTransferCalc:
     #     user1.delegate(params={'merch_model': 'transfer', 'merch_method': 'calc', 'm_lid': str(user1.merchant1.lid),
     #                            'amount': '0.009', 'out_curr': 'UAH'})
     #     # pprint.pprint(user1.resp_delegate)
-    #     assert user1.resp_delegate['message'] == 'InvalidAmountFormat'
-    #     assert user1.resp_delegate['data']['reason'] == 'Invalid format 0.009 for UAH'
+    #     assert user1.resp_delegate['code'] == -32082
+    #     assert user1.resp_delegate['message'] == 'EParamAmountFormatInvalid'
+    #     assert user1.resp_delegate['data']['field'] == 'amount'
     #     admin.set_fee(tp=30, currency_id=admin.currency['UAH'], is_active=False, merchant_id=user1.merchant1.id)
     #     admin.set_currency_precision(is_crypto=False, admin_min=bl(0.01), admin_max=bl(3000), precision=2)
     #
@@ -2631,8 +2811,9 @@ class TestTransferCalc:
     #                   is_active=True)
     #     user1.merchant1.transfer_calc(amount='0.009', out_curr='USD')
     #     # pprint.pprint(user1.merchant1.resp_transfer_calc)
-    #     assert user1.merchant1.resp_transfer_calc['message'] == 'InvalidAmountFormat'
-    #     assert user1.merchant1.resp_transfer_calc['data']['reason'] == 'Invalid format 0.009 for USD'
+    #     assert user1.merchant1.resp_transfer_calc['code'] == -32082
+    #     assert user1.merchant1.resp_transfer_calc['message'] == 'EParamAmountFormatInvalid'
+    #     assert user1.merchant1.resp_transfer_calc['data']['field'] == 'amount'
     #     admin.set_fee(tp=30, currency_id=admin.currency['USD'], is_active=False, merchant_id=user1.merchant1.id)
     #     admin.set_currency_precision(is_crypto=False, admin_min=bl(0.01), admin_max=bl(3000), precision=2)
     #
@@ -2646,8 +2827,10 @@ class TestTransferCalc:
     #     user1.delegate(params={'merch_model': 'transfer', 'merch_method': 'calc', 'm_lid': str(user1.merchant1.lid),
     #                            'amount': '0.009'})
     #     # pprint.pprint(user1.resp_delegate)
-    #     assert user1.resp_delegate['message'] == 'InvalidInputParams'
-    #     assert user1.resp_delegate['data']['reason'] == "method 'merchant.delegate' missing 1 argument: 'out_curr'"
+    #     assert user1.resp_delegate['code'] == -32002
+    #     assert user1.resp_delegate['message'] == 'EParamInvalid'
+    #     assert user1.resp_delegate['data']['field'] == 'out_curr'
+    #     assert user1.resp_delegate['data']['reason'] == 'Should be provided'
     #     admin.set_fee(tp=30, currency_id=admin.currency['UAH'], is_active=False, merchant_id=user1.merchant1.id)
     #
     # def test_transfer_calc_43(self): # Запрос без out_curr
@@ -2667,8 +2850,10 @@ class TestTransferCalc:
     #                                'x-signature': create_sign(user1.merchant1.akey, data['params'], time_sent),
     #                                'x-utc-now-ms': time_sent}, verify=False)
     #     # print(r.text)
-    #     assert loads(r.text)['error']['message'] == 'InvalidInputParams'
-    #     assert loads(r.text)['error']['data']['reason'] == "method 'transfer.calc' missing 1 argument: 'out_curr'"
+    #     assert loads(r.text)['error']['code'] == -32002
+    #     assert loads(r.text)['error']['message'] == 'EParamInvalid'
+    #     assert loads(r.text)['error']['data']['field'] == 'out_curr'
+    #     assert loads(r.text)['error']['data']['reason'] == 'Should be provided'
     #     admin.set_fee(tp=30, currency_id=admin.currency['USD'], is_active=False, merchant_id=user1.merchant1.id)
     #
     # def test_transfer_calc_44(self): # Запрос out_curr = None
@@ -2680,8 +2865,10 @@ class TestTransferCalc:
     #     user1.delegate(params={'merch_model': 'transfer', 'merch_method': 'calc', 'm_lid': str(user1.merchant1.lid),
     #                            'amount': '0.009', 'out_curr': None})
     #     # pprint.pprint(user1.resp_delegate)
-    #     assert user1.resp_delegate['message'] == 'InvalidCurrency'
-    #     assert user1.resp_delegate['data']['reason'] == None
+    #     assert user1.resp_delegate['code'] == -32002
+    #     assert user1.resp_delegate['message'] == 'EParamInvalid'
+    #     assert user1.resp_delegate['data']['field'] == 'out_curr'
+    #     assert user1.resp_delegate['data']['reason'] == 'Should be provided'
     #     admin.set_fee(tp=30, currency_id=admin.currency['UAH'], is_active=False, merchant_id=user1.merchant1.id)
     #
     # def test_transfer_calc_45(self): # Запрос out_curr = None
@@ -2693,8 +2880,10 @@ class TestTransferCalc:
     #                   is_active=True)
     #     user1.merchant1.transfer_calc(amount='0.009', out_curr=None)
     #     # pprint.pprint(user1.merchant1.resp_transfer_calc)
-    #     assert user1.merchant1.resp_transfer_calc['message'] == 'InvalidCurrency'
-    #     assert user1.merchant1.resp_transfer_calc['data']['reason'] == None
+    #     assert user1.merchant1.resp_transfer_calc['code'] == -32002
+    #     assert user1.merchant1.resp_transfer_calc['message'] == 'EParamInvalid'
+    #     assert user1.merchant1.resp_transfer_calc['data']['field'] == 'out_curr'
+    #     assert user1.merchant1.resp_transfer_calc['data']['reason'] == 'Should be provided'
     #     admin.set_fee(tp=30, currency_id=admin.currency['USD'], is_active=False, merchant_id=user1.merchant1.id)
     #
     # def test_transfer_calc_46(self): # Запрос с лишним параметром 'par': '123'
@@ -2707,9 +2896,10 @@ class TestTransferCalc:
     #     user1.delegate(params={'merch_model': 'transfer', 'merch_method': 'calc', 'm_lid': str(user1.merchant1.lid),
     #                            'amount': '0.01', 'out_curr': 'UAH', 'par': '123'})
     #     # pprint.pprint(user1.resp_delegate)
-    #     assert user1.resp_delegate['message'] == 'InvalidInputParams'
-    #     assert user1.resp_delegate['data']['reason'] ==  \
-    #            "method 'merchant.delegate' received a redundant argument 'par'"
+    #     assert user1.resp_delegate['code'] == -32002
+    #     assert user1.resp_delegate['message'] == 'EParamInvalid'
+    #     assert user1.resp_delegate['data']['field'] == 'par'
+    #     assert user1.resp_delegate['data']['reason'] == 'Should not be provided'
     #     admin.set_fee(tp=30, currency_id=admin.currency['UAH'], is_active=False, merchant_id=user1.merchant1.id)
     #
     # def test_transfer_calc_47(self): # Запрос с лишним параметром 'par': '123'
@@ -2729,9 +2919,10 @@ class TestTransferCalc:
     #                                'x-signature': create_sign(user1.merchant1.akey, data['params'], time_sent),
     #                                'x-utc-now-ms': time_sent}, verify=False)
     #     # print(r.text)
-    #     assert loads(r.text)['error']['message'] == 'InvalidInputParams'
-    #     assert loads(r.text)['error']['data']['reason'] == \
-    #            "method 'transfer.calc' received a redundant argument 'par'"
+    #     assert loads(r.text)['error']['code'] == -32002
+    #     assert loads(r.text)['error']['message'] == 'EParamInvalid'
+    #     assert loads(r.text)['error']['data']['field'] == 'par'
+    #     assert loads(r.text)['error']['data']['reason'] == 'Should not be provided'
     #     admin.set_fee(tp=30, currency_id=admin.currency['USD'], is_active=False, merchant_id=user1.merchant1.id)
     #
     # def test_transfer_calc_48(self): # Запрос без подписи
@@ -2750,8 +2941,10 @@ class TestTransferCalc:
     #                       headers={'x-merchant': str(user1.merchant1.lid),
     #                                'x-utc-now-ms': time_sent}, verify=False)
     #     # pprint.pprint(loads(r.text))
-    #     assert loads(r.text)['error']['message'] == 'InvalidHeaders'
-    #     assert loads(r.text)['error']['data']['reason'] == 'Add x-signature to headers'
+    #     assert loads(r.text)['error']['code'] == -32012
+    #     assert loads(r.text)['error']['message'] == 'EParamHeadersInvalid'
+    #     assert loads(r.text)['error']['data']['field'] == 'x-signature'
+    #     assert loads(r.text)['error']['data']['reason'] == 'Not present'
     #     admin.set_fee(tp=30, currency_id=admin.currency['USD'], is_active=False, merchant_id=user1.merchant1.id)
     #
     # def test_transfer_calc_49(self): # Запрос с невалидной подписью
@@ -2772,7 +2965,8 @@ class TestTransferCalc:
     #                                'x-signature': create_sign(user2.merchant1.akey, data['params'], time_sent),
     #                                'x-utc-now-ms': time_sent}, verify=False)
     #     # pprint.pprint(loads(r.text))
-    #     assert loads(r.text)['error']['message'] == 'InvalidSign'
+    #     assert loads(r.text)['error']['code'] == -32010
+    #     assert loads(r.text)['error']['message'] == 'EParamSignInvalid'
     #     assert loads(r.text)['error']['data']['reason'] == 'Invalid signature'
     #     admin.set_fee(tp=30, currency_id=admin.currency['USD'], is_active=False, merchant_id=user1.merchant1.id)
     #
@@ -2786,8 +2980,10 @@ class TestTransferCalc:
     #     user1.delegate(params={'merch_model': 'transfer', 'merch_method': 'calc', 'm_lid': '11111',
     #                            'amount': '0.01', 'out_curr': 'UAH'})
     #     # pprint.pprint(user1.resp_delegate)
-    #     assert user1.resp_delegate['message'] == 'NotFound'
-    #     assert user1.resp_delegate['data']['reason'] == 'Merchant with lid 11111 was not found'
+    #     assert user1.resp_delegate['code'] == -32090
+    #     assert user1.resp_delegate['message'] == 'EParamNotFound'
+    #     assert user1.resp_delegate['data']['field'] == 'merchant'
+    #     assert user1.resp_delegate['data']['reason'] == 'Not found'
     #     admin.set_fee(tp=30, currency_id=admin.currency['UAH'], is_active=False, merchant_id=user1.merchant1.id)
     #
     # def test_transfer_calc_51(self): # Перевод суммы ниже технического минимума по таблице exchange
@@ -2804,79 +3000,91 @@ class TestTransferCalc:
     #                   is_active=False)
     #     user1.merchant1.transfer_calc(amount='1', in_curr='UAH', out_curr='USD')
     #     # pprint.pprint(user1.merchant1.resp_transfer_calc)
-    #     assert user1.merchant1.resp_transfer_calc['message'] == 'AmountTooSmall'
-    #     assert user1.merchant1.resp_transfer_calc['data']['reason'] == '28.49'
+    #     assert user1.merchant1.resp_transfer_calc['code'] == -32074
+    #     assert user1.merchant1.resp_transfer_calc['message'] == 'EParamAmountTooSmall'
+    #     assert user1.merchant1.resp_transfer_calc['data']['field'] == 'in_amount'
+    #     assert user1.merchant1.resp_transfer_calc['data']['reason'] == 'Amount is too small'
+    #     assert user1.merchant1.resp_transfer_calc['data']['value'] == '28.49'
     #     admin.set_rate_exchange(rate=28199900000, fee=10000000, in_currency='UAH', out_currency='USD',
     #                             tech_min=bl(0.1), tech_max=bl(10000))
-    #
-    # def test_transfer_calc_52(self, _custom_fee, _disable_personal_operation_fee_transfer_USD):
-    #     """ Перевод суммы ниже технического минимума по таблице exchange
-    #     Amount transfer below the technical minimum in the exchange table delegate
-    #     Calc transfer 10.05 USD to another owner: UAH to USD by OWNER  with internal exchange
-    #     and with common fee 5% for exchange and with personal fee 3.5 % for exchange
-    #     and with common percent fee 10% for transfer and with common absolute fee 1 USD for transfer
-    #     and with personal percent fee 5% for transfer and with personal absolute fee 0.5 USD for transfer. """
-    #     admin.set_wallet_amount(balance=bl(400), currency='UAH', merch_lid=user1.merchant1.lid)
-    #     admin.set_wallet_amount(balance=bl(10), currency='USD', merch_lid=user2.merchant1.lid)
-    #     admin.set_rate_exchange(rate=28199900000, fee=50000000, in_currency='UAH', out_currency='USD',
-    #                             tech_min=bl(400), tech_max=bl(10000))
-    #     admin.set_personal_exchange_fee(in_curr=admin.currency['UAH'], out_curr=admin.currency['USD'],
-    #                                     is_active=True, merchant_id=user1.merchant1.id, fee=35000000)
-    #     admin.set_fee(mult=100000000, add=1000000000, _min=0, _max=0, around='ceil', tp=30,
-    #                   currency_id=admin.currency['USD'], is_active=True)
-    #     admin.set_fee(mult=50000000, add=500000000, _min=0, _max=0, around='ceil', tp=30,
-    #                   currency_id=admin.currency['USD'], is_active=True, merchant_id=user1.merchant1.id)
-    #     user1.delegate(params={'merch_model': 'transfer', 'merch_method': 'calc', 'm_lid': str(user1.merchant1.lid),
-    #                            'amount': '10.05', 'in_curr': 'UAH', 'out_curr': 'USD'})
-    #     # pprint.pprint(user1.resp_delegate)
-    #     assert user1.resp_delegate['message'] == 'AmountTooSmall'
-    #     assert user1.resp_delegate['data']['reason'] == '293.33'
-    #     admin.set_rate_exchange(rate=28199900000, fee=50000000, in_currency='UAH', out_currency='USD',
-    #                             tech_min=bl(0.1), tech_max=bl(10000))
-    #
-    # def test_transfer_calc_53(self): # Перевод суммы выше технического максимума по таблице exchange
-    #     """ Amount transfer above the technical maximum in the exchange table transfer_create
-    #     Calc transfer 1 USD the same owner: UAH to USD by MERCHANT with internal exchange
-    #     and with common percent fee 1% for exchange. """
-    #     admin.set_wallet_amount(balance=bl(30), currency='UAH', merch_lid=user1.merchant1.lid)
-    #     admin.set_wallet_amount(balance=bl(1), currency='USD', merch_lid=user1.merchant2.lid)
-    #     admin.set_rate_exchange(rate=28199900000, fee=10000000, in_currency='UAH', out_currency='USD',
-    #                             tech_min=bl(0.1), tech_max=bl(20))
-    #     admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=30, currency_id=admin.currency['USD'],
-    #                   is_active=False, merchant_id=user1.merchant1.id)
-    #     admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=30, currency_id=admin.currency['USD'],
-    #                   is_active=False)
-    #     user1.merchant1.transfer_calc(amount='1', in_curr='UAH', out_curr='USD')
-    #     # pprint.pprint(user1.merchant1.resp_transfer_calc)
-    #     assert user1.merchant1.resp_transfer_calc['message'] == 'AmountTooBig'
-    #     assert user1.merchant1.resp_transfer_calc['data']['reason'] == '28.49'
-    #     admin.set_rate_exchange(rate=28199900000, fee=10000000, in_currency='UAH', out_currency='USD',
-    #                             tech_min=bl(0.1), tech_max=bl(10000))
-    #
-    # def test_transfer_calc_54(self, _custom_fee, _disable_personal_operation_fee_transfer_USD):
-    #     """ Перевод суммы выше технического максимума по таблице exchange
-    #     Amount transfer above the technical maximum in the exchange table delegate
-    #     Calc transfer 10.05 USD to another owner: UAH to USD by OWNER  with internal exchange
-    #     and with common fee 5% for exchange and with personal fee 3.5 % for exchange
-    #     and with common percent fee 10% for transfer and with common absolute fee 1 USD for transfer
-    #     and with personal percent fee 5% for transfer and with personal absolute fee 0.5 USD for transfer. """
-    #     admin.set_wallet_amount(balance=bl(400), currency='UAH', merch_lid=user1.merchant1.lid)
-    #     admin.set_wallet_amount(balance=bl(10), currency='USD', merch_lid=user2.merchant1.lid)
-    #     admin.set_rate_exchange(rate=28199900000, fee=50000000, in_currency='UAH', out_currency='USD',
-    #                             tech_min=bl(0.1), tech_max=bl(200))
-    #     admin.set_personal_exchange_fee(in_curr=admin.currency['UAH'], out_curr=admin.currency['USD'],
-    #                                     is_active=True, merchant_id=user1.merchant1.id, fee=35000000)
-    #     admin.set_fee(mult=100000000, add=1000000000, _min=0, _max=0, around='ceil', tp=30,
-    #                   currency_id=admin.currency['USD'], is_active=True)
-    #     admin.set_fee(mult=50000000, add=500000000, _min=0, _max=0, around='ceil', tp=30,
-    #                   currency_id=admin.currency['USD'], is_active=True, merchant_id=user1.merchant1.id)
-    #     user1.delegate(params={'merch_model': 'transfer', 'merch_method': 'calc', 'm_lid': str(user1.merchant1.lid),
-    #                            'amount': '10.05', 'in_curr': 'UAH', 'out_curr': 'USD'})
-    #     # pprint.pprint(user1.resp_delegate)
-    #     assert user1.resp_delegate['message'] == 'AmountTooBig'
-    #     assert user1.resp_delegate['data']['reason'] == '293.33'
-    #     admin.set_rate_exchange(rate=28199900000, fee=50000000, in_currency='UAH', out_currency='USD',
-    #                             tech_min=bl(0.1), tech_max=bl(10000))
+
+    def test_transfer_calc_52(self, _custom_fee, _disable_personal_operation_fee_transfer_USD):
+        """ Перевод суммы ниже технического минимума по таблице exchange
+        Amount transfer below the technical minimum in the exchange table delegate
+        Calc transfer 10.05 USD to another owner: UAH to USD by OWNER  with internal exchange
+        and with common fee 5% for exchange and with personal fee 3.5 % for exchange
+        and with common percent fee 10% for transfer and with common absolute fee 1 USD for transfer
+        and with personal percent fee 5% for transfer and with personal absolute fee 0.5 USD for transfer. """
+        admin.set_wallet_amount(balance=bl(400), currency='UAH', merch_lid=user1.merchant1.lid)
+        admin.set_wallet_amount(balance=bl(10), currency='USD', merch_lid=user2.merchant1.lid)
+        admin.set_rate_exchange(rate=28199900000, fee=50000000, in_currency='UAH', out_currency='USD',
+                                tech_min=bl(400), tech_max=bl(10000))
+        admin.set_personal_exchange_fee(in_curr=admin.currency['UAH'], out_curr=admin.currency['USD'],
+                                        is_active=True, merchant_id=user1.merchant1.id, fee=35000000)
+        admin.set_fee(mult=100000000, add=1000000000, _min=0, _max=0, around='ceil', tp=30,
+                      currency_id=admin.currency['USD'], is_active=True)
+        admin.set_fee(mult=50000000, add=500000000, _min=0, _max=0, around='ceil', tp=30,
+                      currency_id=admin.currency['USD'], is_active=True, merchant_id=user1.merchant1.id)
+        user1.delegate(params={'merch_model': 'transfer', 'merch_method': 'calc', 'm_lid': str(user1.merchant1.lid),
+                               'amount': '10.05', 'in_curr': 'UAH', 'out_curr': 'USD'})
+        # pprint.pprint(user1.resp_delegate)
+        assert user1.resp_delegate['code'] == -32074
+        assert user1.resp_delegate['message'] == 'EParamAmountTooSmall'
+        assert user1.resp_delegate['data']['field'] == 'in_amount'
+        assert user1.resp_delegate['data']['reason'] == 'Amount is too small'
+        assert user1.resp_delegate['data']['value'] == '293.33'
+        admin.set_rate_exchange(rate=28199900000, fee=50000000, in_currency='UAH', out_currency='USD',
+                                tech_min=bl(0.1), tech_max=bl(10000))
+
+    def test_transfer_calc_53(self): # Перевод суммы выше технического максимума по таблице exchange
+        """ Amount transfer above the technical maximum in the exchange table transfer_create
+        Calc transfer 1 USD the same owner: UAH to USD by MERCHANT with internal exchange
+        and with common percent fee 1% for exchange. """
+        admin.set_wallet_amount(balance=bl(30), currency='UAH', merch_lid=user1.merchant1.lid)
+        admin.set_wallet_amount(balance=bl(1), currency='USD', merch_lid=user1.merchant2.lid)
+        admin.set_rate_exchange(rate=28199900000, fee=10000000, in_currency='UAH', out_currency='USD',
+                                tech_min=bl(0.1), tech_max=bl(20))
+        admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=30, currency_id=admin.currency['USD'],
+                      is_active=False, merchant_id=user1.merchant1.id)
+        admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=30, currency_id=admin.currency['USD'],
+                      is_active=False)
+        user1.merchant1.transfer_calc(amount='1', in_curr='UAH', out_curr='USD')
+        # pprint.pprint(user1.merchant1.resp_transfer_calc)
+        assert user1.merchant1.resp_transfer_calc['code'] == -32073
+        assert user1.merchant1.resp_transfer_calc['message'] == 'EParamAmountTooBig'
+        assert user1.merchant1.resp_transfer_calc['data']['field'] == 'in_amount'
+        assert user1.merchant1.resp_transfer_calc['data']['reason'] == 'Amount is too big'
+        assert user1.merchant1.resp_transfer_calc['data']['value'] == '28.49'
+        admin.set_rate_exchange(rate=28199900000, fee=10000000, in_currency='UAH', out_currency='USD',
+                                tech_min=bl(0.1), tech_max=bl(10000))
+
+    def test_transfer_calc_54(self, _custom_fee, _disable_personal_operation_fee_transfer_USD):
+        """ Перевод суммы выше технического максимума по таблице exchange
+        Amount transfer above the technical maximum in the exchange table delegate
+        Calc transfer 10.05 USD to another owner: UAH to USD by OWNER  with internal exchange
+        and with common fee 5% for exchange and with personal fee 3.5 % for exchange
+        and with common percent fee 10% for transfer and with common absolute fee 1 USD for transfer
+        and with personal percent fee 5% for transfer and with personal absolute fee 0.5 USD for transfer. """
+        admin.set_wallet_amount(balance=bl(400), currency='UAH', merch_lid=user1.merchant1.lid)
+        admin.set_wallet_amount(balance=bl(10), currency='USD', merch_lid=user2.merchant1.lid)
+        admin.set_rate_exchange(rate=28199900000, fee=50000000, in_currency='UAH', out_currency='USD',
+                                tech_min=bl(0.1), tech_max=bl(200))
+        admin.set_personal_exchange_fee(in_curr=admin.currency['UAH'], out_curr=admin.currency['USD'],
+                                        is_active=True, merchant_id=user1.merchant1.id, fee=35000000)
+        admin.set_fee(mult=100000000, add=1000000000, _min=0, _max=0, around='ceil', tp=30,
+                      currency_id=admin.currency['USD'], is_active=True)
+        admin.set_fee(mult=50000000, add=500000000, _min=0, _max=0, around='ceil', tp=30,
+                      currency_id=admin.currency['USD'], is_active=True, merchant_id=user1.merchant1.id)
+        user1.delegate(params={'merch_model': 'transfer', 'merch_method': 'calc', 'm_lid': str(user1.merchant1.lid),
+                               'amount': '10.05', 'in_curr': 'UAH', 'out_curr': 'USD'})
+        # pprint.pprint(user1.resp_delegate)
+        assert user1.resp_delegate['code'] == -32073
+        assert user1.resp_delegate['message'] == 'EParamAmountTooBig'
+        assert user1.resp_delegate['data']['field'] == 'in_amount'
+        assert user1.resp_delegate['data']['reason'] == 'Amount is too big'
+        assert user1.resp_delegate['data']['value'] == '293.33'
+        admin.set_rate_exchange(rate=28199900000, fee=50000000, in_currency='UAH', out_currency='USD',
+                                tech_min=bl(0.1), tech_max=bl(10000))
 
     def test_transfer_calc_55(self): # Перевод суммы равной техническому минимуму по таблице exchange
         """ Calc transfer of the amount equal to the technical maximum in the exchange table transfer_create
@@ -2986,7 +3194,6 @@ class TestTransferCalc:
         admin.set_rate_exchange(rate=28199900000, fee=50000000, in_currency='UAH', out_currency='USD',
                                 tech_min=bl(0.1), tech_max=bl(10000))
 
-
 class TestTransferList:
     """ Testing transfer list method. """
 
@@ -3006,11 +3213,15 @@ class TestTransferList:
         r = user1.merchant1.transfer_list(in_curr=curr)['data'][0]
         assert r['in_curr'] == curr, r
 
-    # def test_3(self):
-    #     """ Unknown in_curr filter test. """
-    #     curr = 'ГРН'
-    #     r = user1.merchant1.transfer_list(in_curr=curr)
-    #     assert r == {'code': -32076, 'message': 'InvalidCurrency', 'data': curr}, r
+    def test_3(self):
+        """ Unknown in_curr filter test. """
+        curr = 'ГРН'
+        r = user1.merchant1.transfer_list(in_curr=curr)
+        # pprint.pprint(r)
+        assert r['code'] == -32014
+        assert r['data']['field'] == 'in_curr'
+        assert r['data']['reason'] == 'Invalid currency name'
+        assert r['message'] == 'EParamCurrencyInvalid'
 
     def test_4(self):
         """ Success out_curr filter test. """
@@ -3018,11 +3229,15 @@ class TestTransferList:
         r = user1.merchant1.transfer_list(out_curr=curr)['data'][0]
         assert r['out_curr'] == curr, r
 
-    # def test_5(self):
-    #     """ Unknown out_curr filter test. """
-    #     curr = 'ГРН'
-    #     r = user1.merchant1.transfer_list(out_curr=curr)
-    #     assert r == {'code': -32076, 'message': 'InvalidCurrency', 'data': curr}
+    def test_5(self):
+        """ Unknown out_curr filter test. """
+        curr = 'ГРН'
+        r = user1.merchant1.transfer_list(out_curr=curr)
+        # pprint.pprint(r)
+        assert r['code'] == -32014
+        assert r['data']['field'] == 'out_curr'
+        assert r['data']['reason'] == 'Invalid currency name'
+        assert r['message'] == 'EParamCurrencyInvalid'
 
     def test_6(self):
         """ First filter test. """
@@ -3033,14 +3248,21 @@ class TestTransferList:
     def test_7(self):
         """ First filter test. """
         r = user1.merchant1.transfer_list(first=1)
-        assert r['error'] == {'code': -32070, 'message': 'InvalidParam',
-                              'data': {'reason': "Key 'first' must not be of 'int' type"}}
+        # pprint.pprint(r)
+        assert r['code'] == -32003
+        assert r['data']['field'] == 'first'
+        assert r['data']['reason'] == "'first' must not be of 'int' type"
+        assert r['data']['value'] == 1
+        assert r['message'] == 'EParamType'
 
     def test_8(self):
         """ First filter test. """
         r = user1.merchant1.transfer_list(first='one')
-        assert r['error'] == {'code': -32070, 'message': 'InvalidParam',
-                              'data': {'reason': 'first - has to be an Integer'}}
+        # pprint.pprint(r)
+        assert r['code'] == -32003
+        assert r['data']['field'] == 'first'
+        assert r['data']['reason'] == 'Should be an Integer'
+        assert r['message'] == 'EParamType'
 
     def test_9(self):
         """ First filter test. """
@@ -3058,5 +3280,8 @@ class TestTransferList:
         """ Count filter test. """
         count = 0
         r = user1.merchant1.transfer_list(count=str(count))
-        len = r['data'].__len__()
-        assert len == 20 or len == r['total']
+        # pprint.pprint(r)
+        assert r['code'] == -32002
+        assert r['data']['field'] == 'count'
+        assert r['data']['reason'] == 'Should be more than zero'
+        assert r['message'] == 'EParamInvalid'

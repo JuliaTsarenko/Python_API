@@ -23,35 +23,38 @@ class TestGet:
     def test_1(self):
         """ Success requests without sess_id. """
         r = user1.session_get()
-        assert r.get('user_id') == user1.id, r
+        print(r)
+        assert r.get('owner_id') == user1.id, r
 
     def test_2(self):
         """ Success requests with sess_id. """
-        session_id = admin.get_session(key={'owner_id': user1.id})[0]['id']
+        session_id = admin.get_sessions(key={'owner_id': user1.id})[0]['id']
         r = user1.session_get(sess_id=str(session_id))
-        assert r.get('user_id') == user1.id, r
+        assert r.get('owner_id') == user1.id, r
         assert r.get('id') == session_id, r
 
     def test_3(self):
         """ Success requests with many sess_id. """
-        sessions = admin.get_session(key={'owner_id': user1.id})
+        sessions = admin.get_sessions(key={'owner_id': user1.id})
         session_id1 = sessions[0]['id']
         session_id2 = sessions[1]['id']
         r1 = user1.session_get(sess_id=str(session_id1))
         r2 = user1.session_get(sess_id=str(session_id2))
-        assert r1.get('user_id') == r2.get('user_id') == user1.id
+        assert r1.get('owner_id') == r2.get('owner_id') == user1.id
         assert r1.get('id') == session_id1, r1
         assert r2.get('id') == session_id2, r2
 
     def test_4(self):
         """ Request with wrong sess_id. """
-        session_id = admin.get_session(key={'owner_id': user2.id})[0]['id']
+        session_id = admin.get_sessions(key={'owner_id': user2.id})[0]['id']
         r = user1.session_get(sess_id=str(session_id))
+        print(r)
         assert r['error'] == {'code': -32090, 'message': 'NotFound'}, r
 
     def test_5(self):
         """ Request with invalid value. """
         r = user1.session_get(sess_id='test')
+        print(r)
         assert r['error'] == {'code': -32070, 'message': 'InvalidParam',
                               'data': {'reason': 'Invalid value for session_id: test'}}, r
 
@@ -90,14 +93,14 @@ class TestList:
     def test_1(self):
         """ Success request without filters. """
         r = user1.session_list()
-        assert r['data'][0].get('user_id') == user1.id, r
+        assert r['data'][0].get('owner_id') == user1.id, r
 
     def test_2(self):
         """ Success request with many sessions. """
         r = user1.session_list()['data']
-        assert r[0].get('user_id') == user1.id, r
-        assert r[1].get('user_id') == user1.id, r
-        assert r[2].get('user_id') == user1.id, r
+        assert r[0].get('owner_id') == user1.id, r
+        assert r[1].get('owner_id') == user1.id, r
+        assert r[2].get('owner_id') == user1.id, r
         assert r[0]['create_time'] > r[1]['create_time']
         assert r[1]['create_time'] > r[2]['create_time']
 
@@ -157,28 +160,27 @@ class TestDelete:
 
     def test_1(self):
         """ Success request with sess_id. """
-        session_id = admin.get_session(key={'owner_id': user1.id})[1]['id']
+        session_id = admin.get_sessions(key={'owner_id': user1.id})[1]['id']
         r = user1.session_delete(sess_id=str(session_id))
-        print(r)
-        assert r.get('user_id') == user1.id, r
+        assert r.get('owner_id') == user1.id, r
         assert r.get('id') == session_id, r
 
     def test_2(self):
         """ Wrong request with active sess_id. """
-        session_id = admin.get_session(key={'owner_id': user1.id})[0]['id']
+        session_id = admin.get_sessions(key={'owner_id': user1.id})[0]['id']
         r = user1.session_delete(sess_id=str(session_id))
         assert r['error'] == {'code': -32034, 'message': 'Forbidden',
                               'data': {'reason': 'Active session cannot be deleted'}}, r
 
     def test_3(self):
         """ Wrong requests without sess_id. """
-        r = user1.session_delete()
+        r = user1.session_delete(sess_id=None)
         assert r['error'] == {'code': -32070, 'message': 'InvalidParam',
                               'data': {'reason': 'Invalid value for session_id: None'}}, r
 
     def test_4(self):
         """ Request with wrong sess_id. """
-        session_id = admin.get_session(key={'owner_id': user2.id})[0]['id']
+        session_id = admin.get_sessions(key={'owner_id': user2.id})[0]['id']
         r = user1.session_delete(sess_id=str(session_id))
         assert r['error'] == {'code': -32090, 'message': 'NotFound',
                               'data': {'reason': 'no session found with id: ' + str(session_id)}}, r
@@ -223,7 +225,7 @@ class TestDeleteAll:
 
     def test_1(self):
         """ Success request. """
-        session_id = admin.get_session(key={'owner_id': user1.id})[0]['id']
+        session_id = admin.get_sessions(key={'owner_id': user1.id})[0]['id']
         r = user1.session_delete_all()
         assert r.__len__() == 2, r
         assert r[0].get('id') != session_id, r

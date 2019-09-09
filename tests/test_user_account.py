@@ -1,7 +1,6 @@
 import pytest
+import time
 from users.user import User
-from json import loads
-import requests
 
 
 @pytest.mark.usefixtures('_validate_pwd_off')
@@ -49,7 +48,6 @@ class TestRegistration:
         code = admin.get_onetime_code(email='anymoneyuser100@mailinator.com')
         User.confirm_registration(code=code, key=User.confirm_key)
         User.confirm_registration(code=code, key=User.confirm_key)
-        # print('\n',  User.resp_confirm)
         assert User.resp_confirm['error'] == {"code": -32033, "message": "Auth2Drop", "data": "key"}
 
     def test_registration_5(self, _delete_user):
@@ -70,7 +68,7 @@ class TestRegistration:
         """ Registration without confirm token. """
         User.registration(email='anymoneyuser100@mailinator.com', pwd='Ac*123')
         User.confirm_registration(code=admin.get_onetime_code(email='anymoneyuser100@mailinator.com'), key=None)
-        assert User.resp_confirm['error'] == {'code': -32040, 'message': 'Req400', 'data': 'Bad Request'}
+        assert User.resp_confirm['error'] == {'code': -32033, 'message': 'Auth2Drop', 'data': 'key'}
         assert admin.get_user(email='anymoneyuser100@mailinator.com')['lvl'] == 10
 
     def test_registration_8(self, _delete_user):
@@ -252,7 +250,7 @@ class TestAuthorization:
         user1.set_2type(tp='0')
         user1.authorization_by_email(email=user1.email, pwd=user1.pwd)
         print(user1.email)
-        assert "key" in user1.resp_authorization['error']['data']
+        assert 'key' in user1.resp_authorization['error']['data']
         user1.confirm_registration(code=admin.get_onetime_code(email=user1.email), key=user1.confirm_key, user=user1)
         assert user1.resp_confirm['session']['token'] == admin.get_session(user1.email)
 
@@ -267,7 +265,7 @@ class TestAuthorization:
     @pytest.mark.skip(reason=' Avoiding wrong captcha ')
     def test_autorization_7(self, _delete_auth2type_token, _disable_2type):
         """ Authorization after deactivated 2 step auth token. """
-        user1.set_2type(tp=0)
+        user1.set_2type(tp='0')
         user1.authorization_by_email(email=user1.email, pwd=user1.pwd)
         code = admin.get_onetime_code(email=user1.email)
         user1.cancel_2auth(key=user1.confirm_key)
@@ -386,43 +384,11 @@ class TestUpdate:
     def test_update_email_9(self):
         """ Update email without email string. """
         user1.update_email(email=None)
-        assert user1.resp_update_email['error'] == {'code': -32035, 'message': 'InvalidField'}
+        assert user1.resp_update_email['error'] == {'code': -32602, 'message': 'InvalidInputParams',
+                                                    'data': {'reason': "method 'account.update_email' missing 1 argument: 'email'"}}
 
 
-@pytest.mark.skip(reason='Save password 123456 on real account. ')
 class TestUpdatePassword:
-    """ Updating password. """
-
-    def test_update_password_1(self, _drop_pwd):
-        """ Update password. """
-        user1.update_pwd(pwd='000000')
-        assert user1.resp_update_pwd['result']['session']['token'] == admin.get_session(email=user1.email)
-        user1.authorization_by_email(email=user1.email, pwd='000000')
-        assert user1.resp_authorization['result']['session']['token'] == admin.get_session(email=user1.email)
-
-    def test_update_password_2(self, _disable_2type, _drop_pwd):
-        """ Update password with 2 step auth. """
-        user1.set_2type(tp=0)
-        user1.update_pwd(pwd='000000')
-        user1.confirm_registration(code=admin.get_onetime_code(email=user1.email), key=user1.confirm_key, user=user1)
-        assert user1.resp_confirm['result']['session']['token'] == admin.get_session(email=user1.email)
-        user1.authorization_by_email(email=user1.email, pwd='000000')
-        user1.confirm_registration(code=admin.get_onetime_code(email=user1.email), key=user1.confirm_key, user=user1)
-        assert user1.resp_confirm['result']['session']['token'] == admin.get_session(email=user1.email)
-
-    def test_update_password_3(self):
-        """ Update password with empty password. """
-        user1.update_pwd(pwd=None)
-        assert 'error' in user1.resp_update_pwd
-
-    def test_update_password_4(self):
-        """ Update password with string shorter than 6 symbols. """
-        user1.update_pwd(pwd='12345')
-        assert 'error' in user1.resp_update_pwd
-        assert admin.get_session(email=user1.email) == user1.headers['x-token']
-
-
-class TestUpdatePassword2:
     """ Updating password. """
 
     def test_0(self, start_session):
@@ -440,12 +406,12 @@ class TestUpdatePassword2:
     def test_update_password_2(self, _registration_and_delete):
         """ Update password with empty password. """
         user1.update_pwd(pwd=None)
-        assert user1.resp_update_pwd['error'] == {"code": -32070, "message": "InvalidParam",
-                                                 'data': {'reason': 'None is not acceptable for pwd'}}
+        assert user1.resp_update_pwd['error'] == {'code': -32602, 'message': 'InvalidInputParams',
+                                                  'data': {'reason': "method 'account.update_pwd' missing 1 argument: 'pwd'"}}
 
     def test_update_password_3(self, _registration_and_delete):
         """ Update password with 2 step auth. """
-        user1.set_2type(tp=0)
+        user1.set_2type(tp='0')
         user1.update_pwd(pwd='As.123')
         user1.confirm_registration(code=admin.get_onetime_code(email='anymoneyuser100@mailinator.com'),
                                    key=user1.confirm_key, user=user1)
@@ -457,7 +423,7 @@ class TestUpdatePassword2:
 
     def test_update_password_4(self, _registration_and_delete):
         """ Update password with no confirm 2 step auth. """
-        user1.set_2type(tp=0)
+        user1.set_2type(tp='0')
         user1.update_pwd(pwd='As.123')
         user1.authorization_by_email(email='anymoneyuser100@mailinator.com', pwd='As.123')
         assert user1.resp_authorization['error'] == {"code": -32090, "message": "NotFound", "data": "pwd"}
@@ -465,18 +431,17 @@ class TestUpdatePassword2:
     def test_update_password_5(self, _registration_and_delete):
         """ Update invalidate password with 2 step auth. """
         admin.set_front_params(pass_length_min=6)
-        user1.set_2type(tp=0)
+        user1.set_2type(tp='0')
         user1.update_pwd(pwd='12345')
         user1.confirm_registration(code=admin.get_onetime_code(email='anymoneyuser100@mailinator.com'),
                                    key=user1.confirm_key, user=user1)
-        assert user1.resp_confirm['error'] == {"code": -32082, "message": "InvalidPassLength",
-                                                   "data": {"reason": "Must contain at least 6 symbols"}}
+        assert user1.resp_confirm['error'] == {"code": -32082, "message": "InvalidPassLength", "data": {"reason": "Must contain at least 6 symbols"}}
         user1.authorization_by_email(email='anymoneyuser100@mailinator.com', pwd='As.123')
         assert user1.resp_authorization['error'] == {"code": -32090, "message": "NotFound", "data": "pwd"}
 
     def test_update_password_6(self, _registration_and_delete):
         """ Update password with 2 step auth without confirmation code. """
-        user1.set_2type(tp=0)
+        user1.set_2type(tp='0')
         user1.update_pwd(pwd='As.123')
         user1.confirm_registration(code=None, key=user1.confirm_key, user=user1)
         assert user1.resp_confirm['error'] == {"code": -32033, "message": "Auth2Wrong"}
@@ -485,11 +450,11 @@ class TestUpdatePassword2:
 
     def test_update_password_7(self, _registration_and_delete):
         """ Update password with 2 step auth without auth2 key. """
-        user1.set_2type(tp=0)
+        user1.set_2type(tp='0')
         user1.update_pwd(pwd='As.123')
         user1.confirm_registration(code=admin.get_onetime_code(email='anymoneyuser100@mailinator.com'),
                                    key=None, user=user1)
-        assert user1.resp_confirm['error'] == {"code": -32040, "message": "Req400", "data": "Bad Request"}
+        assert user1.resp_confirm['error'] == {'code': -32033, 'data': 'key', 'message': 'Auth2Drop'}
 
     def test_update_password_8(self, _registration_and_delete):
         """ Update password invalidate password (without upp case char). """
@@ -568,7 +533,8 @@ class TestUpdateLanguage:
     def test_update_language_3(self):
         """ Update language without lang id. """
         user1.update_lang(lang=None)
-        assert user1.resp_update_lang['error'] == {'code': -32035, 'message': 'InvalidField', 'data': 'lang'}
+        assert user1.resp_update_lang['error'] == {'code': -32602, 'message': 'InvalidInputParams',
+                                                   'data': {'reason': "method 'account.update_lang' missing 1 argument: 'lang'"}}
 
 
 class TestUpdateTimezone:
@@ -588,15 +554,17 @@ class TestUpdateTimezone:
     def test_update_timezone_2(self):
         """ Update timezone with wrong format. """
         user1.update_tz(tz='Australia')
-        assert user1.resp_update_tz['error'] == {'code': -32070, 'message': 'InvalidParam'}
+        assert user1.resp_update_tz == {'code': -32070, 'message': 'InvalidParam'}
         assert admin.get_user(email=user1.email)['timezone'] == 'Europe/Amsterdam'
 
     def test_update_timezone_3(self):
         """ Update timezone with None value. """
         user1.update_tz(tz=None)
-        assert user1.resp_update_tz['error'] == {'code': -32070, 'message': 'InvalidParam'}
+        assert user1.resp_update_tz == {'code': -32602, 'message': 'InvalidInputParams',
+                                        'data': {'reason': "method 'account.update_tz' missing 1 argument: 'tz'"}}
 
 
+@pytest.mark.skip(reason='Disabled method "update_safemode "')
 class TestUpdateSafemode:
     """ Updating safemode. """
 
@@ -635,7 +603,7 @@ class TestCurrencyList:
 
     def test_list_currency_1(self):
         """ Getting full list by all currency.  """
-        user1.currency_list(first=None, count=100)
+        user1.currency_list(first=None, count='100')
         ls_currency = [ls['name'] for ls in user1.resp_currency_list['data']]
         ls_currency.sort()
         ls_admin = [ls for ls in admin.currency]
@@ -644,14 +612,14 @@ class TestCurrencyList:
 
     def test_list_currency_2(self):
         """ Getting list of two elements. """
-        user1.currency_list(first=None, count=2)
+        user1.currency_list(first=None, count='2')
         assert len(user1.resp_currency_list['data']) == 2
 
     def test_list_currency_3(self):
         """ Getting list without first element. """
         user1.currency_list(first=None, count=None)
         second_element = user1.resp_currency_list['data'][1]
-        user1.currency_list(first=1, count=None)
+        user1.currency_list(first='1', count=None)
         first_element = user1.resp_currency_list['data'][0]
         assert first_element == second_element
 
@@ -728,7 +696,7 @@ class TestBookmark:
         assert user1.resp_bookmark_list['data'][0]['id'] == user1.bookmark_oid
         assert user1.resp_bookmark_list['data'][0]['title'] == 'ASCII !@#$%^&*()_=+'
         assert len(user1.resp_bookmark_list['data']) == 1
-        user1.bookmark_delete(m_lid=user1.merchant1.lid, oid=user1.bookmark_oid)
+        user1.bookmark_delete(m_lid=user1.merchant1.lid, oid=str(user1.bookmark_oid))
         assert user1.resp_bookmark_delete['id'] == user1.bookmark_oid
         user1.bookmark_list(m_lid=user1.merchant1.lid, first=None, count=None)
         assert len(user1.resp_bookmark_list['data']) == 0
@@ -743,252 +711,102 @@ class TestBookmark:
         assert user1.resp_bookmark_create['order'] == 0
         user1.bookmark_list(m_lid=user1.merchant1.lid, first=None, count=None)
         ls_oid = [oid['id'] for oid in user1.resp_bookmark_list['data']]
-        user1.bookmark_list(m_lid=user1.merchant1.lid, first=1, count=1)
+        user1.bookmark_list(m_lid=user1.merchant1.lid, first='1', count='1')
         assert len(user1.resp_bookmark_list['data']) == 1
-        user1.bookmark_delete(m_lid=user1.merchant1.lid, oid=ls_oid[0])
-        user1.bookmark_delete(m_lid=user1.merchant1.lid, oid=ls_oid[1])
+        user1.bookmark_delete(m_lid=user1.merchant1.lid, oid=str(ls_oid[0]))
+        user1.bookmark_delete(m_lid=user1.merchant1.lid, oid=str(ls_oid[1]))
 
     def test_create_bookmark_3(self):
         """ Create bookmark without m_lid. """
-        user1.bookmark_create(m_lid=None, title='New', params={}, order=1)
-        assert user1.resp_bookmark_create['error'] == {'code': -32070, 'message': 'InvalidParam', 'data': 'm_lid'}
+        user1.bookmark_create(m_lid=None, title='New', params={}, order='1')
+        assert user1.resp_bookmark_create['error'] == {'code': -32602, 'message': 'InvalidInputParams',
+                                                       'data': {'reason': "method 'bookmark.insert' missing 1 argument: 'm_lid'"}}
         user1.bookmark_list(m_lid=user1.merchant1.lid, first=None, count=None)
         assert len(user1.resp_bookmark_list['data']) == 0
 
-
     def test_create_bookmark_4(self):
         """ Create bookmark for wrong m_lid. """
-        user1.bookmark_create(m_lid=1, title='New', params={}, order=0)
+        user1.bookmark_create(m_lid=1, title='New', params={}, order='0')
         assert 'error' in user1.resp_bookmark_create
 
 
     def test_create_bookmark_5(self):
         """ Create bookmark without title. """
         user1.bookmark_create(m_lid=user1.merchant1.lid, title=None, params={}, order=False)
-        assert user1.resp_bookmark_create['error'] == {'code': -32070, 'message': 'InvalidParam', 'data': 'title'}
-
+        assert user1.resp_bookmark_create['error'] == {'code': -32602, 'message': 'InvalidInputParams',
+                                                       'data': {'reason': "method 'bookmark.insert' missing 1 argument: 'title'"}}
 
     def test_create_bookmark_6(self):
         """ Create bookmark with string in params. """
         user1.bookmark_create(m_lid=user1.merchant1.lid, title='Test', params='String', order=False)
         assert user1.resp_bookmark_create['error'] == {'code': -32070, 'message': 'InvalidParam', 'data': 'params'}
 
-
     def test_create_bookmark_7(self):
         """ Create bookmark without params. """
         user1.bookmark_create(m_lid=user1.merchant1.lid, title='Test', params=None, order=False)
-        assert user1.resp_bookmark_create['error'] == {'code': -32070, 'message': 'InvalidParam', 'data': 'params'}
-
+        assert user1.resp_bookmark_create['error'] == {'code': -32602, 'message': 'InvalidInputParams',
+                                                       'data': {'reason': "method 'bookmark.insert' missing 1 argument: 'params'"}}
 
     def test_create_bookmark_8(self):
         """ Create bookmark without order. """
         user1.bookmark_create(m_lid=user1.merchant1.lid, title='Test', params=None, order=None)
-        assert user1.resp_bookmark_create['error'] == {'code': -32070, 'message': 'InvalidParam', 'data': 'params'}
-
+        assert user1.resp_bookmark_create['error'] == {'code': -32602, 'message': 'InvalidInputParams',
+                                                       'data': {'reason': "method 'bookmark.insert' missing 2 arguments: 'params' and 'order'"}}
 
     def test_create_bookmark_9(self):
         """ Create bookmark without session. """
         session, user1.headers['x-token'] = user1.headers['x-token'], None
-        user1.bookmark_create(m_lid=user1.merchant1.lid, title='Test', params=None, order=1)
+        user1.bookmark_create(m_lid=user1.merchant1.lid, title='Test', params=None, order='1')
         assert user1.resp_bookmark_create['error'] == {'code': -32003, 'message': 'InvalidHeaders',
                                                        'data': {'reason': 'Add x-token to headers'}}
         user1.headers['x-token'] = session
 
     def test_update_bookmark_1(self):
         """ Updating bookmark after creating. """
-        user1.bookmark_create(m_lid=user1.merchant1.lid, title='New', params={'param1': 1}, order=1)
-        user1.bookmark_update(m_lid=user1.merchant1.lid, title='New1', oid=user1.bookmark_oid, order=0)
+        user1.bookmark_create(m_lid=user1.merchant1.lid, title='New', params={'param1': 1}, order='1')
+        user1.bookmark_update(m_lid=user1.merchant1.lid, title='New1', oid=str(user1.bookmark_oid), order='0')
         assert user1.resp_bookmark_update['title'] == 'New1'
         assert user1.resp_bookmark_update['order'] == 0
         user1.bookmark_list(m_lid=user1.merchant1.lid, first=None, count=None)
         assert user1.resp_bookmark_list['data'][0]['title'] == 'New1'
         assert user1.resp_bookmark_list['data'][0]['order'] == 0
-        user1.bookmark_update(m_lid=user1.merchant1.lid, title=None, oid=user1.bookmark_oid, order=False)
+        user1.bookmark_update(m_lid=user1.merchant1.lid, title=None, oid=str(user1.bookmark_oid), order=False)
         user1.bookmark_list(m_lid=user1.merchant1.lid, first=None, count=None)
         assert user1.resp_bookmark_list['data'][0]['title'] == 'New1'
         assert user1.resp_bookmark_list['data'][0]['order'] == 0
-        user1.bookmark_update(m_lid=user1.merchant1.lid, title='NewNew', oid=user1.bookmark_oid, order=None)
+        user1.bookmark_update(m_lid=user1.merchant1.lid, title='NewNew', oid=str(user1.bookmark_oid), order=None)
         user1.bookmark_list(m_lid=user1.merchant1.lid, first=None, count=None)
         assert user1.resp_bookmark_list['data'][0]['title'] == 'NewNew'
         assert user1.resp_bookmark_list['data'][0]['order'] == 0
-        user1.bookmark_delete(m_lid=user1.merchant1.lid, oid=user1.bookmark_oid)
+        user1.bookmark_delete(m_lid=user1.merchant1.lid, oid=str(user1.bookmark_oid))
 
     def test_update_bookmark_2(self):
         """ Updating bookmark with wrong title and order. """
         user1.bookmark_create(m_lid=user1.merchant1.lid, title='New', params={'param1': 1}, order=True)
-        user1.bookmark_update(m_lid=user1.merchant1.lid, title='1', oid=333, order=True)
+        user1.bookmark_update(m_lid=user1.merchant1.lid, title='1', oid='333', order=True)
         assert 'error' in user1.resp_bookmark_update
-        user1.bookmark_update(m_lid=None, title='1', oid=user1.bookmark_oid, order=True)
+        user1.bookmark_update(m_lid=None, title='1', oid=str(user1.bookmark_oid), order=True)
         assert 'error' in user1.resp_bookmark_update
-        user1.bookmark_update(m_lid=20000, title='1', oid=user1.bookmark_oid, order=True)
+        user1.bookmark_update(m_lid='01', title='1', oid=str(user1.bookmark_oid), order=True)
         assert 'error' in user1.resp_bookmark_update
         user1.bookmark_list(m_lid=user1.merchant1.lid, first=None, count=None)
         assert user1.resp_bookmark_list['data'][0]['title'] == 'New'
         assert user1.resp_bookmark_list['data'][0]['order'] == 1
-        user1.bookmark_delete(m_lid=user1.merchant1.lid, oid=user1.bookmark_oid)
+        user1.bookmark_delete(m_lid=user1.merchant1.lid, oid=str(user1.bookmark_oid))
 
     def test_delete_bookmark_1(self):
         """ Delete not own bookmark. """
         user1.bookmark_create(m_lid=user1.merchant1.lid, title='New', params={'param1': 1}, order=True)
-        user2.bookmark_delete(m_lid=user1.merchant1.lid, oid=user1.bookmark_oid)
+        user2.bookmark_delete(m_lid=user1.merchant1.lid, oid=str(user1.bookmark_oid))
         assert 'error' in user2.resp_bookmark_delete
-        user1.bookmark_delete(m_lid=user1.merchant1.lid, oid=user1.bookmark_oid)
+        user1.bookmark_delete(m_lid=user1.merchant1.lid, oid=str(user1.bookmark_oid))
 
     def test_delete_bookmark_2(self):
         """ Delete bookmark without session. """
         user1.bookmark_create(m_lid=user1.merchant1.lid, title='New', params={'param1': 1}, order=True)
         session, user1.headers['x-token'] = user1.headers['x-token'], None
-        user1.bookmark_delete(m_lid=user1.merchant1.lid, oid=user1.bookmark_oid)
+        user1.bookmark_delete(m_lid=user1.merchant1.lid, oid=str(user1.bookmark_oid))
         assert user1.resp_bookmark_delete['error'] == {'code': -32003, 'message': 'InvalidHeaders',
                                                        'data': {'reason': 'Add x-token to headers'}}
         user1.headers['x-token'] = session
-        user1.bookmark_delete(m_lid=user1.merchant1.lid, oid=user1.bookmark_oid)
-
-
-class TestUpdateSessExpiry:
-    """ Update time active session. """
-
-    def test_0(self, start_session):
-        """ Warm. """
-        global admin, user1, user2
-        admin, user1, user2 = start_session
-
-    def test_1(self):
-        """ Success test update sess expiry with timedelta. """
-        r = user1.update_sess_expiry(timedelta='10h')
-        assert r['user']['sess_expiry'] == 36000000
-        assert admin.get_user(user1.email)['sess_expiry'] == 36000000
-
-    def test_2(self):
-        """ Success test update sess expiry with timedelta. """
-        r = user1.update_sess_expiry(timedelta='1h10m10s10ms')
-        assert r['user']['sess_expiry'] == 4210010, r
-        assert admin.get_user(user1.email)['sess_expiry'] == 4210010, r
-
-    def test_3(self):
-        """ Success test update sess expiry with timedelta. """
-        r = user1.update_sess_expiry(timedelta='36000')
-        assert r['user']['sess_expiry'] == 36000000, r
-        assert admin.get_user(user1.email)['sess_expiry'] == 36000000, r
-
-    def test_4(self):
-        """ Wrong request without timedelta. """
-        r = user1.update_sess_expiry(timedelta=None)
-        assert r['error'] == {'code': -32602, 'message': 'InvalidInputParams',
-                              'data': {'reason': "method 'account.update_sess_expiry' missing 1 argument: 'timedelta'"}}
-
-    def test_5(self):
-        """ Wrong request with timedelta = int value. """
-        r = user1.update_sess_expiry(timedelta=36000)
-        assert r['error'] == {'code': -32070, 'message': 'InvalidParam',
-                              'data': {'reason': "Key 'timedelta' must not be of 'int' type"}}
-
-    def test_6(self):
-        """ Wrong request with timedelta > max value. """
-        r = user1.update_sess_expiry(timedelta='999999999')
-        assert r['error'] == {'code': -32070, 'message': 'InvalidParam',
-                              'data': {'reason': "too long period"}}, r
-
-    def test_7(self):
-        """ Success request with timedelta = 0. """
-        r = user1.update_sess_expiry(timedelta='0')
-        assert r['user']['sess_expiry'] == 0, r
-        assert admin.get_user(user1.email)['sess_expiry'] == 0, r
-
-    def test_8(self):
-        """ Wrong request with timedelta < min value. """
-        r = user1.update_sess_expiry(timedelta='1')
-        assert r['error'] == {'code': -32070, 'message': 'InvalidParam',
-                              'data': {'reason': "too short period"}}, r
-
-    def test_9(self):
-        """ Wrong request with timedelta no value. """
-        r = user1.update_sess_expiry(timedelta='h')
-        assert r['error'] == {'code': -32070, 'message': 'InvalidParam',
-                              'data': {'reason': "timedelta - is in wrong format. Should be an amount of sec"
-                                                 "onds as Integer or pattern like '1w1d1h1m1s1ms', '1d23m'"}}, r
-
-    def test_10(self):
-        """ Request with wrong param."""
-        r = loads(requests.post(url=user1.wapi_url,
-                                json={'method': 'account.update_sess_expiry',
-                                      'params': {'unknown': 'test'},
-                                      'jsonrpc': 2.0, 'id': user1.ex_id()},
-                                headers=user1.headers, verify=False).text)
-        assert r['error'] == {'code': -32602, 'message': 'InvalidInputParams',
-                              'data': {'reason': "method 'account.update_sess_expiry' received a redundant argument 'unknown'"}}, r
-
-    def test_11(self):
-        """ Request without headers. """
-        r = loads(requests.post(url=user1.wapi_url,
-                                json={'method': 'account.update_sess_expiry',
-                                      'params': {},
-                                      'jsonrpc': 2.0, 'id': user1.ex_id()},
-                                verify=False).text)
-        assert r['error'] == {'code': -32003, 'message': 'InvalidHeaders',
-                              'data': {'reason': "Add x-token to headers"}}, r
-
-
-class TestSessManyAllow:
-    """ Test change user many session's"""
-
-    def test_0(self, start_session):
-        """ Warm. """
-        global admin, user1, user2
-        admin, user1, user2 = start_session
-
-    def test_1(self):
-        """ Success test sess_many_allow with True value. """
-        r = user1.sess_many_allow(allow=True)
-        assert r['user']['many_sess_allowed'] == True
-        user1.authorization_by_email(email=user1.email, pwd=user1.pwd)
-        list = user1.session_list()
-        assert list['total'] == 2
-
-    def test_2(self):
-        """ Success test sess_many_allow with False value. """
-        r = user1.sess_many_allow(allow=False)
-        assert r['user']['many_sess_allowed'] == False
-        user1.authorization_by_email(email=user1.email, pwd=user1.pwd)
-        list = user1.session_list()
-        assert list['error'] == {'code': -32034, 'message': 'Forbidden',
-                                 'data': {'reason': 'Allowed only if many session allowed for user'}}
-
-    def test_3(self):
-        """ Wrong test sess_many_allow with None value. """
-        r = user1.sess_many_allow(allow=None)
-        assert r['error'] == {'code': -32602, 'message': 'InvalidInputParams',
-                              'data': {'reason': "method 'account.sess_many_allow' missing 1 argument: 'allow'"}}
-
-    def test_4(self):
-        """ Wrong test sess_many_allow with string value. """
-        r = user1.sess_many_allow(allow='test')
-        assert r['error'] == {'code': -32070, 'message': 'InvalidParam',
-                              'data': {'reason': 'allow - has to be a Boolean'}}
-
-    def test_5(self):
-        """ Wrong test sess_many_allow with int value. """
-        r = user1.sess_many_allow(allow=10)
-        assert r['error'] == {'code': -32070, 'message': 'InvalidParam',
-                              'data': {'reason': "Key 'allow' must not be of 'int' type"}}
-
-    def test_6(self):
-        """ Request with wrong param."""
-        r = loads(requests.post(url=user1.wapi_url,
-                                json={'method': 'account.sess_many_allow',
-                                      'params': {'unknown': 'test'},
-                                      'jsonrpc': 2.0, 'id': user1.ex_id()},
-                                headers=user1.headers, verify=False).text)
-        assert r['error'] == {'code': -32602, 'message': 'InvalidInputParams',
-                              'data': {'reason': "method 'account.sess_many_allow'"
-                                                 " received a redundant argument 'unknown'"}}, r
-
-    def test_7(self):
-        """ Request without headers. """
-        r = loads(requests.post(url=user1.wapi_url,
-                                json={'method': 'account.sess_many_allow',
-                                      'params': {},
-                                      'jsonrpc': 2.0, 'id': user1.ex_id()},
-                                verify=False).text)
-        assert r['error'] == {'code': -32003, 'message': 'InvalidHeaders',
-                              'data': {'reason': "Add x-token to headers"}}, r
+        user1.bookmark_delete(m_lid=user1.merchant1.lid, oid=str(user1.bookmark_oid))
