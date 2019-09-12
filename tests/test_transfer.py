@@ -3289,7 +3289,6 @@ class TestTransferList:
 
     def test_11(self):
         """ Count filter test. """
-<<<<<<< HEAD
         count = 0
         r = user1.merchant1.transfer_list(count=str(count))
         # pprint.pprint(r)
@@ -3297,9 +3296,4 @@ class TestTransferList:
         assert r['data']['field'] == 'count'
         assert r['data']['reason'] == 'Should be more than zero'
         assert r['message'] == 'EParamInvalid'
-=======
-        r = user1.merchant1.transfer_list(count='0')
-        assert r['error'] == {'code': -32002, 'message': 'EParamInvalid',
-                              'data': {'field': 'count', 'reason': 'Should be more than zero'}}
 
->>>>>>> b712c71d4718c00f1f125528cf79cc0564007c8e
