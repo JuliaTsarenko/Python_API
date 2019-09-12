@@ -431,7 +431,8 @@ class TestWrongConvertCalc:
                           headers={'x-merchant': user1.merchant1.lid,
                                    'x-signature': None,
                                    'x-utc-now-ms': user1.merchant1.time_sent()}, verify=False)
-        assert loads(r.text)['error'] == {'code': -32003, 'message': 'InvalidHeaders', 'data': {'reason': 'Add x-signature to headers'}}
+        assert loads(r.text)['error'] == {"code": -32012, "message": "EParamHeadersInvalid",
+                                          "data": {"field": "x-signature", "reason": "Not present"}}
 
     def test_wrong_convert_calc_21(self):
         """ Exchange with wrong merchant id. """
@@ -1038,7 +1039,7 @@ class TestWrongConvert:
                                    'x-signature': None,
                                    'x-utc-now-ms': user1.merchant1.time_sent()}, verify=False)
         print(r.text)
-        assert loads(r.text)['error'] == {'code': -32003, 'message': 'InvalidHeaders', 'data': {'reason': 'Add x-signature to headers'}}
+        assert loads(r.text)['error'] == {"code": -32012, "message": "EParamHeadersInvalid", "data": {"field": "x-signature", "reason": "Not present"}}
 
     def test_wrong_exchange_21(self):
         """ Exchange without SIGN in headers. """
@@ -1049,7 +1050,7 @@ class TestWrongConvert:
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': str(user1.merchant1.lid),
                                    'x-utc-now-ms': user1.merchant1.time_sent()}, verify=False)
-        assert loads(r.text)['error'] == {'code': -32003, 'message': 'InvalidHeaders', 'data': {'reason': 'Add x-signature to headers'}}
+        assert loads(r.text)['error'] == {"code": -32012, "message": "EParamHeadersInvalid", "data": {"field": "x-signature", "reason": "Not present"}}
 
     def test_wrong_exchange_22(self):
         """ Exchange with wrong merchant id. """
@@ -1312,32 +1313,32 @@ class TestWrongConvertParams:
     def test_wrong_params_1(self):
         """ Getting params for equal currency. """
         user1.merchant1.convert_params(in_curr='UAH', out_curr='UAH')
-        assert user1.merchant1.resp_convert_params == {'code': -32065, 'message': 'UnavailExchange',
+        assert user1.merchant1.resp_convert_params == {'code': -32084, 'message': 'EStateExchangeUnavail',
                                                        'data': {'reason': 'Unavailable exchange from UAH to UAH'}}
 
     def test_wrong_params_2(self):
         """ Getting params from not real currency. """
         user1.merchant1.convert_params(in_curr='UHA', out_curr='USD')
-        assert user1.merchant1.resp_convert_params == {'code': -32076, 'message': 'InvalidCurrency',
+        assert user1.merchant1.resp_convert_params == {'code': -32014, 'message': 'EParamCurrencyInvalid',
                                                        'data': {'field': 'in_curr', 'reason': 'Invalid currency name'}}
 
     def test_wrong_params_3(self):
         """ Getting params to not real currency. """
         user1.merchant1.convert_params(in_curr='UAH', out_curr='UDS')
-        assert user1.merchant1.resp_convert_params == {'code': -32076, 'message': 'InvalidCurrency',
+        assert user1.merchant1.resp_convert_params == {'code': -32014, 'message': 'EParamCurrencyInvalid',
                                                        'data': {'field': 'out_curr', 'reason': 'Invalid currency name'}}
 
     def test_wrong_params_4(self):
         """ Getting params with NONE in_curr. """
         user1.merchant1.convert_params(in_curr=None, out_curr='USD')
-        assert user1.merchant1.resp_convert_params == {'code': -32602, 'data': {'reason': "method 'convert.params' missing 1 argument: "
-                                                                    "'in_curr'"}, 'message': 'InvalidInputParams'}
+        assert user1.merchant1.resp_convert_params == {'code': -32002, 'message': 'EParamInvalid',
+                                                       'data': {'field': 'in_curr', 'reason': 'Should be provided'}}
 
     def test_wrong_params_5(self):
         """ Getting params with NONE out_curr. """
         user1.merchant1.convert_params(in_curr='UAH', out_curr=None)
-        assert user1.merchant1.resp_convert_params == {'code': -32602, 'data': {'reason': "method 'convert.params' missing 1 argument: "
-                                                                    "'out_curr'"}, 'message': 'InvalidInputParams'}
+        assert user1.merchant1.resp_convert_params == {'code': -32002, 'message': 'EParamInvalid',
+                                                       'data': {'field': 'out_curr', 'reason': 'Should be provided'}}
 
     def test_wrong_params_6(self):
         """ Getting params without in_curr parameter. """
@@ -1348,9 +1349,8 @@ class TestWrongConvertParams:
                           headers={'x-merchant': user1.merchant1.lid,
                                    'x-signature': create_sign(user1.merchant1.akey, data['params'], time_sent),
                                    'x-utc-now-ms': time_sent}, verify=False)
-        print(r.text)
-        assert loads(r.text)['error'] == {'code': -32602, 'message': 'InvalidInputParams',
-                                          'data': {'reason': "method 'convert.params' missing 1 argument: 'in_curr'"}}
+        assert loads(r.text)['error'] == {"code": -32002, "message": "EParamInvalid",
+                                          "data": {"field": "in_curr", "reason": "Should be provided"}}
 
     def test_wrong_params_7(self):
         """ Getting params without out_curr parameter. """
@@ -1362,9 +1362,8 @@ class TestWrongConvertParams:
                           headers={'x-merchant': user1.merchant1.lid,
                                    'x-signature': create_sign(user1.merchant1.akey, data['params'], time_sent),
                                    'x-utc-now-ms': time_sent}, verify=False)
-        print(r.text)
-        assert loads(r.text)['error'] == {'code': -32602, 'message': 'InvalidInputParams',
-                                          'data': {'reason': "method 'convert.params' missing 1 argument: 'out_curr'"}}
+        assert loads(r.text)['error'] == {"code": -32002, "message": "EParamInvalid",
+                                          "data": {"field": "out_curr", "reason": "Should be provided"}}
 
     def test_wrong_params_8(self):
         """ Getting params with excess parameter in params field. """
@@ -1376,9 +1375,8 @@ class TestWrongConvertParams:
                           headers={'x-merchant': user1.merchant1.lid,
                                    'x-signature': create_sign(user1.merchant1.akey, data['params'], time_sent),
                                    'x-utc-now-ms': time_sent}, verify=False)
-        print(r.text)
-        assert loads(r.text)['error'] == {'code': -32602, 'message': 'InvalidInputParams',
-                                          'data': {'reason': "method 'convert.params' received a redundant argument 'par'"}}
+        assert loads(r.text)['error'] == {"code": -32002, "message": "EParamInvalid",
+                                          "data": {"field": "par", "reason": "Should not be provided"}}
 
     def test_wrong_params_9(self):
         """ Getting params with NONE signature. """
@@ -1390,8 +1388,8 @@ class TestWrongConvertParams:
                           headers={'x-merchant': user1.merchant1.lid,
                                    'x-signature': None,
                                    'x-utc-now-ms': time_sent}, verify=False)
-        print(r.text)
-        assert loads(r.text)['error'] == {'code': -32003, 'message': 'InvalidHeaders', 'data': {'reason': 'Add x-signature to headers'}}
+        assert loads(r.text)['error'] == {"code": -32012, "message": "EParamHeadersInvalid",
+                                          "data": {"field": "x-signature", "reason": "Not present"}}
 
     def test_wrong_params_10(self):
         """ Getting params with wrong signature. """
@@ -1403,8 +1401,8 @@ class TestWrongConvertParams:
                           headers={'x-merchant': user1.merchant1.lid,
                                    'x-signature': create_sign(user1.merchant2.akey, data['params'], time_sent),
                                    'x-utc-now-ms': time_sent}, verify=False)
-        print(r.text)
-        assert loads(r.text)['error'] == {'code': -32002, 'message': 'InvalidSign', 'data': {'reason': 'Invalid signature'}}
+        assert loads(r.text)['error'] == {'code': -32010, 'message': 'EParamSignInvalid',
+                                          'data': {'reason': 'Invalid signature'}}
 
 
 @pytest.mark.usefixtures('_create_convert_order')
@@ -1572,14 +1570,15 @@ class TestConvertList:
     def test_7(self):
         """ First filter test. """
         r = user1.merchant1.convert_list(first=1)
-        assert r['error'] == {'code': -32070, 'message': 'InvalidParam',
-                              'data': {'reason': "Key 'first' must not be of 'int' type"}}
+        assert r['error'] == {'code': -32003, 'message': 'EParamType',
+                              'data': {'field': 'first', 'reason': "'first' must not be of 'int' type",
+                                       'value': 1}}
 
     def test_8(self):
         """ First filter test. """
         r = user1.merchant1.convert_list(first='one')
-        assert r['error'] == {'code': -32070, 'message': 'InvalidParam',
-                              'data': {'reason': 'first - has to be an Integer'}}
+        assert r['error'] == {'code': -32003, 'message': 'EParamType',
+                              'data': {'field': 'first', 'reason': 'Should be an Integer'}}
 
     def test_9(self):
         """ First filter test. """
@@ -1594,8 +1593,8 @@ class TestConvertList:
         assert len == count or len == r['total']
 
     def test_11(self):
-        """ Count filter test. """
-        count = 0
-        r = user1.merchant1.convert_list(count=str(count))
-        len = r['data'].__len__()
-        assert len == 20 or len == r['total']
+        """ Wrong Count filter test. """
+        r = user1.merchant1.convert_list(count='0')
+        assert r['error'] == {'code': -32002, 'message': 'EParamInvalid',
+                              'data': {'field': 'count', 'reason': 'Should be more than zero'}}
+

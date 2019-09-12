@@ -184,58 +184,94 @@ class TestPwmerchactiveList:
         """ Getting full list of payway for merchant default parameter. Checking all payways. """
         merch_payway = {dct['payway_id'] for dct in admin.get_model(model='pwmerchactive', _filter='merchant_id', value=user1.merchant1.id)
                         if dct['is_active'] is True}
-        adm_payway = {dct['payway_id'] for dct in admin.get_model(model='pwcurrency', _filter='is_out', value=True)}
-        payways = list(merch_payway & adm_payway)
-        payways.sort()
+        print('Merch payway', merch_payway)
+        adm_payways_in = {dct['payway_id'] for dct in admin.get_model(model='pwcurrency', _filter='is_out', value=False)
+                          if dct['is_active'] is True}
+        print(adm_payways_in)
+        payways_in = list(merch_payway & adm_payways_in)
+        payways_in.sort()
+        print('Payways_in', payways_in)
+        adm_payways_out = {dct['payway_id'] for dct in admin.get_model(model='pwcurrency', _filter='is_out', value=True)
+                           if dct['is_active'] is True}
+        payways_out = list(merch_payway & adm_payways_out)
+        payways_out.sort()
         user1.pwmerchactive(method='list', params={'m_lid': user1.merchant1.lid, 'curr': None, 'is_out': None})
-        us_list = [admin.payway_id[pw] for pw in user1.resp_pwmerchactive]
-        us_list.sort()
-        print(payways, us_list)
-        assert us_list == payways
+        us_list_in = [admin.payway_id[pw] for pw in user1.resp_pwmerchactive['in']]
+        us_list_in.sort()
+        us_list_out = [admin.payway_id[pw] for pw in user1.resp_pwmerchactive['out']]
+        us_list_out.sort()
+        print(us_list_in, payways_in)
+        print(us_list_out, payways_out)
+        assert us_list_in == payways_in
+        assert us_list_out == payways_out
 
     def test_pwmerchactive_list_2(self):
-        """ Getting full list payways for payin for currency BTC. Checking all payways"""
+        """ Getting full list payways for currency UAH. Checking all payways. """
         merch_payway = {dct['payway_id'] for dct in admin.get_model(model='pwmerchactive', _filter='merchant_id', value=user1.merchant1.id)
                         if dct['is_active'] is True}
-        adm_payway = {dct['payway_id'] for dct in admin.get_model(model='pwcurrency', _filter='is_out', value=False)
-                      if dct[admin.currency('BTC')]}
-        payways = list(merch_payway & adm_payway)
-        payways.sort()
-        user1.pwmerchactive(method='list', params={'m_lid': user1.merchant1.lid, 'curr': 'BTC', 'is_out': True})
-        us_list = [admin.payway_id[pw] for pw in user1.resp_pwmerchactive]
-        us_list.sort()
-        print(payways, us_list)
-        assert us_list == payways
-        assert equal_list(_list=[dct for dct in user1.resp_pwmerchactive.values() for dct in dct], elem='BTC')
+        adm_payway_in = {dct['payway_id'] for dct in admin.get_model(model='pwcurrency', _filter='is_out', value=False)
+                        if dct[admin.currency('UAH')]}
+        payways_in = list(merch_payway & adm_payway_in)
+        payways_in.sort()
+        adm_payway_out = {dct['payway_id'] for dct in admin.get_model(model='pwcurrency', _filter='is_out', value=True)
+                          if dct[admin.currency('UAH')]}
+        payways_out = list(merch_payway & adm_payway_out)
+        payways_out.sort()
+        user1.pwmerchactive(method='list', params={'m_lid': user1.merchant1.lid, 'curr': 'UAH', 'is_out': None})
+        us_list_in = [admin.payway_id[pw] for pw in user1.resp_pwmerchactive['in']]
+        us_list_in.sort()
+        us_list_out = [admin.payway_id[pw] for pw in user1.resp_pwmerchactive['out']]
+        us_list_out.sort()
+        print(payways_in, us_list_in)
+        assert us_list_in == payways_in
+        assert us_list_out == payways_out
+        assert equal_list(_list=[dct for dct in user1.resp_pwmerchactive['in'].values() for dct in dct], elem='UAH')
+        assert equal_list(_list=[dct for dct in user1.resp_pwmerchactive['out'].values() for dct in dct], elem='UAH')
 
     def test_pwmerchactive_list_3(self):
-        """ Getting full list for payout operations for currency USD. Checking all payways. """
+        """ Getting full IN list. Checking all payways. """
         merch_payway = {dct['payway_id'] for dct in admin.get_model(model='pwmerchactive', _filter='merchant_id', value=user1.merchant1.id)
                         if dct['is_active'] is True}
-        adm_payway = {dct['payway_id'] for dct in admin.get_model(model='pwcurrency', _filter='is_out', value=True)
-                      if dct[admin.currency('USD')]}
-        user1.pwmerchactive(method='list', params={'m_lid': user1.merchant1.lid, 'curr': 'USD', 'is_out': True})
-        payways = list(merch_payway & adm_payway)
-        payways.sort()
-        us_list = [admin.payway_id[pw] for pw in user1.resp_pwmerchactive]
+        adm_payways = {dct['payway_id'] for dct in admin.get_model(model='pwcurrency', _filter='is_out', value=False)}
+        payways_in = list(merch_payway & adm_payways)
+        payways_in.sort()
+        user1.pwmerchactive(method='list', params={'m_lid': user1.merchant1.lid, 'curr': None, 'is_out': False})
+        us_list = [admin.payway_id[pw] for pw in user1.resp_pwmerchactive['in']]
         us_list.sort()
-        print(payways, us_list)
-        assert us_list == payways
-        assert equal_list(_list=[dct for dct in user1.resp_pwmerchactive.values() for dct in dct], elem='USD')
+        print(us_list, payways_in)
+        assert us_list == payways_in
+        assert 'out' not in user1.resp_pwmerchactive
 
     def test_pwmerchactive_list_4(self):
+        """ Getting OUT list for USD. Checking all payways. """
+        merch_payway = {dct['payway_id'] for dct in admin.get_model(model='pwmerchactive', _filter='merchant_id', value=user1.merchant1.id)
+                        if dct['is_active'] is True}
+        adm_payways = {dct['payway_id'] for dct in admin.get_model(model='pwcurrency', _filter='is_out', value=True)
+                       if dct['currency_id'] == admin.currency['USD']}
+        payways_out = list(merch_payway & adm_payways)
+        payways_out.sort()
+        user1.pwmerchactive(method='list', params={'m_lid': user1.merchant1.lid, 'curr': 'USD', 'is_out': True})
+        us_list = [admin.payway_id[pw] for pw in user1.resp_pwmerchactive['out']]
+        us_list.sort()
+        print(us_list, payways_out)
+        assert us_list == payways_out
+        assert 'in' not in user1.resp_pwmerchactive
+
+    def test_pwmerchactive_list_5(self):
         """ Getting common fee for operation payin for currency RUB. """
         admin.set_fee(mult=bl(2), add=bl(1), _min=bl(3), _max=bl(100), payway_id=admin.payway_id('perfect'), tp=0, currency_id=admin.currency('USD'))
         user1.pwmerchactive(method='list', params={'m_lid': user1.merchant1.lid, 'curr': 'USD', 'is_out': False})
         assert user1.resp_pwmerchactive['perfect']['USD'] == {'add': '1', 'max': '100', 'min': '3', 'mult': '0.02'}
 
-    def test_pwmerchactive_list_5(self, _custom_fee, _set_fee):
-        """ Getting personal fee + common for operation payout for currency UAH. """
+    def test_pwmerchactive_list_6(self, _custom_fee, _set_fee):
+        """ Getting common fee for payin: payeer USD and common + personal fee for payout: visamc UAH. """
+        admin.set_fee(mult=bl(1), add=bl(1), _min=bl(3), _max=bl(50), payway_id=admin.payway_id('payeer'), tp=0, currency_id=admin.currency('USD'))
         admin.set_fee(mult=bl(1), add=bl(1), _min=bl(3), _max=bl(50), payway_id=admin.payway_id('visamc'), tp=10, currency_id=admin.currency('UAH'))
-        admin.set_fee(mult=bl(0.5), add=bl(0.5), _min=bl(1), _max=bl(100), payway_id=admin.payway_id('visamc'), tp=10, currency_id=admin.currency('UAH'),
+        admin.set_fee(mult=pers(0.5), add=bl(0.5), _min=bl(1), _max=bl(100), payway_id=admin.payway_id('visamc'), tp=10, currency_id=admin.currency('UAH'),
                       merchant_id=user1.merchant1.id)
         user1.pwmerchactive(method='list', params={'m_lid': user1.merchant1.lid, 'curr': None, 'is_out': None})
-        assert user1.resp_pwmerchactive['visamc']['UAH'] == {'add': '0.5', 'max': '100', 'min': '1', 'mult': '0.005'}
+        assert user1.resp_pwmerchactive['in']['payeer']['USD'] == {'add': '1', 'max': '50', 'min': '3', 'mult': '1'}
+        assert user1.resp_pwmerchactive['out']['visamc']['UAH'] == {'add': '0.5', 'max': '100', 'min': '1', 'mult': '0.005'}
 
 
 class TestWrongPwmerchactiveList:

@@ -1,6 +1,5 @@
 import requests
 import pytest
-import time
 from json import loads
 from users.tools import *
 from users.sign import create_sign
@@ -14,7 +13,6 @@ class TestSciPayCalc:
         """ Warm. """
         global admin, user1, user2
         admin, user1, user2 = start_session
-
 
     def test_sci_pay_calc_1(self):
         """ Calc for sci_pay from VISAMC 0.01 UAH by MERCHANT. """
@@ -920,8 +918,12 @@ class TestWrongSciPayCreate:
         global admin, user1, user2
         admin, user1, user2 = start_session
 
-    def test_wrong_sci_pay_create_1(self):
-        assert 1
+    def test_wrong_sci_pay_create_1(self, _merchant_activate):
+        """ Payin with not active merchant. """
+        admin.set_pwc(pw_id=admin.payway_id['visamc'], currency='UAH', is_out=False, is_active=True, tech_min=bl(1), tech_max=bl(150))
+        user1.merchant1.sci_pay(method='create', params={'payway': 'visamc', 'amount': '2', 'in_curr': 'UAH', 'out_curr': 'UAH',
+                                                         'externalid': user1.merchant1._id(), 'expiry': '60s'})
+        assert user1.merchant1.resp_sci_pay == {'code': -32010, 'data': {'reason': 'Merchant Is Not Active'}, 'message': 'InvalidMerchant'}
 
     def test_wrong_sci_pay_create_2(self):
         """ Payin with amount less than tech_min in pw_carrency table. """

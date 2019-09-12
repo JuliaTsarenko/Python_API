@@ -3248,21 +3248,32 @@ class TestTransferList:
     def test_7(self):
         """ First filter test. """
         r = user1.merchant1.transfer_list(first=1)
+<<<<<<< HEAD
         # pprint.pprint(r)
         assert r['code'] == -32003
         assert r['data']['field'] == 'first'
         assert r['data']['reason'] == "'first' must not be of 'int' type"
         assert r['data']['value'] == 1
         assert r['message'] == 'EParamType'
+=======
+        assert r['error'] == {'code': -32003, 'message': 'EParamType',
+                              'data': {'field': 'first', 'reason': "'first' must not be of 'int' type",
+                                       'value': 1}}
+>>>>>>> b712c71d4718c00f1f125528cf79cc0564007c8e
 
     def test_8(self):
         """ First filter test. """
         r = user1.merchant1.transfer_list(first='one')
+<<<<<<< HEAD
         # pprint.pprint(r)
         assert r['code'] == -32003
         assert r['data']['field'] == 'first'
         assert r['data']['reason'] == 'Should be an Integer'
         assert r['message'] == 'EParamType'
+=======
+        assert r['error'] == {'code': -32003, 'message': 'EParamType',
+                              'data': {'field': 'first', 'reason': 'Should be an Integer'}}
+>>>>>>> b712c71d4718c00f1f125528cf79cc0564007c8e
 
     def test_9(self):
         """ First filter test. """
@@ -3278,6 +3289,7 @@ class TestTransferList:
 
     def test_11(self):
         """ Count filter test. """
+<<<<<<< HEAD
         count = 0
         r = user1.merchant1.transfer_list(count=str(count))
         # pprint.pprint(r)
@@ -3285,3 +3297,9 @@ class TestTransferList:
         assert r['data']['field'] == 'count'
         assert r['data']['reason'] == 'Should be more than zero'
         assert r['message'] == 'EParamInvalid'
+=======
+        r = user1.merchant1.transfer_list(count='0')
+        assert r['error'] == {'code': -32002, 'message': 'EParamInvalid',
+                              'data': {'field': 'count', 'reason': 'Should be more than zero'}}
+
+>>>>>>> b712c71d4718c00f1f125528cf79cc0564007c8e

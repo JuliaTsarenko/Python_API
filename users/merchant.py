@@ -1,3 +1,5 @@
+import pprint
+
 import requests
 import time
 import random
@@ -327,7 +329,6 @@ class Merchant:
         data = {'method': 'sci_pay.' + method, 'params': params, 'jsonrpc': 2.0, 'id': self.req_id}
         time_sent = self.time_sent()
         r = requests.post(url=self.japi_url, json=data, headers=self.headers(data, time_sent), verify=False)
-        # print(r.text)
         try:
             self.resp_sci_pay = loads(r.text)['result']
             # pprint.pprint(loads(r.text))
@@ -351,7 +352,6 @@ class Merchant:
     def sci_refund(self, method, params):
         self.req_id = self._id()
         data = {'method': 'sci_refund.' + method, 'params': params, 'jsonrpc': 2.0, 'id': self.req_id}
-        # print(data)
         time_sent = self.time_sent()
         r = requests.post(url=self.japi_url, json=data, headers=self.headers(data, time_sent), verify=False)
         try:
@@ -465,7 +465,7 @@ class Merchant:
                       ord_by=None, ord_dir=False, uaccount=None):
         self.req_id = self._id()
         data = {'method': 'merchant.inpay_history',
-                'params': {'begin': begin, 'end': end, 'curr': curr, 'payway': payway, 'status': status,
+                'params': {'begin': begin, 'end': end, 'in_curr': curr, 'payway': payway, 'status': status,
                            'first': first, 'count': count, 'ord_by': ord_by, 'ord_dir': ord_dir, 'uaccount': uaccount},
                 'jsonrpc': 2.0, 'id': self.req_id}
         time_sent = self.time_sent()
@@ -476,11 +476,11 @@ class Merchant:
             return loads(r.text)
 
     def outpay_history(self, begin=None, end=None, curr=None, first='0', count='20', payway=None, status=None,
-                      ord_by=None, ord_dir=False):
+                      ord_by=None, ord_dir=False, uaccount=None):
         self.req_id = self._id()
         data = {'method': 'merchant.outpay_history',
-                'params': {'begin': begin, 'end': end, 'curr': curr, 'payway': payway, 'status': status,
-                           'first': first, 'count': count, 'ord_by': ord_by, 'ord_dir': ord_dir},
+                'params': {'begin': begin, 'end': end, 'out_curr': curr, 'payway': payway, 'status': status,
+                           'first': first, 'count': count, 'ord_by': ord_by, 'ord_dir': ord_dir, 'uaccount': uaccount},
                 'jsonrpc': 2.0, 'id': self.req_id}
         time_sent = self.time_sent()
         r = requests.post(url=self.japi_url, json=data, headers=self.headers(data, time_sent), verify=False)
@@ -489,7 +489,7 @@ class Merchant:
         except KeyError:
             return loads(r.text)
 
-    def convert_history(self, begin='0', end=None, in_curr=None, out_curr=None, first='0', count='20', status=None,
+    def convert_history(self, begin=None, end=None, in_curr=None, out_curr=None, first='0', count='20', status=None,
                       ord_by=None, ord_dir=False):
         self.req_id = self._id()
         data = {'method': 'merchant.convert_history',

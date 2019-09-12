@@ -328,7 +328,6 @@ class User:
             except KeyError:
                     self.resp_merch_get_key = loads(r.text)
 
-
     def merchant_renew_key(self, m_lid):
         r = requests.post(url=self.wapi_url,
                           json={'method': 'merchant.renew_key', 'params': {'m_lid': m_lid},
@@ -417,12 +416,10 @@ class User:
     def delegate(self, params):
         data = {'method': 'merchant.delegate', 'params': params, 'jsonrpc': 2.0, 'id': self.ex_id()}
         r = requests.post(url=self.wapi_url, json=data, headers=self.headers, verify=False)
-        # print(r.text)
-        self.resp_delegate = loads(r.text).get('result') or loads(r.text).get('error') or loads(r.text)
-        # try:
-        #     self.resp_delegate = loads(r.text).get('result', True)
-        # except KeyError:
-        #     self.resp_delegate = loads(r.text)['error']
+        try:
+            self.resp_delegate = loads(r.text)['result']
+        except KeyError:
+            self.resp_delegate = loads(r.text)['error']
 
 
 if __name__ == '__main__':

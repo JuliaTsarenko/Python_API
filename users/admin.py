@@ -4,6 +4,8 @@ from users.tools import getting_email_code
 from json import loads
 import random
 from string import ascii_uppercase
+import pprint
+from users.tools import *
 
 
 requests.packages.urllib3.disable_warnings()
@@ -61,10 +63,6 @@ class Admin:
         data = loads(r.content)[1]['data'][0]
         admin_session = dict(zip(fields, data))
         return {'x-token': admin_session['token']}
-
-    def set_st(self, name, data):
-        requests.post(url=self.admin_url, json={'model': 'st', 'method': 'update', 'data': data, 'selector': {'name': ['eq', name]}},
-                      headers=self.headers, verify=False)
 
     def get_user(self, email):
         response = requests.post(url=self.admin_url,
@@ -310,18 +308,20 @@ class Admin:
 
     def create_personal_fee(self, mult=0, add=0, _min=0, _max=0, around='ceil', tp=0, payway_id=None, currency=None,
                             is_active=False, merchant_id=None):
-        requests.post(url=self.admin_url,
+        r = requests.post(url=self.admin_url,
                       json={'model': 'fee',
                             'method': 'insert',
                             'data': {'fee': {'max': _max, 'add': add, 'm': around, 'mult': mult, 'min': _min},
                                      'tp': tp, 'currency_id': self.currency[currency], 'payway_id': payway_id,
                                      'merchant_id': merchant_id, 'is_active': is_active}, 'selector': {}},
                       headers=self.headers, verify=False)
+        # pprint.pprint(loads(r.text))
+        self.resp_create_personal_fee = loads(r.text)
 
     def delete_personal_fee(self, merchant_id, tp=0):
         r = requests.post(url=self.admin_url,
                       json={'model': 'fee', 'method': 'delete',
-                            'selector': {'merchant_id': ['eq', merchant_id]}},
+                            'selector': {'merchant_id': ['eq', merchant_id], 'tp': ['eq', tp]}},
                       headers=self.headers, verify=False)
 
     def set_rate_exchange(self, rate, fee, in_currency, out_currency, tech_min=None, tech_max=None, is_active=True,
@@ -342,13 +342,6 @@ class Admin:
                                              'out_currency_id': ['eq', self.currency[out_currency]]}},
                           headers=self.headers, verify=False)
 
-    def set_limit_exchange(self, tech_min, tech_max, in_curr, out_curr):
-        requests.post(url=self.admin_url,
-                      json={'model': 'exchange', 'method': 'update', 'data': {'tech_min': tech_min, 'tech_max': tech_max},
-                            'selector': {'in_currency_id': ['eq', self.currency[in_curr]],
-                                         'out_currency_id': ['eq', self.currency[out_curr]]}},
-                      headers=self.headers, verify=False)
-
     def set_order_status(self, lid, status, amount_paid=0):
         time.sleep(1)
         r = requests.post(url=self.admin_url,
@@ -357,6 +350,16 @@ class Admin:
                       headers=self.headers, verify=False)
         # print('\n', 'set_order_status', loads(r.text))
         self.resp_order_status = loads(r.text)
+
+    def set_order(self, lid, data):
+        time.sleep(1)
+        r = requests.post(url=self.admin_url,
+                          json={'model': 'order', 'method': 'update', 'data': data, 'selector': {'lid': ['in', [lid]]}},
+                          headers=self.headers, verify=False)
+
+    def set_st(self, name, data):
+        requests.post(url=self.admin_url, json={'model': 'st', 'method': 'update', 'data': data, 'selector': {'name': ['eq', name]}},
+                      headers=self.headers, verify=False)
 
     def set_st_value(self, name, value=False):
         r = requests.post(url=self.admin_url,
@@ -435,7 +438,7 @@ class Admin:
     def set_crypto_address(self, merchant_id, rotate=False, comment=None):
         r = requests.post(url=self.admin_url,
                           json={'model': 'address', 'method': 'update', 'data': {'rotate': rotate, 'comment': comment},
-                                'selector': {'merchant_id': ['eq', [merchant_id]]}},
+                                'selector': {'merchant_id': ['in', [merchant_id]]}},
                           headers=self.headers, verify=False)
 
     def delete_crypto_address(self, _id):
@@ -465,7 +468,10 @@ class Admin:
 
 
 if __name__ == '__main__':
-    admin = Admin(token='GKkx84nPPNE6JMpao_qcDyTy1oq63C5TO7f0TuZuzngAQ8yHCRSeDXAqE_0b_WFuXtGd')
+    admin = Admin(token='0K3PaUSGxL_cvJxjtpPCMvRwQU4CzpV_t8MKpje7sszEHJJQXbsRWWOkx4arn0pOQ3TX')
+    # admin.set_crypto_address(merchant_id=703687441778420)
+    admin.set_pwcurrency_min_max(payway=admin.payway['kuna']['id'], is_out=True, currency='UAH', is_active=True,
+                                 tech_min=bl(0.01), tech_max=bl(1000))
     # admin.set_fee(currency_id=admin.currency['USD'], payway_id=admin.payway_id['perfect'], tp=0, is_active=True, mult=1000000)
     #print(admin.get_model(model='session', _filter='token', value='nzhTv5TsVQSFGQ5ZsxqKa8b5eubJgn3FZZn5FWl34ZxSIyWWpUk2yyw6_4wqLj71hCTP'))
     # admin.set_order_status(lid=61180, status=100)

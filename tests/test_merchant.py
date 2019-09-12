@@ -74,7 +74,7 @@ class TestOrderGet:
         user1.merchant1.order_get(o_lid=lid)
         keys = ['account_amount', 'ctime', 'externalid', 'ftime', 'in_amount', 'in_curr', 'in_fee_amount',
                'lid', 'orig_amount', 'out_amount', 'out_curr', 'out_fee_amount', 'owner', 'payway_name', 'rate',
-               'ref', 'renumeration', 'reqdata', 'status', 'tgt', 'token', 'tp', 'userdata']
+               'ref', 'renumeration', 'reqdata', 'status', 'tgt', 'token', 'tp', 'uaccount', 'userdata']
         r = user1.merchant1.resp_order_get.get('result')
         test_keys = list(r.keys())
         test_keys.sort()
@@ -102,37 +102,37 @@ class TestOrderGet:
         """ Order get request with empty ibill filter"""
         lid = str(admin.get_order(selector={'merchant_id': user1.merchant1.id, 'status': '0', 'tp': '0'})[1]['lid'])
         user1.merchant1.order_get(o_lid=lid, ibill=None)
-        error = user1.merchant1.resp_order_get.get('error')
-        assert error == {'code': -32070, 'message': 'InvalidParam', 'data': {'reason': 'ibill None'}}, error
+        r = user1.merchant1.resp_order_get.get('result')
+        assert str(r['lid']) == lid
 
     def test_5(self):
         """ Order get request with invalidate (int) o_lid filter"""
-        lid = str(admin.get_order(selector={'merchant_id': user1.merchant1.id, 'status': '0', 'tp': '0'})[1]['lid'])
         user1.merchant1.order_get(o_lid=1290, ibill=False)
         error = user1.merchant1.resp_order_get.get('error')
-        assert error == {'code': -32070, 'message': 'InvalidParam',
-                         'data': {'reason': "Key 'o_lid' must not be of 'int' type"}}
+        assert error == {'code': -32003, 'message': 'EParamType',
+                         'data': {'field': 'o_lid', 'reason': "'o_lid' must not be of 'int' type", 'value': 1290}}
 
     def test_6(self):
         """ Order get request with empty o_lid filter. """
         lid = str(admin.get_order(selector={'merchant_id': user1.merchant1.id, 'status': '0', 'tp': '0'})[1]['lid'])
         user1.merchant1.order_get(o_lid=None)
         error = user1.merchant1.resp_order_get.get('error')
-        assert error == {'code': -32070, 'message': 'InvalidParam', 'data': {'reason': 'o_lid None'}}
+        assert error == {'code': -32002, 'message': 'EParamInvalid',
+                         'data': {'field': 'o_lid', 'reason': 'Should be provided'}}
 
     def test_7(self):
         """ Order get request with unknown o_lid filter and ibill false. """
-        lid = str(admin.get_order(selector={'merchant_id': user1.merchant1.id, 'status': '0', 'tp': '0'})[1]['lid'])
         user1.merchant1.order_get(o_lid='999999', ibill=False)
         error = user1.merchant1.resp_order_get.get('error')
-        assert error == {'code': -32090, 'message': 'NotFound', 'data': {'reason': 'o_lid 999999'}}
+        assert error == {'code': -32090, 'message': 'EParamNotFound',
+                         'data': {'field': 'o_lid', 'reason': 'Not found'}}
 
     def test_8(self):
         """ Order get request with unknown o_lid filter and ibill true"""
-        lid = str(admin.get_order(selector={'merchant_id': user1.merchant1.id, 'status': '0', 'tp': '0'})[1]['lid'])
         user1.merchant1.order_get(o_lid='999999', ibill=True)
         error = user1.merchant1.resp_order_get.get('error')
-        assert error == {'code': -32090, 'message': 'NotFound', 'data': {'reason': 'o_lid 999999'}}
+        assert error == {'code': -32090, 'message': 'EParamNotFound',
+                         'data': {'field': 'o_lid', 'reason': 'Not found'}}
 
 
 class TestIbillHistory:
@@ -143,78 +143,79 @@ class TestIbillHistory:
         global admin, user1, user2
         admin, user1, user2 = start_session
 
-    # def test_1(self):
-    #     """ Ibill count comparison. """
-    #     admin_count = admin.get_ibill(selector={'merchant_id': user1.merchant1.id})['count']
-    #     assert admin_count == user1.merchant1.ibill_history()['total']
-    #
-    # def test_2(self):
-    #     """ Ibill [0] comparison. """
-    #     ibill = user1.merchant1.ibill_history()['data'][0]
-    #     assert admin.get_ibill(selector={'merchant_id': user1.merchant1.id, 'id': ibill['oid']}) \
-    #            != 'No ibills for this query.'
-    #
-    # def test_3(self):
-    #     """ Begin filter test. Begin = ibill ctime. """
-    #     time = user1.merchant1.ibill_history(ord_by='ctime', ord_dir=True)['data'][1]['ctime']
-    #     test_ibill = user1.merchant1.ibill_history(ord_by='ctime', ord_dir=True, begin=str(time))['data'][0]
-    #     assert test_ibill['ctime'] >= time
-    #
-    # def test_4(self):
-    #     """ Begin filter test. Begin = ibill ctime -1. """
-    #     time = user1.merchant1.ibill_history(ord_by='ctime', ord_dir=True)['data'][1]['ctime']-1
-    #     test_ibill = user1.merchant1.ibill_history(ord_by='ctime', ord_dir=True, begin=str(time))['data'][0]
-    #     assert test_ibill['ctime'] >= time
-    #
-    # def test_5(self):
-    #     """ Begin filter test. Begin = ibill ctime +1. """
-    #     time = user1.merchant1.ibill_history(ord_by='ctime', ord_dir=True)['data'][1]['ctime']+1
-    #     test_ibill = user1.merchant1.ibill_history(ord_by='ctime', ord_dir=True, begin=str(time))['data'][0]
-    #     assert test_ibill['ctime'] >= time
-    #
-    # def test_6(self):
-    #     """ End filter test. End = ibill ctime. """
-    #     time = user1.merchant1.ibill_history(ord_by='ctime', ord_dir=True)['data'][1]['ctime']
-    #     test_ibill = user1.merchant1.ibill_history(ord_by='ctime', ord_dir=False, end=str(time))['data'][0]
-    #     assert test_ibill['ctime'] < time
-    #
-    # def test_7(self):
-    #     """ End filter test. End = ibill ctime -1. """
-    #     time = user1.merchant1.ibill_history(ord_by='ctime', ord_dir=True)['data'][1]['ctime']-1
-    #     test_ibill = user1.merchant1.ibill_history(ord_by='ctime', ord_dir=False, end=str(time))['data'][0]
-    #     assert test_ibill['ctime'] < time
-    #
-    # def test_8(self):
-    #     """ End filter test. End = ibill ctime +1. """
-    #     time = user1.merchant1.ibill_history(ord_by='ctime', ord_dir=True)['data'][1]['ctime']+1
-    #     test_ibill = user1.merchant1.ibill_history(ord_by='ctime', ord_dir=False, end=str(time))['data'][0]
-    #     assert test_ibill['ctime'] < time
-    #
-    # def test_9(self):
-    #     """ Begin + End filter test. Begin = ibill ctime, end = ibill ctime +1. """
-    #     time = user1.merchant1.ibill_history(ord_by='ctime', ord_dir=True)['data'][1]['ctime']
-    #     test_ibill = user1.merchant1.ibill_history(ord_by='ctime', ord_dir=True, begin=str(time), end=str(time+1))['data'][0]
-    #     test_ibill2 = user1.merchant1.ibill_history(ord_by='ctime', ord_dir=False, begin=str(time), end=str(time+1))['data'][0]
-    #     assert test_ibill['ctime'] <= test_ibill2['ctime'] >= time
-    #
-    # def test_10(self):
-    #     """ Begin + End filter test. Begin = ibill ctime = end. """
-    #     time = user1.merchant1.ibill_history(ord_by='ctime', ord_dir=True)['data'][1]['ctime']
-    #     test_ibill = user1.merchant1.ibill_history(ord_by='ctime', ord_dir=True, begin=str(time), end=str(time))['data']
-    #     assert not test_ibill
-    #
-    # def test_11(self):
-    #     """ Begin filter test. Begin is int value. """
-    #     time = user1.merchant1.ibill_history(ord_by='ctime', ord_dir=True)['data'][1]['ctime']
-    #     r = user1.merchant1.ibill_history(ord_by='ctime', ord_dir=True, begin=time)
-    #     assert r.get('error') == {'code': -32070, 'message': 'InvalidParam',
-    #                               'data': {'reason': "Key 'begin' must not be of 'int' type"}}, r
-    #
-    # def test_12(self):
-    #     """ End filter test. End is invalidate value. """
-    #     r = user1.merchant1.ibill_history(ord_by='ctime', ord_dir=True, end='now')
-    #     assert r.get('error') == {'code': -32070, 'message': 'InvalidParam',
-    #                               'data': {'reason': 'end - has to be an Integer'}}, r
+    def test_1(self):
+        """ Ibill count comparison. """
+        admin_count = admin.get_ibill(selector={'merchant_id': user1.merchant1.id})['count']
+        assert admin_count == user1.merchant1.ibill_history()['total']
+
+    def test_2(self):
+        """ Ibill [0] comparison. """
+        ibill = user1.merchant1.ibill_history()['data'][0]
+        assert admin.get_ibill(selector={'merchant_id': user1.merchant1.id, 'id': ibill['oid']}) \
+               != 'No ibills for this query.'
+
+    def test_3(self):
+        """ Begin filter test. Begin = ibill ctime. """
+        time = user1.merchant1.ibill_history(ord_by='ctime', ord_dir=True)['data'][1]['ctime']
+        test_ibill = user1.merchant1.ibill_history(ord_by='ctime', ord_dir=True, begin=str(time))['data'][0]
+        assert test_ibill['ctime'] >= time
+
+    def test_4(self):
+        """ Begin filter test. Begin = ibill ctime -1. """
+        time = user1.merchant1.ibill_history(ord_by='ctime', ord_dir=True)['data'][1]['ctime']-1
+        test_ibill = user1.merchant1.ibill_history(ord_by='ctime', ord_dir=True, begin=str(time))['data'][0]
+        assert test_ibill['ctime'] >= time
+
+    def test_5(self):
+        """ Begin filter test. Begin = ibill ctime +1. """
+        time = user1.merchant1.ibill_history(ord_by='ctime', ord_dir=True)['data'][1]['ctime']+1
+        test_ibill = user1.merchant1.ibill_history(ord_by='ctime', ord_dir=True, begin=str(time))['data'][0]
+        assert test_ibill['ctime'] >= time
+
+    def test_6(self):
+        """ End filter test. End = ibill ctime. """
+        time = user1.merchant1.ibill_history(ord_by='ctime', ord_dir=True)['data'][1]['ctime']
+        test_ibill = user1.merchant1.ibill_history(ord_by='ctime', ord_dir=False, end=str(time))['data'][0]
+        assert test_ibill['ctime'] < time
+
+    def test_7(self):
+        """ End filter test. End = ibill ctime -1. """
+        time = user1.merchant1.ibill_history(ord_by='ctime', ord_dir=True)['data'][1]['ctime']-1
+        test_ibill = user1.merchant1.ibill_history(ord_by='ctime', ord_dir=False, end=str(time))['data'][0]
+        assert test_ibill['ctime'] < time
+
+    def test_8(self):
+        """ End filter test. End = ibill ctime +1. """
+        time = user1.merchant1.ibill_history(ord_by='ctime', ord_dir=True)['data'][1]['ctime']+1
+        test_ibill = user1.merchant1.ibill_history(ord_by='ctime', ord_dir=False, end=str(time))['data'][0]
+        assert test_ibill['ctime'] < time
+
+    def test_9(self):
+        """ Begin + End filter test. Begin = ibill ctime, end = ibill ctime +1. """
+        time = user1.merchant1.ibill_history(ord_by='ctime', ord_dir=True)['data'][1]['ctime']
+        test_ibill = user1.merchant1.ibill_history(ord_by='ctime', ord_dir=True, begin=str(time), end=str(time+1))['data'][0]
+        test_ibill2 = user1.merchant1.ibill_history(ord_by='ctime', ord_dir=False, begin=str(time), end=str(time+1))['data'][0]
+        assert test_ibill['ctime'] <= test_ibill2['ctime'] >= time
+
+    def test_10(self):
+        """ Begin + End filter test. Begin = ibill ctime = end. """
+        time = user1.merchant1.ibill_history(ord_by='ctime', ord_dir=True)['data'][1]['ctime']
+        test_ibill = user1.merchant1.ibill_history(ord_by='ctime', ord_dir=True, begin=str(time), end=str(time))['data']
+        assert not test_ibill
+
+    def test_11(self):
+        """ Begin filter test. Begin is int value. """
+        time = user1.merchant1.ibill_history(ord_by='ctime', ord_dir=True)['data'][1]['ctime']
+        r = user1.merchant1.ibill_history(ord_by='ctime', ord_dir=True, begin=time)
+        assert r.get('error') == {'code': -32003, 'message': 'EParamType',
+                                  'data': {'field': 'begin', 'reason': "'begin' must not be of 'int' type",
+                                           'value': time}}, r
+
+    def test_12(self):
+        """ End filter test. End is invalidate value. """
+        r = user1.merchant1.ibill_history(ord_by='ctime', ord_dir=True, end='now')
+        assert r.get('error') == {'code': -32003, 'message': 'EParamType',
+                                  'data': {'field': 'end', 'reason': "Should be an Integer"}}, r
 
     def test_13(self):
         """ Success curr filter test. """
@@ -226,8 +227,8 @@ class TestIbillHistory:
         """ Unknown curr filter test. """
         curr = 'ГРН'
         ibill = user1.merchant1.ibill_history(curr=curr)
-        assert ibill['error'] == {'code': -32076, 'message': 'InvalidCurrency',
-                                  'data': {'reason': 'curr - got invalid currency name'}}
+        assert ibill['error'] == {'code': -32014, 'message': 'EParamCurrencyInvalid',
+                                  'data': {'field': 'curr', 'reason': 'Invalid currency name'}}
 
     def test_15(self):
         """ First filter test. """
@@ -238,14 +239,15 @@ class TestIbillHistory:
     def test_16(self):
         """ First filter test. """
         ibill = user1.merchant1.ibill_history(first=1)
-        assert ibill['error'] == {'code': -32070, 'message': 'InvalidParam',
-                                  'data': {'reason': "Key 'first' must not be of 'int' type"}}
+        assert ibill['error'] == {'code': -32003, 'message': 'EParamType',
+                                  'data': {'field': 'first', 'reason': "'first' must not be of 'int' type",
+                                           'value': 1}}
 
     def test_17(self):
         """ First filter test. """
         ibill = user1.merchant1.ibill_history(first='one')
-        assert ibill['error'] == {'code': -32070, 'message': 'InvalidParam',
-                                  'data': {'reason': 'first - has to be an Integer'}}
+        assert ibill['error'] == {'code': -32003, 'message': 'EParamType',
+                                  'data': {'field': 'first', 'reason': "Should be an Integer"}}
 
     def test_18(self):
         """ First filter test. """
@@ -263,8 +265,8 @@ class TestIbillHistory:
         """ Count filter test. """
         count = 0
         ibill = user1.merchant1.ibill_history(count=str(count))
-        assert ibill['error'] == {'code': -32070, 'message': 'InvalidParam',
-                                  'data': {'reason': 'count - has to be more than zero'}}
+        assert ibill['error'] == {'code': -32002, 'message': 'EParamInvalid',
+                                  'data': {'field': 'count', 'reason': 'Should be more than zero'}}
 
     def test_21(self):
         """ ord_by and ord_dir filter test. """
@@ -308,18 +310,19 @@ class TestIbillHistory:
         r = user1.merchant1.ibill_history(ord_by=ord_by, ord_dir=ord_dir)['data']
         assert float(r[0]['amount']) <= float(r[1]['amount']), r
 
-    def test_27(self):
-        """ ord_by and ord_dir filter test. """
-        ord_by = 'time'
-        r = user1.merchant1.ibill_history(ord_by=ord_by)
-        assert r['error'] == {'code': -32070, 'message': 'InvalidParam', 'data': 'time'}, r
+    # def test_27(self):
+    #     """ ord_by and ord_dir filter test. """
+    #     ord_by = 'time'
+    #     r = user1.merchant1.ibill_history(ord_by=ord_by)
+    #     print(r)
+    #     assert r['error'] == {'code': -32070, 'message': 'InvalidParam', 'data': 'time'}, r
 
     def test_28(self):
         """ ord_by and ord_dir filter test. """
-        ord_dir = 123
-        r = user1.merchant1.ibill_history(ord_dir=ord_dir)
-        assert r['error'] == {'code': -32070, 'message': 'InvalidParam',
-                              'data': {'reason': "Key 'ord_dir' must not be of 'int' type"}}, r
+        r = user1.merchant1.ibill_history(ord_dir=123)
+        assert r['error'] == {'code': -32003, 'message': 'EParamType',
+                              'data': {'field': 'ord_dir','reason': "'ord_dir' must not be of 'int' type",
+                                       'value': 123}}, r
 
     def test_29(self):
         """ Success "inpay" group filter. """
@@ -339,8 +342,8 @@ class TestIbillHistory:
     def test_32(self):
         """ Wrong group filter. """
         r = user1.merchant1.ibill_history(group='all')
-        assert r['error'] == {'code': -32070, 'message': 'InvalidParam',
-                              'data': {'reason': 'group - got invalid group name'}}
+        assert r['error'] == {'code': -32002, 'message': 'EParamInvalid',
+                              'data': {'field': 'group', 'reason': 'Invalid group name'}}
 
     def test_33(self):
         """ Success lid filter. """
@@ -357,21 +360,21 @@ class TestIbillHistory:
 
     def test_35(self):
         """ Wrong lid filter. unknown Order  """
-        lid = str(admin.get_order(selector={'merchant_id': user1.merchant2.id, 'status': 100})[1]['lid'])
+        lid = str(admin.get_order(selector={'merchant_id': user1.merchant2.id, 'status': 100, 'tp': 20})[1]['lid'])
         r = user1.merchant1.ibill_history(lid=lid)
         assert r['total'] == 0
 
     def test_36(self):
         """ Wrong lid filter. unknown Order  """
         r = user1.merchant1.ibill_history(lid=100)
-        assert r['error'] == {'code': -32070, 'message': 'InvalidParam',
-                              'data': {'reason': "Key 'lid' must not be of 'int' type"}}
+        assert r['error'] == {'code': -32003, 'message': 'EParamType',
+                              'data': {'field': 'lid', 'reason': "'lid' must not be of 'int' type", 'value': 100}}
 
     def test_37(self):
         """ Wrong lid filter. unknown Order  """
         r = user1.merchant1.ibill_history(lid='qwerty')
-        assert r['error'] == {'code': -32070, 'message': 'InvalidParam',
-                              'data': {'reason': 'lid - has to be an Integer'}}
+        assert r['error'] == {'code': -32003, 'message': 'EParamType',
+                              'data': {'field': 'lid', 'reason': 'Should be an Integer'}}
 
     def test_38(self):
         """ Success amount filter. Amount = 0.01 """
@@ -478,17 +481,18 @@ class TestIbillHistory:
         r = user1.merchant1.ibill_history(filter_amount='!=-0.01')['data'][0]
         assert float(r['amount']) != -0.01
 
-    def test_59(self):
-        """ Wrong amount filter. """
-        r = user1.merchant1.ibill_history(filter_amount='!=')
-        assert r['error'] == {'code': -32070, 'message': 'InvalidParam',
-            'data': {'reason': 'Format of string has to match the pattern <operand><comma><number>, e.g. ">123.45"'}}
+    # def test_59(self):
+    #     """ Wrong amount filter. """
+    #     r = user1.merchant1.ibill_history(filter_amount='!=')
+    #     print(r)
+    #     assert r['error'] == {'code': -32070, 'message': 'InvalidParam',
+    #         'data': {'reason': 'Format of string has to match the pattern <operand><comma><number>, e.g. ">123.45"'}}
 
-    def test_60(self):
-        """ Wrong amount filter. """
-        r = user1.merchant1.ibill_history(filter_amount='10+5')
-        assert r['error'] == {'code': -32070, 'message': 'InvalidParam',
-            'data': {'reason': 'Format of string has to match the pattern <operand><comma><number>, e.g. ">123.45"'}}
+    # def test_60(self):
+    #     """ Wrong amount filter. """
+    #     r = user1.merchant1.ibill_history(filter_amount='10+5')
+    #     assert r['error'] == {'code': -32070, 'message': 'InvalidParam',
+    #         'data': {'reason': 'Format of string has to match the pattern <operand><comma><number>, e.g. ">123.45"'}}
 
     def test_61(self):
         """ Success fee filter. fee = 1.5 """
@@ -590,17 +594,18 @@ class TestIbillHistory:
         r = user1.merchant1.ibill_history(filter_fee='!=0')['data'][0]
         assert float(r['fee']) != 0
 
-    def test_81(self):
-        """ Wrong fee filter. """
-        r = user1.merchant1.ibill_history(filter_fee='!=')
-        assert r['error'] == {'code': -32070, 'message': 'InvalidParam',
-            'data': {'reason': 'Format of string has to match the pattern <operand><comma><number>, e.g. ">123.45"'}}
+    # def test_81(self):
+    #     """ Wrong fee filter. """
+    #     r = user1.merchant1.ibill_history(filter_fee='!=')
+    #     assert r['error'] == {'code': -32070, 'message': 'InvalidParam',
+    #         'data': {'reason': 'Format of string has to match the pattern <operand><comma><number>, e.g. ">123.45"'}}
 
-    def test_82(self):
-        """ Wrong fee filter. """
-        r = user1.merchant1.ibill_history(filter_fee='10+5')
-        assert r['error'] == {'code': -32070, 'message': 'InvalidParam',
-            'data': {'reason': 'Format of string has to match the pattern <operand><comma><number>, e.g. ">123.45"'}}
+    # def test_82(self):
+    #     """ Wrong fee filter. """
+    #     r = user1.merchant1.ibill_history(filter_fee='10+5')
+    #     assert r['error'] == {'code': -32070, 'message': 'InvalidParam',
+    #         'data': {'reason': 'Format of string has to match the pattern <operand><comma><number>, e.g. ">123.45"'}}
+
 
 class TestInpayHistory:
     """ inpay_history """
@@ -610,229 +615,253 @@ class TestInpayHistory:
         global admin, user1, user2
         admin, user1, user2 = start_session
 
-    # def test_1(self):
-    #     """ Success request with no filter. """
-    #     r = user1.merchant1.inpay_history()['data'][0]
-    #     assert r['tp'] == 'payin'
-    #
-    # def test_2(self):
-    #     """ Success payway filter. """
-    #     r = user1.merchant1.inpay_history(payway='btc')['data'][0]
-    #     assert r['tp'] == 'payin'
-    #     assert r['payway_name'] == 'btc'
-    #
-    # def test_3(self):
-    #     """ Unknown payway filter. """
-    #     r = user1.merchant1.inpay_history(payway='Termynal')
-    #     assert r['error'] == {'code': -32070, 'message': 'InvalidParam', 'data': {'reason': 'Termynal'}}
-    #
-    # def test_4(self):
-    #     """ Unknown payway filter. """
-    #     r = user1.merchant1.inpay_history(payway=101)
-    #     assert r['error'] == {'code': -32070, 'message': 'InvalidParam',
-    #                           'data': {'reason': "Key 'payway' must not be of 'int' type"}}
-    #
-    # def test_5(self):
-    #     """ Success "unfinished" status filter. """
-    #     r = user1.merchant1.inpay_history(status='unfinished')['data'][0]
-    #     assert r['tp'] == 'payin'
-    #     assert r['status'] in ['new', 'prereq', 'pending', 'started', 'accepted', 'wait', 'retry', 'confirmed',
-    #                            'wtf', 'final']
-    #
-    # def test_6(self):
-    #     """ Success "done" status filter. """
-    #     r = user1.merchant1.inpay_history(status='done')['data'][0]
-    #     assert r['tp'] == 'payin'
-    #     assert r['status'] == 'done'
-    #
-    # def test_7(self):
-    #     """ Success "fail" status filter. """
-    #     r = user1.merchant1.inpay_history(status='fail')['data'][0]
-    #     assert r['tp'] == 'payin'
-    #     assert r['status'] in ['fail', 'reject']
-    #
-    # def test_8(self):
-    #     """ Inpay count comparison. """
-    #     admin_count = int(admin.get_order(selector={'merchant_id': user1.merchant1.id, 'tp': 0})[0]['count'])
-    #     assert admin_count == user1.merchant1.inpay_history()['total']
-    #
-    # def test_9(self):
-    #     """ Ibill [0] comparison. """
-    #     ibill = user1.merchant1.inpay_history()['data'][0]
-    #     assert admin.get_order(selector={'merchant_id': user1.merchant1.id, 'lid':ibill['lid'], 'tp': 0}) \
-    #            != 'No ibills for this query.'
-    #
-    # def test_10(self):
-    #     """ Begin filter test. Begin = ibill ctime. """
-    #     time = user1.merchant1.inpay_history(ord_by='ctime', ord_dir=True)['data'][1]['ctime']
-    #     test_ibill = user1.merchant1.inpay_history(ord_by='ctime', ord_dir=True, begin=str(time))['data'][0]
-    #     assert test_ibill['ctime'] >= time
-    #
-    # def test_11(self):
-    #     """ Begin filter test. Begin = ibill ctime -1. """
-    #     time = user1.merchant1.inpay_history(ord_by='ctime', ord_dir=True)['data'][1]['ctime']-1
-    #     test_ibill = user1.merchant1.inpay_history(ord_by='ctime', ord_dir=True, begin=str(time))['data'][0]
-    #     assert test_ibill['ctime'] >= time
-    #
-    # def test_12(self):
-    #     """ Begin filter test. Begin = ibill ctime +1. """
-    #     time = user1.merchant1.inpay_history(ord_by='ctime', ord_dir=True)['data'][1]['ctime']+1
-    #     test_ibill = user1.merchant1.inpay_history(ord_by='ctime', ord_dir=True, begin=str(time))['data'][0]
-    #     assert test_ibill['ctime'] >= time
-    #
-    # def test_13(self):
-    #     """ End filter test. End = ibill ctime. """
-    #     time = user1.merchant1.inpay_history(ord_by='ctime', ord_dir=True)['data'][1]['ctime']
-    #     test_ibill = user1.merchant1.inpay_history(ord_by='ctime', ord_dir=False, end=str(time))['data'][0]
-    #     assert test_ibill['ctime'] < time
-    #
-    # def test_14(self):
-    #     """ End filter test. End = ibill ctime -1. """
-    #     time = user1.merchant1.inpay_history(ord_by='ctime', ord_dir=True)['data'][1]['ctime']-1
-    #     test_ibill = user1.merchant1.inpay_history(ord_by='ctime', ord_dir=False, end=str(time))['data'][0]
-    #     assert test_ibill['ctime'] < time
-    #
-    # def test_15(self):
-    #     """ End filter test. End = ibill ctime +1. """
-    #     time = user1.merchant1.inpay_history(ord_by='ctime', ord_dir=True)['data'][1]['ctime']+1
-    #     test_ibill = user1.merchant1.inpay_history(ord_by='ctime', ord_dir=False, end=str(time))['data'][0]
-    #     assert test_ibill['ctime'] < time
-    #
-    # def test_16(self):
-    #     """ Begin + End filter test. Begin = ibill ctime, end = ibill ctime +1. """
-    #     time = user1.merchant1.inpay_history(ord_by='ctime', ord_dir=True)['data'][1]['ctime']
-    #     test_ibill = user1.merchant1.inpay_history(ord_by='ctime', ord_dir=True, begin=str(time), end=str(time+1))['data'][0]
-    #     test_ibill2 = user1.merchant1.inpay_history(ord_by='ctime', ord_dir=False, begin=str(time), end=str(time+1))['data'][0]
-    #     assert test_ibill['ctime'] <= test_ibill2['ctime'] >= time
-    #
-    # def test_17(self):
-    #     """ Begin + End filter test. Begin = ibill ctime = end. """
-    #     time = user1.merchant1.inpay_history(ord_by='ctime', ord_dir=True)['data'][1]['ctime']
-    #     test_ibill = user1.merchant1.inpay_history(ord_by='ctime', ord_dir=True, begin=str(time), end=str(time))['data']
-    #     assert not test_ibill
-    #
-    # def test_18(self):
-    #     """ Begin filter test. Begin is int value. """
-    #     time = user1.merchant1.inpay_history(ord_by='ctime', ord_dir=True)['data'][1]['ctime']
-    #     r = user1.merchant1.inpay_history(ord_by='ctime', ord_dir=True, begin=time)
-    #     assert r.get('error') == {'code': -32070, 'message': 'InvalidParam',
-    #                               'data': {'reason': "Key 'begin' must not be of 'int' type"}}, r
-    #
-    # def test_19(self):
-    #     """ End filter test. End is invalidate value. """
-    #     r = user1.merchant1.inpay_history(ord_by='ctime', ord_dir=True, end='now')
-    #     assert r.get('error') == {'code': -32070, 'message': 'InvalidParam',
-    #                               'data': {'reason': 'end - has to be an Integer'}}, r
-    #
-    # def test_20(self):
-    #     """ Success curr filter test. """
-    #     curr = 'USD'
-    #     ibill = user1.merchant1.inpay_history(curr=curr)['data'][0]
-    #     assert ibill['in_curr'] == curr, ibill
-    #
-    # def test_21(self):
-    #     """ Unknown curr filter test. """
-    #     curr = 'ГРН'
-    #     ibill = user1.merchant1.inpay_history(curr=curr)
-    #     assert ibill['error'] == {'code': -32076, 'message': 'InvalidCurrency', 'data': curr}
-    #
-    # def test_22(self):
-    #     """ First filter test. """
-    #     ibill = user1.merchant1.inpay_history()['data'][1]
-    #     test_ibill = user1.merchant1.inpay_history(first='1')['data'][0]
-    #     assert ibill == test_ibill
-    #
-    # def test_23(self):
-    #     """ First filter test. """
-    #     ibill = user1.merchant1.inpay_history(first=1)
-    #     assert ibill['error'] == {'code': -32070, 'message': 'InvalidParam', 'data':
-    #         {'reason': "Key 'first' must not be of 'int' type"}}
-    #
-    # def test_24(self):
-    #     """ First filter test. """
-    #     ibill = user1.merchant1.inpay_history(first='one')
-    #     assert ibill['error'] == {'code': -32070, 'message': 'InvalidParam', 'data':
-    #         {'reason': 'first - has to be an Integer'}}
-    #
-    # def test_25(self):
-    #     """ First filter test. """
-    #     ibill = user1.merchant1.inpay_history(first='9999999')['data']
-    #     assert not ibill
-    #
-    # def test_26(self):
-    #     """ Count filter test. """
-    #     count = 10
-    #     ibill = user1.merchant1.inpay_history(count=str(count))
-    #     len = ibill['data'].__len__()
-    #     assert len == count or len == ibill['total']
-    #
-    # def test_27(self):
-    #     """ Count filter test. """
-    #     ibill = user1.merchant1.inpay_history(count='0')
-    #     assert ibill['error'] == {'code': -32070, 'message': 'InvalidParam',
-    #                               'data': {'reason': 'count - has to be more than zero'}}
-    #
-    # def test_28(self):
-    #     """ ord_by and ord_dir filter test. """
-    #     ord_by = 'ctime'
-    #     ord_dir = None
-    #     r = user1.merchant1.inpay_history(ord_by=ord_by, ord_dir=ord_dir)['data']
-    #     assert r[0]['ctime'] >= r[1]['ctime'], r
-    #
-    # def test_29(self):
-    #     """ ord_by and ord_dir filter test. """
-    #     ord_by = 'ctime'
-    #     ord_dir = False
-    #     r = user1.merchant1.inpay_history(ord_by=ord_by, ord_dir=ord_dir)['data']
-    #     assert r[0]['ctime'] >= r[1]['ctime'], r
-    #
-    # def test_30(self):
-    #     """ ord_by and ord_dir filter test. """
-    #     ord_by = 'ctime'
-    #     ord_dir = True
-    #     r = user1.merchant1.inpay_history(ord_by=ord_by, ord_dir=ord_dir)['data']
-    #     assert r[0]['ctime'] <= r[1]['ctime'], r
-    #
-    # def test_31(self):
-    #     """ ord_by and ord_dir filter test. """
-    #     ord_by = 'in_amount'
-    #     ord_dir = None
-    #     r = user1.merchant1.inpay_history(ord_by=ord_by, ord_dir=ord_dir)['data']
-    #     assert float(r[0]['in_amount']) >= float(r[1]['in_amount']), r
-    #
-    # def test_32(self):
-    #     """ ord_by and ord_dir filter test. """
-    #     ord_by = 'in_amount'
-    #     ord_dir = False
-    #     r = user1.merchant1.inpay_history(ord_by=ord_by, ord_dir=ord_dir)['data']
-    #     assert float(r[0]['in_amount']) >= float(r[1]['in_amount']), r
-    #
-    # def test_33(self):
-    #     """ ord_by and ord_dir filter test. """
-    #     ord_by = 'in_amount'
-    #     ord_dir = True
-    #     r = user1.merchant1.inpay_history(ord_by=ord_by, ord_dir=ord_dir)['data']
-    #     assert float(r[0]['in_amount']) <= float(r[1]['in_amount']), r
-    #
+    def test_1(self):
+        """ Success request with no filter. """
+        r = user1.merchant1.inpay_history()['data'][0]
+        assert r['tp'] == 'payin'
+
+    def test_2(self):
+        """ Success payway filter. """
+        r = user1.merchant1.inpay_history(payway='btc')['data'][0]
+        assert r['tp'] == 'payin'
+        assert r['payway_name'] == 'btc'
+
+    def test_3(self):
+        """ Unknown payway filter. """
+        r = user1.merchant1.inpay_history(payway='Termynal')
+        assert r['error'] == {'code': -32081, 'message': 'EParamPaywayInvalid',
+                              'data': {'field': 'payway', 'reason': 'Invalid payway name'}}
+
+    def test_4(self):
+        """ Unknown payway filter. """
+        r = user1.merchant1.inpay_history(payway=101)
+        assert r['error'] == {'code': -32003, 'message': 'EParamType',
+                              'data': {'field': 'payway', 'reason': "'payway' must not be of 'int' type", 'value': 101}}
+
+    def test_5(self):
+        """ Success "unfinished" status filter. """
+        r = user1.merchant1.inpay_history(status='unfinished')['data'][0]
+        assert r['tp'] == 'payin'
+        assert r['status'] in ['new', 'prereq', 'pending', 'started', 'accepted', 'wait', 'retry', 'confirmed',
+                               'wtf', 'final']
+
+    def test_6(self):
+        """ Success "done" status filter. """
+        r = user1.merchant1.inpay_history(status='done')['data'][0]
+        assert r['tp'] == 'payin'
+        assert r['status'] == 'done'
+
+    def test_7(self):
+        """ Success "fail" status filter. """
+        r = user1.merchant1.inpay_history(status='fail')['data'][0]
+        assert r['tp'] == 'payin'
+        assert r['status'] in ['fail', 'reject']
+
+    def test_8(self):
+        """ Inpay count comparison. """
+        admin_count = int(admin.get_order(selector={'merchant_id': user1.merchant1.id, 'tp': 0})[0]['count'])
+        assert admin_count == user1.merchant1.inpay_history()['total']
+
+    def test_9(self):
+        """ Ibill [0] comparison. """
+        ibill = user1.merchant1.inpay_history()['data'][0]
+        assert admin.get_order(selector={'merchant_id': user1.merchant1.id, 'lid':ibill['lid'], 'tp': 0}) \
+               != 'No ibills for this query.'
+
+    def test_10(self):
+        """ Begin filter test. Begin = ibill ctime. """
+        time = user1.merchant1.inpay_history(ord_by='ctime', ord_dir=True)['data'][1]['ctime']
+        test_ibill = user1.merchant1.inpay_history(ord_by='ctime', ord_dir=True, begin=str(time))['data'][0]
+        assert test_ibill['ctime'] >= time
+
+    def test_11(self):
+        """ Begin filter test. Begin = ibill ctime -1. """
+        time = user1.merchant1.inpay_history(ord_by='ctime', ord_dir=True)['data'][1]['ctime']-1
+        test_ibill = user1.merchant1.inpay_history(ord_by='ctime', ord_dir=True, begin=str(time))['data'][0]
+        assert test_ibill['ctime'] >= time
+
+    def test_12(self):
+        """ Begin filter test. Begin = ibill ctime +1. """
+        time = user1.merchant1.inpay_history(ord_by='ctime', ord_dir=True)['data'][1]['ctime']+1
+        test_ibill = user1.merchant1.inpay_history(ord_by='ctime', ord_dir=True, begin=str(time))['data'][0]
+        assert test_ibill['ctime'] >= time
+
+    def test_13(self):
+        """ End filter test. End = ibill ctime. """
+        time = user1.merchant1.inpay_history(ord_by='ctime', ord_dir=True)['data'][1]['ctime']
+        test_ibill = user1.merchant1.inpay_history(ord_by='ctime', ord_dir=False, end=str(time))['data'][0]
+        assert test_ibill['ctime'] < time
+
+    def test_14(self):
+        """ End filter test. End = ibill ctime -1. """
+        time = user1.merchant1.inpay_history(ord_by='ctime', ord_dir=True)['data'][1]['ctime']-1
+        test_ibill = user1.merchant1.inpay_history(ord_by='ctime', ord_dir=False, end=str(time))['data'][0]
+        assert test_ibill['ctime'] < time
+
+    def test_15(self):
+        """ End filter test. End = ibill ctime +1. """
+        time = user1.merchant1.inpay_history(ord_by='ctime', ord_dir=True)['data'][1]['ctime']+1
+        test_ibill = user1.merchant1.inpay_history(ord_by='ctime', ord_dir=False, end=str(time))['data'][0]
+        assert test_ibill['ctime'] < time
+
+    def test_16(self):
+        """ Begin + End filter test. Begin = ibill ctime, end = ibill ctime +1. """
+        time = user1.merchant1.inpay_history(ord_by='ctime', ord_dir=True)['data'][1]['ctime']
+        test_ibill = user1.merchant1.inpay_history(ord_by='ctime', ord_dir=True, begin=str(time), end=str(time+1))['data'][0]
+        test_ibill2 = user1.merchant1.inpay_history(ord_by='ctime', ord_dir=False, begin=str(time), end=str(time+1))['data'][0]
+        assert test_ibill['ctime'] <= test_ibill2['ctime'] >= time
+
+    def test_17(self):
+        """ Begin + End filter test. Begin = ibill ctime = end. """
+        time = user1.merchant1.inpay_history(ord_by='ctime', ord_dir=True)['data'][1]['ctime']
+        test_ibill = user1.merchant1.inpay_history(ord_by='ctime', ord_dir=True, begin=str(time), end=str(time))['data']
+        assert not test_ibill
+
+    def test_18(self):
+        """ Begin filter test. Begin is int value. """
+        time = user1.merchant1.inpay_history(ord_by='ctime', ord_dir=True)['data'][1]['ctime']
+        r = user1.merchant1.inpay_history(ord_by='ctime', ord_dir=True, begin=time)
+        assert r.get('error') == {'code': -32003, 'message': 'EParamType',
+                                  'data': {'field': 'begin', 'reason': "'begin' must not be of 'int' type",
+                                           'value': time}}, r
+
+    def test_19(self):
+        """ End filter test. End is invalidate value. """
+        r = user1.merchant1.inpay_history(ord_by='ctime', ord_dir=True, end='now')
+        assert r.get('error') == {'code': -32003, 'message': 'EParamType',
+                                  'data': {'field': 'end', 'reason': 'Should be an Integer'}}, r
+
+    def test_20(self):
+        """ Success curr filter test. """
+        curr = 'USD'
+        ibill = user1.merchant1.inpay_history(curr=curr)['data'][0]
+        assert ibill['in_curr'] == curr, ibill
+
+    def test_21(self):
+        """ Unknown curr filter test. """
+        curr = 'ГРН'
+        ibill = user1.merchant1.inpay_history(curr=curr)
+        assert ibill['error'] == {'code': -32014, 'message': 'EParamCurrencyInvalid',
+                                  'data': {'field': 'in_curr', 'reason': 'Invalid currency name'}}
+
+    def test_22(self):
+        """ First filter test. """
+        ibill = user1.merchant1.inpay_history()['data'][1]
+        test_ibill = user1.merchant1.inpay_history(first='1')['data'][0]
+        assert ibill == test_ibill
+
+    def test_23(self):
+        """ First filter test. """
+        ibill = user1.merchant1.inpay_history(first=1)
+        assert ibill['error'] == {'code': -32003, 'message': 'EParamType',
+                                  'data': {'field': 'first', 'reason': "'first' must not be of 'int' type",
+                                           'value': 1}}
+
+    def test_24(self):
+        """ First filter test. """
+        ibill = user1.merchant1.inpay_history(first='one')
+        assert ibill['error'] == {'code': -32003, 'message': 'EParamType',
+                                  'data': {'field': 'first', 'reason': 'Should be an Integer'}}
+
+    def test_25(self):
+        """ First filter test. """
+        ibill = user1.merchant1.inpay_history(first='9999999')['data']
+        assert not ibill
+
+    def test_26(self):
+        """ Count filter test. """
+        count = 10
+        ibill = user1.merchant1.inpay_history(count=str(count))
+        len = ibill['data'].__len__()
+        assert len == count or len == ibill['total']
+
+    def test_27(self):
+        """ Count filter test. """
+        ibill = user1.merchant1.inpay_history(count='0')
+        assert ibill['error'] == {'code': -32002, 'message': 'EParamInvalid',
+                                  'data': {'field': 'count', 'reason': 'Should be more than zero'}}
+
+    def test_28(self):
+        """ ord_by and ord_dir filter test. """
+        ord_by = 'ctime'
+        ord_dir = None
+        r = user1.merchant1.inpay_history(ord_by=ord_by, ord_dir=ord_dir)['data']
+        assert r[0]['ctime'] >= r[1]['ctime'], r
+
+    def test_29(self):
+        """ ord_by and ord_dir filter test. """
+        ord_by = 'ctime'
+        ord_dir = False
+        r = user1.merchant1.inpay_history(ord_by=ord_by, ord_dir=ord_dir)['data']
+        assert r[0]['ctime'] >= r[1]['ctime'], r
+
+    def test_30(self):
+        """ ord_by and ord_dir filter test. """
+        ord_by = 'ctime'
+        ord_dir = True
+        r = user1.merchant1.inpay_history(ord_by=ord_by, ord_dir=ord_dir)['data']
+        assert r[0]['ctime'] <= r[1]['ctime'], r
+
+    def test_31(self):
+        """ ord_by and ord_dir filter test. """
+        ord_by = 'in_amount'
+        ord_dir = None
+        r = user1.merchant1.inpay_history(ord_by=ord_by, ord_dir=ord_dir)['data']
+        assert float(r[0]['in_amount']) >= float(r[1]['in_amount']), r
+
+    def test_32(self):
+        """ ord_by and ord_dir filter test. """
+        ord_by = 'in_amount'
+        ord_dir = False
+        r = user1.merchant1.inpay_history(ord_by=ord_by, ord_dir=ord_dir)['data']
+        assert float(r[0]['in_amount']) >= float(r[1]['in_amount']), r
+
+    def test_33(self):
+        """ ord_by and ord_dir filter test. """
+        ord_by = 'in_amount'
+        ord_dir = True
+        r = user1.merchant1.inpay_history(ord_by=ord_by, ord_dir=ord_dir)['data']
+        assert float(r[0]['in_amount']) <= float(r[1]['in_amount']), r
+
     # def test_34(self):
     #     """ ord_by and ord_dir filter test. """
     #     ord_by = 'time'
     #     r = user1.merchant1.inpay_history(ord_by=ord_by)
     #     assert r['error'] == {'code': -32070, 'message': 'InvalidParam', 'data': 'time'}, r
-    #
-    # def test_35(self):
-    #     """ ord_by and ord_dir filter test. """
-    #     ord_dir = 123
-    #     r = user1.merchant1.inpay_history(ord_dir=ord_dir)
-    #     assert r['error'] == {'code': -32070, 'message': 'InvalidParam',
-    #                           'data': {'reason': "Key 'ord_dir' must not be of 'int' type"}}, r
-    #
-    # @pytest.mark.usefixtures('create_payin_with_uaccount')
-    # def test_36(self):
-    #     r = user1.merchant1.inpay_history(uaccount='5168')
-    #     print(r)
-        # assert r['error'] == {'code': -32070, 'message': 'InvalidParam',
-        #                       'data': {'reason': "Key 'ord_dir' must not be of 'int' type"}}, r
+
+    def test_35(self):
+        """ ord_by and ord_dir filter test. """
+        r = user1.merchant1.inpay_history(ord_dir=123)
+        assert r['error'] == {'code': -32003, 'message': 'EParamType',
+                              'data': {'field': 'ord_dir', 'reason': "'ord_dir' must not be of 'int' type",
+                                       'value': 123}}, r
+
+    @pytest.mark.usefixtures('create_payin_with_uaccount')
+    def test_36(self):
+        r = user1.merchant1.inpay_history(uaccount='5168********7159')['data']
+        assert '5168********7159' == r[0]['userdata']['payer'], r
+
+    def test_37(self):
+        r = user1.merchant1.inpay_history(uaccount='5168')['data']
+        assert '5168' in r[0]['userdata']['payer'], r
+
+    def test_38(self):
+        r = user1.merchant1.inpay_history(uaccount='68**')['data']
+        assert '68**' in r[0]['userdata']['payer'], r
+
+    def test_39(self):
+        r = user1.merchant1.inpay_history(uaccount='7159')['data']
+        assert '7159' in r[0]['userdata']['payer'], r
+
+    def test_40(self):
+        r = user1.merchant1.inpay_history(uaccount='test88')['data']
+        assert r == [], r
+
+    def test_41(self):
+        r = user1.merchant1.inpay_history(uaccount=5168)
+        assert r['error'] == {'code': -32003, 'message': 'EParamType',
+                              'data': {'field': 'uaccount', 'reason': "'uaccount' must not be of 'int' type",
+                                       'value': 5168}}, r
 
 
 class TestOutpayHistory:
@@ -857,13 +886,14 @@ class TestOutpayHistory:
     def test_3(self):
         """ Unknown payway filter. """
         r = user1.merchant1.outpay_history(payway='Termynal')
-        assert r['error'] == {'code': -32070, 'message': 'InvalidParam', 'data': {'reason': 'Termynal'}}
+        assert r['error'] == {'code': -32081, 'message': 'EParamPaywayInvalid',
+                              'data': {'field': 'payway', 'reason': 'Invalid payway name'}}
 
     def test_4(self):
         """ Unknown payway filter. """
         r = user1.merchant1.outpay_history(payway=101)
-        assert r['error'] == {'code': -32070, 'message': 'InvalidParam',
-                              'data': {'reason': "Key 'payway' must not be of 'int' type"}}
+        assert r['error'] == {'code': -32003, 'message': 'EParamType',
+                              'data': {'field': 'payway', 'reason': "'payway' must not be of 'int' type", 'value': 101}}
 
     def test_5(self):
         """ Success "unfinished" status filter. """
@@ -948,14 +978,15 @@ class TestOutpayHistory:
         """ Begin filter test. Begin is int value. """
         time = user1.merchant1.outpay_history(ord_by='ctime', ord_dir=True)['data'][1]['ctime']
         r = user1.merchant1.outpay_history(ord_by='ctime', ord_dir=True, begin=time)
-        assert r.get('error') == {'code': -32070, 'message': 'InvalidParam',
-                                  'data': {'reason': "Key 'begin' must not be of 'int' type"}}, r
+        assert r.get('error') == {'code': -32003, 'message': 'EParamType',
+                                  'data': {'field': 'begin', 'reason': "'begin' must not be of 'int' type",
+                                           'value': time}}, r
 
     def test_19(self):
         """ End filter test. End is invalidate value. """
         r = user1.merchant1.outpay_history(ord_by='ctime', ord_dir=True, end='now')
-        assert r.get('error') == {'code': -32070, 'message': 'InvalidParam',
-                                  'data': {'reason': 'end - has to be an Integer'}}, r
+        assert r.get('error') == {'code': -32003, 'message': 'EParamType',
+                                  'data': {'field': 'end', 'reason': 'Should be an Integer'}}, r
 
     def test_20(self):
         """ Success curr filter test. """
@@ -967,7 +998,8 @@ class TestOutpayHistory:
         """ Unknown curr filter test. """
         curr = 'ГРН'
         ibill = user1.merchant1.outpay_history(curr=curr)
-        assert ibill['error'] == {'code': -32076, 'message': 'InvalidCurrency', 'data': curr}
+        assert ibill['error'] == {'code': -32014, 'message': 'EParamCurrencyInvalid',
+                                  'data': {'field': 'out_curr', 'reason': 'Invalid currency name'}}
 
     def test_22(self):
         """ First filter test. """
@@ -978,14 +1010,15 @@ class TestOutpayHistory:
     def test_23(self):
         """ First filter test. """
         ibill = user1.merchant1.outpay_history(first=1)
-        assert ibill['error'] == {'code': -32070, 'message': 'InvalidParam', 'data':
-            {'reason': "Key 'first' must not be of 'int' type"}}
+        assert ibill['error'] == {'code': -32003, 'message': 'EParamType',
+                                  'data': {'field': 'first', 'reason': "'first' must not be of 'int' type",
+                                           'value': 1}}
 
     def test_24(self):
         """ First filter test. """
         ibill = user1.merchant1.outpay_history(first='one')
-        assert ibill['error'] == {'code': -32070, 'message': 'InvalidParam',
-                                  'data': {'reason': 'first - has to be an Integer'}}
+        assert ibill['error'] == {'code': -32003, 'message': 'EParamType',
+                                  'data': {'field': 'first', 'reason': 'Should be an Integer'}}
 
     def test_25(self):
         """ First filter test. """
@@ -1002,8 +1035,8 @@ class TestOutpayHistory:
     def test_27(self):
         """ Count filter test. """
         ibill = user1.merchant1.outpay_history(count='0')
-        assert ibill['error'] == {'code': -32070, 'message': 'InvalidParam',
-                                  'data': {'reason': 'count - has to be more than zero'}}
+        assert ibill['error'] == {'code': -32002, 'message': 'EParamInvalid',
+                                  'data': {'field': 'count', 'reason': 'Should be more than zero'}}
 
     def test_28(self):
         """ ord_by and ord_dir filter test. """
@@ -1047,18 +1080,46 @@ class TestOutpayHistory:
         r = user1.merchant1.outpay_history(ord_by=ord_by, ord_dir=ord_dir)['data']
         assert float(r[0]['out_amount']) <= float(r[1]['out_amount']), r
 
-    def test_34(self):
-        """ ord_by and ord_dir filter test. """
-        ord_by = 'time'
-        r = user1.merchant1.outpay_history(ord_by=ord_by)
-        assert r['error'] == {'code': -32070, 'message': 'InvalidParam', 'data': 'time'}, r
+    # def test_34(self):
+    #     """ ord_by and ord_dir filter test. """
+    #     ord_by = 'time'
+    #     r = user1.merchant1.outpay_history(ord_by=ord_by)
+    #     assert r['error'] == {'code': -32070, 'message': 'InvalidParam', 'data': 'time'}, r
 
     def test_35(self):
         """ ord_by and ord_dir filter test. """
         ord_dir = 123
         r = user1.merchant1.outpay_history(ord_dir=ord_dir)
-        assert r['error'] == {'code': -32070, 'message': 'InvalidParam',
-                              'data': {'reason': "Key 'ord_dir' must not be of 'int' type"}}, r
+        assert r['error'] == {'code': -32003, 'message': 'EParamType',
+                              'data': {'field': 'ord_dir', 'reason': "'ord_dir' must not be of 'int' type",
+                                       'value': 123}}, r
+
+    @pytest.mark.usefixtures('create_payout_with_uaccount')
+    def test_36(self):
+        r = user1.merchant1.outpay_history(uaccount='+380666789567')['data']
+        assert '+380666789567' == r[0]['userdata']['contact'], r
+
+    def test_37(self):
+        r = user1.merchant1.outpay_history(uaccount='066')['data']
+        assert '066' in r[0]['userdata']['contact'], r
+
+    def test_38(self):
+        r = user1.merchant1.outpay_history(uaccount='6789')['data']
+        assert '6789' in r[0]['userdata']['contact'], r
+
+    def test_39(self):
+        r = user1.merchant1.outpay_history(uaccount='567')['data']
+        assert '567' in r[0]['userdata']['contact'], r
+
+    def test_40(self):
+        r = user1.merchant1.outpay_history(uaccount='test123409')['data']
+        assert r == [], r
+
+    def test_41(self):
+        r = user1.merchant1.outpay_history(uaccount=380666789567)
+        assert r['error'] == {'code': -32003, 'message': 'EParamType',
+                              'data': {'field': 'uaccount', 'reason': "'uaccount' must not be of 'int' type",
+                                       'value': 380666789567}}, r
 
 
 class TestConvertHistory:
@@ -1157,14 +1218,15 @@ class TestConvertHistory:
         """ Begin filter test. Begin is int value. """
         time = user1.merchant1.convert_history(ord_by='ctime', ord_dir=True)['data'][1]['ctime']
         r = user1.merchant1.convert_history(ord_by='ctime', ord_dir=True, begin=time)
-        assert r.get('error') == {'code': -32070, 'message': 'InvalidParam',
-                                  'data': {'reason': "Key 'begin' must not be of 'int' type"}}, r
+        assert r.get('error') == {'code': -32003, 'message': 'EParamType',
+                                  'data': {'field': 'ord_by', 'reason': "'ord_by' must not be of 'int' type",
+                                           'value': time}}, r
 
     def test_16(self):
         """ End filter test. End is invalidate value. """
         r = user1.merchant1.convert_history(ord_by='ctime', ord_dir=True, end='now')
-        assert r.get('error') == {'code': -32070, 'message': 'InvalidParam',
-                              'data': {'reason': 'end - has to be an Integer'}}, r
+        assert r.get('error') == {'code': -32003, 'message': 'EParamType',
+                                  'data': {'field': 'end', 'reason': 'Should be an Integer'}}, r
 
     def test_17(self):
         """ Success in_curr filter test. """
@@ -1176,7 +1238,8 @@ class TestConvertHistory:
         """ Unknown curr filter test. """
         curr = 'ГРН'
         ibill = user1.merchant1.convert_history(in_curr=curr)
-        assert ibill['error'] == {'code': -32076, 'message': 'InvalidCurrency', 'data': curr}
+        assert ibill['error'] == {'code': -32014, 'message': 'EParamCurrencyInvalid',
+                                  'data': {'field': 'in_curr', 'reason': 'Invalid currency name'}}
 
     def test_19(self):
         """ Success out_curr filter test. """
@@ -1188,7 +1251,8 @@ class TestConvertHistory:
         """ Unknown out_curr filter test. """
         curr = 'ГРН'
         ibill = user1.merchant1.convert_history(out_curr=curr)
-        assert ibill['error'] == {'code': -32076, 'message': 'InvalidCurrency', 'data': curr}
+        assert ibill['error'] == {'code': -32014, 'message': 'EParamCurrencyInvalid',
+                                  'data': {'field': 'out_curr', 'reason': 'Invalid currency name'}}
 
     def test_21(self):
         """ First filter test. """
@@ -1199,14 +1263,15 @@ class TestConvertHistory:
     def test_22(self):
         """ First filter test. """
         ibill = user1.merchant1.convert_history(first=1)
-        assert ibill['error'] == {'code': -32070, 'message': 'InvalidParam', 'data':
-            {'reason': "Key 'first' must not be of 'int' type"}}
+        assert ibill['error'] == {'code': -32003, 'message': 'EParamType',
+                                  'data': {'field': 'first', 'reason': "'first' must not be of 'int' type",
+                                           'value': 1}}
 
     def test_23(self):
         """ First filter test. """
         ibill = user1.merchant1.convert_history(first='one')
-        assert ibill['error'] == {'code': -32070, 'message': 'InvalidParam',
-                                  'data': {'reason': 'first - has to be an Integer'}}
+        assert ibill['error'] == {'code': -32003, 'message': 'EParamType',
+                                  'data': {'field': 'first', 'reason': 'Should be an Integer'}}
 
     def test_24(self):
         """ First filter test. """
@@ -1223,8 +1288,8 @@ class TestConvertHistory:
     def test_26(self):
         """ Count filter test. """
         ibill = user1.merchant1.convert_history(count='0')
-        assert ibill['error'] == {'code': -32070, 'message': 'InvalidParam',
-                                  'data': {'reason': 'count - has to be more than zero'}}
+        assert ibill['error'] == {'code': -32002, 'message': 'EParamInvalid',
+                                  'data': {'field': 'count', 'reason': 'Should be more than zero'}}
 
     def test_27(self):
         """ ord_by and ord_dir filter test. """
@@ -1268,18 +1333,18 @@ class TestConvertHistory:
         r = user1.merchant1.convert_history(ord_by=ord_by, ord_dir=ord_dir)['data']
         assert float(r[0]['out_amount']) <= float(r[1]['out_amount']), r
 
-    def test_33(self):
-        """ ord_by and ord_dir filter test. """
-        ord_by = 'time'
-        r = user1.merchant1.convert_history(ord_by=ord_by)
-        assert r['error'] == {'code': -32070, 'message': 'InvalidParam', 'data': 'time'}, r
+    # def test_33(self):
+    #     """ ord_by and ord_dir filter test. """
+    #     ord_by = 'time'
+    #     r = user1.merchant1.convert_history(ord_by=ord_by)
+    #     assert r['error'] == {'code': -32070, 'message': 'InvalidParam', 'data': 'time'}, r
 
     def test_34(self):
         """ ord_by and ord_dir filter test. """
-        ord_dir = 123
-        r = user1.merchant1.convert_history(ord_dir=ord_dir)
-        assert r['error'] == {'code': -32070, 'message': 'InvalidParam',
-                              'data': {'reason': "Key 'ord_dir' must not be of 'int' type"}}, r
+        r = user1.merchant1.convert_history(ord_dir=123)
+        assert r['error'] == {'code': -32003, 'message': 'EParamType',
+                              'data': {'field': 'ord_dir', 'reason': "'ord_dir' must not be of 'int' type",
+                                       'value': 123}}, r
 
 
 class TestCurrencyList:

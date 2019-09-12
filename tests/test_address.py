@@ -58,17 +58,19 @@ class TestWrongAddressCreate:
     def test_wrong_create_1(self):
         """ Creating address with not crypto currency in in_curr parameter. """
         user1.merchant1.address_create(params={'in_curr': 'UAH', 'out_curr': None, 'comment': '123'})
-        assert user1.merchant1.resp_address_create == {'code': -32076, 'data': {'reason': 'UAH'}, 'message': 'InvalidCurrency'}
+        assert user1.merchant1.resp_address_create == {'code': -32055, 'data': {'field': 'in_curr', 'reason': 'Not able to be used', 'value': 'UAH'},
+                                                       'message': 'EStateCurrencyUnavail'}
 
     def test_wrong_create_2(self):
         """ Creating address with autoconvert to equal currency. """
         user1.merchant1.address_create(params={'in_curr': 'BTC', 'out_curr': 'BTC', 'comment': '123'})
-        assert user1.merchant1.resp_address_create == {'code': -32076, 'data': {'reason': ['BTC', 'BTC']}, 'message': 'InvalidCurrency'}
+        assert user1.merchant1.resp_address_create == {'code': -32002, 'data': {'out_curr': 'BTC'}, 'message': 'EParamInvalid'}
 
     def test_wrong_create_3(self):
         """ Creating address with NONE in_curr parameter. """
         user1.merchant1.address_create(params={'in_curr': None, 'out_curr': None, 'comment': '123'})
-        assert user1.merchant1.resp_address_create == {'code': -32076, 'data': {'reason': None}, 'message': 'InvalidCurrency'}
+        assert user1.merchant1.resp_address_create == {'code': -32002, 'data':  {'field': 'in_curr', 'reason': 'Should be provided'},
+                                                       'message': 'EParamInvalid'}
 
     @pytest.mark.skip(reason='Not deactivated crypto currency')
     def test_wrong_create_4(self):
@@ -91,25 +93,27 @@ class TestWrongAddressCreate:
     def test_wrong_create_7(self):
         """ Creating address with not real in_curr. """
         user1.merchant1.address_create(params={'in_curr': 'BCT', 'out_curr': None, 'comment': '123'})
-        assert user1.merchant1.resp_address_create == {'code': -32076, 'data': {'reason': 'BCT'}, 'message': 'InvalidCurrency'}
+        assert user1.merchant1.resp_address_create == {'code': -32014, 'data': {'field': 'in_curr', 'reason': 'Invalid currency name'},
+                                                       'message': 'EParamCurrencyInvalid'}
 
     def test_wrong_create_8(self):
         """ Creating address with excist parameter. """
         user1.merchant1.address_create(params={'in_curr': 'BTC', 'out_curr': None, 'comment': '123', 'par': '123'})
-        assert user1.merchant1.resp_address_create == {'code': -32602,
-                                                       'data': {'reason': "method 'address.create' received a redundant argument 'par'"},
-                                                       'message': 'InvalidInputParams'}
+        assert user1.merchant1.resp_address_create == {'code': -32002,
+                                                       'data': {'field': 'par', 'reason': 'Should not be provided'},
+                                                       'message': 'EParamInvalid'}
 
     def test_wrong_create_9(self):
         """ Creating address without in_curr parameter. """
         user1.merchant1.address_create(params={'out_curr': None, 'comment': '123'})
-        assert user1.merchant1.resp_address_create == {'code': -32602, 'data': {'reason': "method 'address.create' missing 1 argument: 'in_curr'"},
-                                                       'message': 'InvalidInputParams'}
+        assert user1.merchant1.resp_address_create == {'code': -32002, 'data': {'field': 'in_curr', 'reason': 'Should be provided'},
+                                                       'message': 'EParamInvalid'}
 
     def test_wrong_create_10(self, _merchant_activate):
         """ Creating address from not active merchant. """
         user1.merchant1.address_create(params={'in_curr': 'BTC', 'out_curr': None, 'comment': '123'})
-        assert user1.merchant1.resp_address_create == {'code': -32010, 'data': {'reason': 'Merchant Is Not Active'}, 'message': 'InvalidMerchant'}
+        assert user1.merchant1.resp_address_create == {'code': -32031, 'data': {'field': 'x-merchant', 'reason': 'Merchant inactive'},
+                                                       'message': 'EStateMerchantInactive'}
 
     def test_wrong_create_11(self):
         """ Creating address with wrong merchant lid. """
@@ -121,7 +125,8 @@ class TestWrongAddressCreate:
                                    'x-signature': create_sign(user1.merchant1.akey, data['params'], time_sent),
                                    'x-utc-now-ms': time_sent}, verify=False)
         print(r.text)
-        assert loads(r.text)['error'] == {'code': -32010, 'data': {'reason': 'Merchant Is Not Active'}, 'message': 'InvalidMerchant'}
+        assert loads(r.text)['error'] == {'code': -32031, 'data': {'field': 'x-merchant', 'reason': 'Merchant inactive'},
+                                          'message': 'EStateMerchantInactive'}
 
     def test_wrong_create_12(self):
         """ Creating address without merchant parameter. """
@@ -132,7 +137,8 @@ class TestWrongAddressCreate:
                           headers={'x-signature': create_sign(user1.merchant1.akey, data['params'], time_sent),
                                    'x-utc-now-ms': time_sent}, verify=False)
         print(r.text)
-        assert loads(r.text)['error'] == {'code': -32003, 'data': {'reason': 'Add x-merchant to headers'}, 'message': 'InvalidHeaders'}
+        assert loads(r.text)['error'] == {'code': -32012, 'data': {'field': 'x-merchant', 'reason': 'Not present'},
+                                          'message': 'EParamHeadersInvalid'}
 
     def test_wrong_create_13(self):
         """ Creating address with wrong sign. """
@@ -144,7 +150,7 @@ class TestWrongAddressCreate:
                                    'x-signature': 'Wrong sign',
                                    'x-utc-now-ms': time_sent}, verify=False)
         print(r.text)
-        assert loads(r.text)['error'] == {'code': -32002, 'data': {'reason': 'Invalid signature'}, 'message': 'InvalidSign'}
+        assert loads(r.text)['error'] == {'code': -32010, 'data': {'reason': 'Invalid signature'}, 'message': 'EParamSignInvalid'}
 
     def test_wrong_create_14(self):
         """ Creating address without x-signature parameter. """
@@ -156,7 +162,8 @@ class TestWrongAddressCreate:
                           headers={'x-merchant': user1.merchant1.lid,
                                    'x-utc-now-ms': time_sent}, verify=False)
         print(r.text)
-        assert loads(r.text)['error'] == {'code': -32003, 'data': {'reason': 'Add x-signature to headers'}, 'message': 'InvalidHeaders'}
+        assert loads(r.text)['error'] == {'code': -32012, 'data': {'field': 'x-signature', 'reason': 'Not present'},
+                                          'message': 'EParamHeadersInvalid'}
 
     def test_wrong_create_15(self):
         """ Creating address without utc-now parameter. """
@@ -168,10 +175,11 @@ class TestWrongAddressCreate:
                           headers={'x-merchant': user1.merchant1.lid,
                                    'x-signature': create_sign(user1.merchant1.akey, data['params'], time_sent)}, verify=False)
         print(r.text)
-        assert loads(r.text)['error'] == {'code': -32003, 'data': {'reason': 'Add x-utc-now-ms to headers'}, 'message': 'InvalidHeaders'}
+        assert loads(r.text)['error'] == {'code': -32012, 'data': {'field': 'x-utc-now-ms', 'reason': 'Not present'},
+                                          'message': 'EParamHeadersInvalid'}
 
 
-@pytest.mark.usefixtures('_default_crypto_address', 'create_address_list')
+@pytest.mark.usefixtures('_default_crypto_address', '_create_address_list')
 class TestAddressList:
     """ Checking address list with parameters. """
 
@@ -181,11 +189,10 @@ class TestAddressList:
         admin, user1, user2 = start_session
 
     def test_address_list_1(self):
-        """ Getting list for first five address by MERCHANT. """
-        adm_ls = [dct['id'] for dct in admin.get_crypto_adress(_filter='merchant_id', value=user1.merchant1.id)
-                  if dct['rotate'] is False]
+        """ Getting full list address by MERCHANT. """
+        adm_ls = [dct['id'] for dct in admin.get_crypto_adress(_filter='merchant_id', value=user1.merchant1.id) if dct['rotate'] is False]
         user1.merchant1.address_list(params={'in_curr': None, 'out_curr': None, 'is_autoconvert': None, 'rotate': None, 'first': None, 'count': None,
-                                     'begin': None, 'end': None})
+                                     'begin': None, 'end': None, 'name': None})
         us_list = [dct['id'] for dct in user1.merchant1.resp_address_list['data']]
         assert us_list == adm_ls
 
@@ -195,7 +202,7 @@ class TestAddressList:
                   if dct['rotate'] is False]
         user1.delegate(params={'m_lid': user1.merchant1.lid, 'merch_model': 'address', 'merch_method': 'list',
                                'in_curr': None, 'out_curr': None, 'is_autoconvert': None, 'rotate': None, 'first': None,
-                               'count': None, 'begin': str(adm_ls[3]), 'end': None})
+                               'count': None, 'begin': str(adm_ls[3]), 'end': None, 'name': None})
         us_list = [dct['ctime'] for dct in user1.resp_delegate['data']]
         assert us_list == adm_ls[:4]
 
@@ -203,7 +210,7 @@ class TestAddressList:
         """ Getting list with END parameter by MERCHANT: getting all adress without lust. """
         adm_ls = [dct['ctime'] for dct in admin.get_crypto_adress(_filter='merchant_id', value=user1.merchant1.id) if dct['rotate'] is False]
         user1.merchant1.address_list(params={'in_curr': None, 'out_curr': None, 'is_autoconvert': None, 'rotate': None, 'first': None, 'count': None,
-                                     'begin': None, 'end': str(adm_ls[1] + 1)})
+                                     'begin': None, 'end': str(adm_ls[1] + 1), 'name': None})
         us_list = [dct['ctime'] for dct in user1.merchant1.resp_address_list['data']]
         assert us_list[0] == adm_ls[1]
         assert us_list == adm_ls[1:]
@@ -213,7 +220,7 @@ class TestAddressList:
         adm_ls = [dct['ctime'] for dct in admin.get_crypto_adress(_filter='merchant_id', value=user1.merchant1.id) if dct['rotate'] is False]
         user1.delegate(params={'m_lid': user1.merchant1.lid, 'merch_model': 'address', 'merch_method': 'list',
                                'in_curr': None, 'out_curr': None, 'is_autoconvert': None, 'rotate': None, 'first': None,
-                               'count': None, 'begin': str(adm_ls[3]), 'end': str(adm_ls[1] + 1)})
+                               'count': None, 'begin': str(adm_ls[3]), 'end': str(adm_ls[1] + 1), 'name': None})
         us_list = [dct['ctime'] for dct in user1.resp_delegate['data']]
         assert us_list[0] == adm_ls[1]
         assert us_list[-1] == adm_ls[3]
@@ -223,7 +230,7 @@ class TestAddressList:
         """ Getting list with COUNT parameter by MERCHANT: getting 2 address. """
         adm_ls = [dct['id'] for dct in admin.get_crypto_adress(_filter='merchant_id', value=user1.merchant1.id) if dct['rotate'] is False]
         user1.merchant1.address_list(params={'in_curr': None, 'out_curr': None, 'is_autoconvert': None, 'rotate': None, 'first': None, 'count': '2',
-                                     'begin': None, 'end': None})
+                                     'begin': None, 'end': None, 'name': None})
         us_list = [dct['id'] for dct in user1.merchant1.resp_address_list['data']]
         assert us_list == adm_ls[:2]
 
@@ -232,7 +239,7 @@ class TestAddressList:
         adm_ls = [dct['id'] for dct in admin.get_crypto_adress(_filter='merchant_id', value=user1.merchant1.id) if dct['rotate'] is False]
         user1.delegate(params={'m_lid': user1.merchant1.lid, 'merch_model': 'address', 'merch_method': 'list',
                                'in_curr': None, 'out_curr': None, 'is_autoconvert': None, 'rotate': None, 'first': '2',
-                               'count': None, 'begin': None, 'end': None})
+                               'count': None, 'begin': None, 'end': None, 'name': None})
         us_list = [dct['id'] for dct in user1.resp_delegate['data']]
         assert us_list == adm_ls[2:]
 
@@ -240,7 +247,7 @@ class TestAddressList:
         """ Getting list with FIRST, COUNT, BEGIN and END parameter by MERCHANT: getting list of two address. """
         adm_ls = [dct['ctime'] for dct in admin.get_crypto_adress(_filter='merchant_id', value=user1.merchant1.id) if dct['rotate'] is False]
         user1.merchant1.address_list(params={'in_curr': None, 'out_curr': None, 'is_autoconvert': None, 'rotate': None, 'first': '1', 'count': '2',
-                                     'begin': str(adm_ls[4]), 'end': str(adm_ls[1] + 1)})
+                                     'begin': str(adm_ls[4]), 'end': str(adm_ls[1] + 1), 'name': None})
         us_list = [dct['ctime'] for dct in user1.merchant1.resp_address_list['data']]
         assert us_list == adm_ls[2:4]
 
@@ -249,7 +256,7 @@ class TestAddressList:
         adm_ls = [dct['ctime'] for dct in admin.get_crypto_adress(_filter='merchant_id', value=user1.merchant1.id) if dct['rotate'] is False]
         user1.delegate(params={'m_lid': user1.merchant1.lid, 'merch_model': 'address', 'merch_method': 'list',
                                'in_curr': None, 'out_curr': None, 'is_autoconvert': None, 'rotate': None, 'first': '1',
-                               'count': str(len(adm_ls)), 'begin': str(adm_ls[3]), 'end': str(adm_ls[1] + 1)})
+                               'count': str(len(adm_ls)), 'begin': str(adm_ls[3]), 'end': str(adm_ls[1] + 1), 'name': None})
         us_list = [dct['ctime'] for dct in user1.resp_delegate['data']]
         assert us_list[0] == adm_ls[2]
         assert us_list[-1] == adm_ls[3]
@@ -260,7 +267,7 @@ class TestAddressList:
                     for dct in admin.get_crypto_adress(_filter='merchant_id', value=user1.merchant1.id) if dct['rotate'] is False]
         adm_list = adm_list[:5]
         user1.merchant1.address_list(params={'in_curr': 'BTC', 'out_curr': None, 'is_autoconvert': None, 'rotate': None, 'first': '0', 'count': '5',
-                                     'begin': str(adm_list[4]['ctime']), 'end': str(adm_list[0]['ctime'] + 1)})
+                                     'begin': str(adm_list[4]['ctime']), 'end': str(adm_list[0]['ctime'] + 1), 'name': None})
         adm_list = [dct['ctime'] for dct in adm_list if dct['in_curr'] == admin.currency['BTC']]
         us_list = [dct['ctime'] for dct in user1.merchant1.resp_address_list['data']]
         print(us_list, adm_list)
@@ -273,7 +280,8 @@ class TestAddressList:
         adm_list = adm_list[:5]
         user1.delegate(params={'m_lid': user1.merchant1.lid, 'merch_model': 'address', 'merch_method': 'list',
                                'in_curr': None, 'out_curr': 'USD', 'is_autoconvert': None, 'rotate': None, 'first': '0',
-                               'count': '5', 'begin': str(adm_list[4]['ctime']), 'end': str(adm_list[0]['ctime'] + 1)})
+                               'count': '5', 'begin': str(adm_list[4]['ctime']), 'end': str(adm_list[0]['ctime'] + 1),
+                               'name': None})
         adm_list = [dct['ctime'] for dct in adm_list if dct['out_curr'] == admin.currency['USD']]
         us_list = [dct['ctime'] for dct in user1.resp_delegate['data']]
         print(us_list, adm_list)
@@ -285,7 +293,7 @@ class TestAddressList:
                     for dct in admin.get_crypto_adress(_filter='merchant_id', value=user1.merchant1.id) if dct['rotate'] is False]
         adm_list = adm_list[:5]
         user1.merchant1.address_list(params={'in_curr': 'BTC', 'out_curr': 'USD', 'is_autoconvert': None, 'rotate': None, 'first': '0', 'count': '5',
-                                     'begin': str(adm_list[4]['ctime']), 'end': str(adm_list[0]['ctime'] + 1)})
+                                     'begin': str(adm_list[4]['ctime']), 'end': str(adm_list[0]['ctime'] + 1), 'name': None})
         adm_list = [dct['ctime'] for dct in adm_list if dct['in_curr'] == admin.currency['BTC'] and dct['out_curr'] == admin.currency['USD']]
         us_list = [dct['ctime'] for dct in user1.merchant1.resp_address_list['data']]
         print(us_list, adm_list)
@@ -297,7 +305,7 @@ class TestAddressList:
                     if dct['in_currency_id'] == admin.currency['BTC'] and dct['out_currency_id'] == admin.currency['USD'] if dct['rotate'] is False]
         user1.delegate(params={'m_lid': user1.merchant1.lid, 'merch_model': 'address', 'merch_method': 'list',
                                'in_curr': 'BTC', 'out_curr': 'USD', 'is_autoconvert': False, 'rotate': None, 'first': None,
-                               'count': None, 'begin': str(adm_list[0]['ctime']), 'end': None})
+                               'count': None, 'begin': str(adm_list[0]['ctime']), 'end': None, 'name': None})
         assert user1.resp_delegate['data'] == []
 
     def test_address_list_13(self):
@@ -306,7 +314,7 @@ class TestAddressList:
                     admin.get_crypto_adress(_filter='merchant_id', value=user1.merchant1.id) if dct['rotate'] is False]
         adm_list = adm_list[:5]
         user1.merchant1.address_list(params={'in_curr': None, 'out_curr': 'USD', 'is_autoconvert': True, 'rotate': False, 'first': '0', 'count': '5',
-                                     'begin': str(adm_list[4]['ctime']), 'end': str(adm_list[0]['ctime'] + 1)})
+                                     'begin': str(adm_list[4]['ctime']), 'end': str(adm_list[0]['ctime'] + 1), 'name': None})
         adm_list = [dct['ctime'] for dct in adm_list if dct['out_curr'] == admin.currency['USD']]
         us_list = [dct['ctime'] for dct in user1.merchant1.resp_address_list['data']]
         print(us_list, adm_list)
@@ -319,12 +327,11 @@ class TestAddressList:
         adm_list = adm_list[:5]
         user1.delegate(params={'m_lid': user1.merchant1.lid, 'merch_model': 'address', 'merch_method': 'list',
                                'in_curr': 'BTC', 'out_curr': None, 'is_autoconvert': True, 'rotate': False, 'first': None,
-                               'count': None, 'begin': str(adm_list[4]['ctime']), 'end': None})
+                               'count': None, 'begin': str(adm_list[4]['ctime']), 'end': None, 'name': None})
         adm_list = [dct['ctime'] for dct in adm_list if dct['in_curr'] == admin.currency['BTC'] and dct['out_curr'] is not None]
         us_list = [dct['ctime'] for dct in user1.merchant1.resp_address_list['data']]
         assert us_list == adm_list
 
-    # @pytest.mark.skip(reason='Fail')
     def test_address_list_15(self, _default_crypto_address):
         """ Getting list with BEGIN, END, FIRST, COUNT, ROTATE=TRUE parameter by OWNER. """
         adm_list = [{'ctime': dct['ctime'], 'id': dct['id'], 'rotate': dct['rotate']} for dct
@@ -334,7 +341,7 @@ class TestAddressList:
         print(str(adm_list[0]['id']))
         user1.merchant1.address_edit(params={'oid': str(adm_list[0]['id']), 'comment': None, 'rotate': True})
         user1.merchant1.address_list(params={'in_curr': None, 'out_curr': None, 'is_autoconvert': None, 'rotate': True, 'first': '0', 'count': '5',
-                                     'begin': str(adm_list[4]['ctime']), 'end': str(adm_list[0]['ctime'] + 1)})
+                                     'begin': str(adm_list[4]['ctime']), 'end': str(adm_list[0]['ctime'] + 1), 'name': None})
         adm_list = [dct['ctime'] for dct in adm_list if dct['rotate'] is True]
         us_list = [dct['ctime'] for dct in user1.merchant1.resp_address_list['data']]
         print(us_list, adm_list)
