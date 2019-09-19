@@ -1543,11 +1543,12 @@ class TestConvertList:
         r = user1.merchant1.convert_list(in_curr=curr)['data'][0]
         assert r['in_curr'] == curr, r
 
-    # def test_3(self):
-    #     """ Unknown in_curr filter test. """
-    #     curr = 'ГРН'
-    #     r = user1.merchant1.convert_list(in_curr=curr)
-    #     assert r == {'code': -32076, 'message': 'InvalidCurrency', 'data': curr}, r
+    def test_3(self):
+        """ Unknown in_curr filter test. """
+        curr = 'ГРН'
+        r = user1.merchant1.convert_list(in_curr=curr)
+        assert r['error'] == {'code': -32014, 'message': 'EParamCurrencyInvalid',
+                              'data': {'field': 'in_curr', 'reason': 'Invalid currency name'}}, r
 
     def test_4(self):
         """ Success out_curr filter test. """
@@ -1555,11 +1556,12 @@ class TestConvertList:
         r = user1.merchant1.convert_list(out_curr=curr)['data'][0]
         assert r['out_curr'] == curr, r
 
-    # def test_5(self):
-    #     """ Unknown out_curr filter test. """
-    #     curr = 'ГРН'
-    #     r = user1.merchant1.convert_list(out_curr=curr)
-    #     assert r == {'code': -32076, 'message': 'InvalidCurrency', 'data': curr}
+    def test_5(self):
+        """ Unknown out_curr filter test. """
+        curr = 'ГРН'
+        r = user1.merchant1.convert_list(out_curr=curr)
+        assert r['error'] == {'code': -32014, 'message': 'EParamCurrencyInvalid',
+                              'data': {'field': 'out_curr', 'reason': 'Invalid currency name'}}, r
 
     def test_6(self):
         """ First filter test. """

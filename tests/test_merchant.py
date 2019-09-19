@@ -16,8 +16,8 @@ class TestMerchantBalance:
         """ Warm. """
         global admin, user1, user2
         admin, user1, user2 = start_session
-        admin.set_currency(is_crypto=False, admin_min=bl(0.01), admin_max='3000000000000')
-        admin.set_currency(is_crypto=True, admin_min=bl(0.000001), admin_max='3000000000')
+        admin.set_currency(is_crypto=False, admin_min=bl(0.01), admin_max=bl(3000))
+        admin.set_currency(is_crypto=True, admin_min=bl(0.000001), admin_max=bl(3))
 
     def test_MerchantBalance_1(self):
         """ Balance all. """
@@ -57,7 +57,8 @@ class TestMerchantBalance:
 
     def test_MerchantBalance_6(self):
         """ Balance non-existent currency. """
-        assert user1.merchant1.balance(curr='TST')['error']['message'] == 'InvalidCurrency'
+        assert user1.merchant1.balance(curr='TST')['error']['message'] == 'EParamCurrencyInvalid'
+        # pprint.pprint(user1.merchant1.resp_balance)
 
 
 class TestOrderGet:
@@ -74,10 +75,12 @@ class TestOrderGet:
         user1.merchant1.order_get(o_lid=lid)
         keys = ['account_amount', 'ctime', 'externalid', 'ftime', 'in_amount', 'in_curr', 'in_fee_amount',
                'lid', 'orig_amount', 'out_amount', 'out_curr', 'out_fee_amount', 'owner', 'payway_name', 'rate',
-               'ref', 'renumeration', 'reqdata', 'status', 'tgt', 'token', 'tp', 'uaccount', 'userdata']
+               'ref', 'renumeration', 'reqdata', 'status', 'tgt', 'token', 'tp', 'userdata']
         r = user1.merchant1.resp_order_get.get('result')
         test_keys = list(r.keys())
         test_keys.sort()
+        # pprint.pprint(keys)
+        # pprint.pprint(test_keys)
         assert test_keys == keys
         assert str(r['lid']) == lid
 
@@ -87,9 +90,11 @@ class TestOrderGet:
     #     user1.merchant1.order_get(o_lid=lid, ibill=True)
     #     keys = ['amount', 'balance', 'ctime' ,'curr' ,'fee' ,'lid' ,'model' ,'oid' ,'other_curr']
     #     r = user1.merchant1.resp_order_get['result']
-    #     test_keys = list(r['balance_changes'][0].keys())
-    #     test_keys.sort()
-    #     assert test_keys == keys
+    #     # test_keys = list(r['balance_changes'][0].keys())
+    #     pprint.pprint(user1.merchant1.resp_order_get['result'])
+    #     # test_keys.sort()
+    #     # pprint.pprint(keys)
+    #     assert user1.merchant1.resp_order_get['result']['balance_changes'] == []
     #     assert str(r['lid']) == lid
 
     def test_3(self):
@@ -310,12 +315,12 @@ class TestIbillHistory:
         r = user1.merchant1.ibill_history(ord_by=ord_by, ord_dir=ord_dir)['data']
         assert float(r[0]['amount']) <= float(r[1]['amount']), r
 
-    # def test_27(self):
-    #     """ ord_by and ord_dir filter test. """
-    #     ord_by = 'time'
-    #     r = user1.merchant1.ibill_history(ord_by=ord_by)
-    #     print(r)
-    #     assert r['error'] == {'code': -32070, 'message': 'InvalidParam', 'data': 'time'}, r
+    def test_27(self):
+        """ ord_by and ord_dir filter test. """
+        ord_by = 'time'
+        r = user1.merchant1.ibill_history(ord_by=ord_by)
+        assert r['error'] == {'code': -32002, 'message': 'EParamInvalid',
+                              'data': {'field': 'ord_by', 'reason': 'Invalid ord_by value', 'value': 'time'}}, r
 
     def test_28(self):
         """ ord_by and ord_dir filter test. """
@@ -481,18 +486,18 @@ class TestIbillHistory:
         r = user1.merchant1.ibill_history(filter_amount='!=-0.01')['data'][0]
         assert float(r['amount']) != -0.01
 
-    # def test_59(self):
-    #     """ Wrong amount filter. """
-    #     r = user1.merchant1.ibill_history(filter_amount='!=')
-    #     print(r)
-    #     assert r['error'] == {'code': -32070, 'message': 'InvalidParam',
-    #         'data': {'reason': 'Format of string has to match the pattern <operand><comma><number>, e.g. ">123.45"'}}
+    def test_59(self):
+        """ Wrong amount filter. """
+        r = user1.merchant1.ibill_history(filter_amount='!=')
+        assert r['error'] == {'code': -32002, 'message': 'EParamInvalid',
+                              'data': {'field': 'amount', 'reason': 'Invalid amount value', 'value': '!='}}
 
-    # def test_60(self):
-    #     """ Wrong amount filter. """
-    #     r = user1.merchant1.ibill_history(filter_amount='10+5')
-    #     assert r['error'] == {'code': -32070, 'message': 'InvalidParam',
-    #         'data': {'reason': 'Format of string has to match the pattern <operand><comma><number>, e.g. ">123.45"'}}
+    def test_60(self):
+        """ Wrong amount filter. """
+        r = user1.merchant1.ibill_history(filter_amount='10+5')
+        assert r['error'] == {'code': -32016, 'message': 'EParamFieldInvalid',
+                              'data': {'reason': 'Format of string has to match the pattern <operand><comma><number>,'
+                                                 ' e.g. ">123.45"', 'value': '10+5'}}
 
     def test_61(self):
         """ Success fee filter. fee = 1.5 """
@@ -594,17 +599,18 @@ class TestIbillHistory:
         r = user1.merchant1.ibill_history(filter_fee='!=0')['data'][0]
         assert float(r['fee']) != 0
 
-    # def test_81(self):
-    #     """ Wrong fee filter. """
-    #     r = user1.merchant1.ibill_history(filter_fee='!=')
-    #     assert r['error'] == {'code': -32070, 'message': 'InvalidParam',
-    #         'data': {'reason': 'Format of string has to match the pattern <operand><comma><number>, e.g. ">123.45"'}}
+    def test_81(self):
+        """ Wrong fee filter. """
+        r = user1.merchant1.ibill_history(filter_fee='!=')
+        assert r['error'] == {'code': -32002, 'message': 'EParamInvalid',
+                              'data': {'field': 'fee', 'reason': 'Invalid fee value', 'value': '!='}}
 
-    # def test_82(self):
-    #     """ Wrong fee filter. """
-    #     r = user1.merchant1.ibill_history(filter_fee='10+5')
-    #     assert r['error'] == {'code': -32070, 'message': 'InvalidParam',
-    #         'data': {'reason': 'Format of string has to match the pattern <operand><comma><number>, e.g. ">123.45"'}}
+    def test_82(self):
+        """ Wrong fee filter. """
+        r = user1.merchant1.ibill_history(filter_fee='10+5')
+        assert r['error'] == {'code': -32016, 'message': 'EParamFieldInvalid',
+                              'data': {'reason': 'Format of string has to match the pattern <operand><comma><number>,'
+                                                 ' e.g. ">123.45"', 'value': '10+5'}}
 
 
 class TestInpayHistory:
@@ -823,11 +829,12 @@ class TestInpayHistory:
         r = user1.merchant1.inpay_history(ord_by=ord_by, ord_dir=ord_dir)['data']
         assert float(r[0]['in_amount']) <= float(r[1]['in_amount']), r
 
-    # def test_34(self):
-    #     """ ord_by and ord_dir filter test. """
-    #     ord_by = 'time'
-    #     r = user1.merchant1.inpay_history(ord_by=ord_by)
-    #     assert r['error'] == {'code': -32070, 'message': 'InvalidParam', 'data': 'time'}, r
+    def test_34(self):
+        """ ord_by and ord_dir filter test. """
+        ord_by = 'time'
+        r = user1.merchant1.inpay_history(ord_by=ord_by)
+        assert r['error'] == {'code': -32002, 'message': 'EParamInvalid',
+                              'data': {'field': 'ord_by', 'reason': 'Invalid ord_by value', 'value': 'time'}}, r
 
     def test_35(self):
         """ ord_by and ord_dir filter test. """
@@ -1080,11 +1087,12 @@ class TestOutpayHistory:
         r = user1.merchant1.outpay_history(ord_by=ord_by, ord_dir=ord_dir)['data']
         assert float(r[0]['out_amount']) <= float(r[1]['out_amount']), r
 
-    # def test_34(self):
-    #     """ ord_by and ord_dir filter test. """
-    #     ord_by = 'time'
-    #     r = user1.merchant1.outpay_history(ord_by=ord_by)
-    #     assert r['error'] == {'code': -32070, 'message': 'InvalidParam', 'data': 'time'}, r
+    def test_34(self):
+        """ ord_by and ord_dir filter test. """
+        ord_by = 'time'
+        r = user1.merchant1.outpay_history(ord_by=ord_by)
+        assert r['error'] == {'code': -32002, 'message': 'EParamInvalid',
+                              'data': {'field': 'ord_by', 'reason': 'Invalid ord_by value', 'value': 'time'}}, r
 
     def test_35(self):
         """ ord_by and ord_dir filter test. """
@@ -1219,7 +1227,7 @@ class TestConvertHistory:
         time = user1.merchant1.convert_history(ord_by='ctime', ord_dir=True)['data'][1]['ctime']
         r = user1.merchant1.convert_history(ord_by='ctime', ord_dir=True, begin=time)
         assert r.get('error') == {'code': -32003, 'message': 'EParamType',
-                                  'data': {'field': 'ord_by', 'reason': "'ord_by' must not be of 'int' type",
+                                  'data': {'field': 'begin', 'reason': "'begin' must not be of 'int' type",
                                            'value': time}}, r
 
     def test_16(self):
@@ -1333,11 +1341,12 @@ class TestConvertHistory:
         r = user1.merchant1.convert_history(ord_by=ord_by, ord_dir=ord_dir)['data']
         assert float(r[0]['out_amount']) <= float(r[1]['out_amount']), r
 
-    # def test_33(self):
-    #     """ ord_by and ord_dir filter test. """
-    #     ord_by = 'time'
-    #     r = user1.merchant1.convert_history(ord_by=ord_by)
-    #     assert r['error'] == {'code': -32070, 'message': 'InvalidParam', 'data': 'time'}, r
+    def test_33(self):
+        """ ord_by and ord_dir filter test. """
+        ord_by = 'time'
+        r = user1.merchant1.convert_history(ord_by=ord_by)
+        assert r['error'] == {'code': -32002, 'message': 'EParamInvalid',
+                              'data': {'field': 'ord_by', 'reason': 'Invalid ord_by value', 'value': 'time'}}, r
 
     def test_34(self):
         """ ord_by and ord_dir filter test. """
@@ -1413,8 +1422,10 @@ class TestCurrencyList:
         admin.set_currency_activity(name='LTC', is_disabled=False, is_active=False)
         user1.merchant1.currency_list()
         # pprint.pprint(user1.merchant1.resp_currency_list)
-        assert user1.merchant1.resp_currency_list['error']['message'] == 'NotFound'
-        assert user1.merchant1.resp_currency_list['error']['data']['reason'] == 'No currency available'
+        assert user1.merchant1.resp_currency_list['error']['code'] == -32090
+        assert user1.merchant1.resp_currency_list['error']['message'] == 'EParamNotFound'
+        assert user1.merchant1.resp_currency_list['error']['data']['field'] == 'currency'
+        assert user1.merchant1.resp_currency_list['error']['data']['reason'] == 'Not found'
 
     def test_CurrencyList_3(self, _enable_currency):
         """ Currency List. """
@@ -1428,8 +1439,10 @@ class TestCurrencyList:
         admin.set_currency_activity(name='LTC', is_disabled=True, is_active=True)
         user1.merchant1.currency_list()
         # pprint.pprint(user1.merchant1.resp_currency_list)
-        assert user1.merchant1.resp_currency_list['error']['message'] == 'NotFound'
-        assert user1.merchant1.resp_currency_list['error']['data']['reason'] == 'No currency available'
+        assert user1.merchant1.resp_currency_list['error']['code'] == -32090
+        assert user1.merchant1.resp_currency_list['error']['message'] == 'EParamNotFound'
+        assert user1.merchant1.resp_currency_list['error']['data']['field'] == 'currency'
+        assert user1.merchant1.resp_currency_list['error']['data']['reason'] == 'Not found'
 
 
 class TestPaywayList:
@@ -1503,29 +1516,34 @@ class TestPaywayList:
                                                   'precision': 8,
                                                   'tech_max': '3',
                                                   'tech_min': '0.000001'},
-                                                 {'fee': {'add': '0.0003',
-                                                          'max': '0',
-                                                          'method': 'ceil',
-                                                          'min': '0',
-                                                          'mult': '0.05'},
+                                                 {'fee': {},
                                                   'is_crypto': True,
                                                   'is_out': False,
                                                   'name': 'BTC',
                                                   'precision': 8,
-                                                  'tech_max': '3000',
-                                                  'tech_min': '10'}],
+                                                  'tech_max': '1',
+                                                  'tech_min': '0.0008'}],
                                   'is_active': True,
                                   'is_public': True,
                                   'type': 'crypto'},
-                          'cash_kiev': {'currencies': [],
+                          'cash_kiev': {'currencies': [{'fee': {},
+                                                        'is_crypto': False,
+                                                        'is_out': False,
+                                                        'name': 'USD',
+                                                        'precision': 2,
+                                                        'tech_max': '100',
+                                                        'tech_min': '1'}],
                                         'is_active': True,
                                         'is_public': True,
-                                        'type': 'sci'},
-                          'eth': {'currencies': [{'fee': {'add': '0',
-                                                          'max': '0',
-                                                          'method': 'ceil',
-                                                          'min': '0',
-                                                          'mult': '0'},
+                                        'type': 'cash'},
+                          'eth': {'currencies': [{'fee': {},
+                                                  'is_crypto': True,
+                                                  'is_out': True,
+                                                  'name': 'ETH',
+                                                  'precision': 8,
+                                                  'tech_max': '0.895',
+                                                  'tech_min': '0.000001'},
+                                                 {'fee': {},
                                                   'is_crypto': True,
                                                   'is_out': False,
                                                   'name': 'ETH',
@@ -1542,33 +1560,21 @@ class TestPaywayList:
                                                    'precision': 2,
                                                    'tech_max': '3000',
                                                    'tech_min': '0.01'},
-                                                  {'fee': {'add': '1',
-                                                           'max': '0',
-                                                           'method': 'ceil',
-                                                           'min': '0',
-                                                           'mult': '0.05'},
+                                                  {'fee': {},
                                                    'is_crypto': False,
                                                    'is_out': False,
                                                    'name': 'USD',
                                                    'precision': 2,
                                                    'tech_max': '2',
                                                    'tech_min': '0.01'},
-                                                  {'fee': {'add': '0',
-                                                           'max': '0',
-                                                           'method': 'ceil',
-                                                           'min': '0',
-                                                           'mult': '0'},
+                                                  {'fee': {},
                                                    'is_crypto': False,
                                                    'is_out': True,
                                                    'name': 'UAH',
                                                    'precision': 2,
                                                    'tech_max': '15.48',
                                                    'tech_min': '0.01'},
-                                                  {'fee': {'add': '0',
-                                                           'max': '0',
-                                                           'method': 'ceil',
-                                                           'min': '0',
-                                                           'mult': '0'},
+                                                  {'fee': {},
                                                    'is_crypto': False,
                                                    'is_out': False,
                                                    'name': 'UAH',
@@ -1578,28 +1584,20 @@ class TestPaywayList:
                                    'is_active': True,
                                    'is_public': True,
                                    'type': 'cheque'},
-                          'kuna': {'currencies': [{'fee': {'add': '0',
-                                                           'max': '0',
-                                                           'method': 'ceil',
-                                                           'min': '0',
-                                                           'mult': '0'},
+                          'kuna': {'currencies': [{'fee': {},
                                                    'is_crypto': False,
                                                    'is_out': True,
                                                    'name': 'UAH',
                                                    'precision': 2,
                                                    'tech_max': '100',
                                                    'tech_min': '1'},
-                                                  {'fee': {'add': '0.33',
-                                                           'max': '0',
-                                                           'method': 'ceil',
-                                                           'min': '0',
-                                                           'mult': '0'},
+                                                  {'fee': {},
                                                    'is_crypto': False,
                                                    'is_out': False,
                                                    'name': 'UAH',
                                                    'precision': 2,
                                                    'tech_max': '3000',
-                                                   'tech_min': '0.01'}],
+                                                   'tech_min': '100'}],
                                    'is_active': True,
                                    'is_public': True,
                                    'type': 'cheque'},
@@ -1608,27 +1606,50 @@ class TestPaywayList:
                                                   'is_out': True,
                                                   'name': 'LTC',
                                                   'precision': 8,
-                                                  'tech_max': '0.87627',
+                                                  'tech_max': '0.87627638',
                                                   'tech_min': '0.002'},
-                                                 {'fee': {'add': '0.001',
-                                                          'max': '0',
-                                                          'method': 'ceil',
-                                                          'min': '0',
-                                                          'mult': '0'},
+                                                 {'fee': {},
                                                   'is_crypto': True,
                                                   'is_out': False,
                                                   'name': 'LTC',
                                                   'precision': 8,
-                                                  'tech_max': '3',
-                                                  'tech_min': '0.002'}],
+                                                  'tech_max': '200',
+                                                  'tech_min': '0.0008'}],
                                   'is_active': True,
                                   'is_public': True,
                                   'type': 'crypto'},
-                          'payeer': {'currencies': [{'fee': {'add': '0',
-                                                             'max': '0',
-                                                             'method': 'ceil',
-                                                             'min': '0',
-                                                             'mult': '0'},
+                          'payeer': {'currencies': [{'fee': {},
+                                                     'is_crypto': False,
+                                                     'is_out': False,
+                                                     'name': 'USD',
+                                                     'precision': 2,
+                                                     'tech_max': '100',
+                                                     'tech_min': '1'},
+                                                    {'fee': {},
+                                                     'is_crypto': False,
+                                                     'is_out': True,
+                                                     'name': 'RUB',
+                                                     'precision': 2,
+                                                     'tech_max': '100',
+                                                     'tech_min': '1'},
+                                                    {'fee': {},
+                                                     'is_crypto': False,
+                                                     'is_out': False,
+                                                     'name': 'RUB',
+                                                     'precision': 2,
+                                                     'tech_max': '200',
+                                                     'tech_min': '1'}],
+                                     'is_active': True,
+                                     'is_public': True,
+                                     'type': 'sci'},
+                          'paymer': {'currencies': [{'fee': {},
+                                                     'is_crypto': False,
+                                                     'is_out': False,
+                                                     'name': 'RUB',
+                                                     'precision': 2,
+                                                     'tech_max': '3000',
+                                                     'tech_min': '0.01'},
+                                                    {'fee': {},
                                                      'is_crypto': False,
                                                      'is_out': False,
                                                      'name': 'USD',
@@ -1640,53 +1661,6 @@ class TestPaywayList:
                                                      'is_out': True,
                                                      'name': 'RUB',
                                                      'precision': 2,
-                                                     'tech_max': '100',
-                                                     'tech_min': '1'},
-                                                    {'fee': {'add': '0',
-                                                             'max': '0',
-                                                             'method': 'ceil',
-                                                             'min': '0',
-                                                             'mult': '0'},
-                                                     'is_crypto': False,
-                                                     'is_out': False,
-                                                     'name': 'RUB',
-                                                     'precision': 2,
-                                                     'tech_max': '3000',
-                                                     'tech_min': '10'}],
-                                     'is_active': True,
-                                     'is_public': True,
-                                     'type': 'sci'},
-                          'paymer': {'currencies': [{'fee': {'add': '0',
-                                                             'max': '0',
-                                                             'method': 'ceil',
-                                                             'min': '0',
-                                                             'mult': '0'},
-                                                     'is_crypto': False,
-                                                     'is_out': False,
-                                                     'name': 'RUB',
-                                                     'precision': 2,
-                                                     'tech_max': '3000',
-                                                     'tech_min': '0.01'},
-                                                    {'fee': {'add': '0',
-                                                             'max': '0',
-                                                             'method': 'ceil',
-                                                             'min': '0',
-                                                             'mult': '0'},
-                                                     'is_crypto': False,
-                                                     'is_out': False,
-                                                     'name': 'USD',
-                                                     'precision': 2,
-                                                     'tech_max': '3000',
-                                                     'tech_min': '0.01'},
-                                                    {'fee': {'add': '0',
-                                                             'max': '0',
-                                                             'method': 'ceil',
-                                                             'min': '0',
-                                                             'mult': '0'},
-                                                     'is_crypto': False,
-                                                     'is_out': True,
-                                                     'name': 'RUB',
-                                                     'precision': 2,
                                                      'tech_max': '3000',
                                                      'tech_min': '0.01'}],
                                      'is_active': True,
@@ -1694,104 +1668,76 @@ class TestPaywayList:
                                      'type': 'cheque'},
                           'perfect': {'currencies': [{'fee': {},
                                                       'is_crypto': False,
-                                                      'is_out': True,
-                                                      'name': 'USD',
-                                                      'precision': 2,
-                                                      'tech_max': '2.24',
-                                                      'tech_min': '0.01'},
-                                                     {'fee': {'add': '2',
-                                                              'max': '0',
-                                                              'method': 'ceil',
-                                                              'min': '0',
-                                                              'mult': '0.05'},
-                                                      'is_crypto': False,
                                                       'is_out': False,
                                                       'name': 'USD',
                                                       'precision': 2,
                                                       'tech_max': '3000',
-                                                      'tech_min': '0.01'}],
+                                                      'tech_min': '1'}],
                                       'is_active': True,
                                       'is_public': True,
                                       'type': 'sci'},
-                          'privat24': {'currencies': [{'fee': {'add': '0',
-                                                               'max': '0',
-                                                               'method': 'ceil',
-                                                               'min': '0',
-                                                               'mult': '0'},
+                          'privat24': {'currencies': [{'fee': {},
                                                        'is_crypto': False,
                                                        'is_out': False,
                                                        'name': 'UAH',
                                                        'precision': 2,
-                                                       'tech_max': '3000',
-                                                       'tech_min': '10'},
-                                                      {'fee': {},
-                                                       'is_crypto': False,
-                                                       'is_out': True,
-                                                       'name': 'UAH',
-                                                       'precision': 2,
-                                                       'tech_max': '93.97',
+                                                       'tech_max': '100',
                                                        'tech_min': '1'}],
                                        'is_active': True,
                                        'is_public': True,
                                        'type': 'sci'},
-                          'qiwi': {'currencies': [{'fee': {'add': '0',
-                                                           'max': '0',
-                                                           'method': 'ceil',
-                                                           'min': '0',
-                                                           'mult': '0'},
+                          'qiwi': {'currencies': [{'fee': {},
+                                                   'is_crypto': False,
+                                                   'is_out': True,
+                                                   'name': 'RUB',
+                                                   'precision': 2,
+                                                   'tech_max': '4.97',
+                                                   'tech_min': '0.01'},
+                                                  {'fee': {},
+                                                   'is_crypto': False,
+                                                   'is_out': False,
+                                                   'name': 'UAH',
+                                                   'precision': 2,
+                                                   'tech_max': '1000',
+                                                   'tech_min': '0.05'},
+                                                  {'fee': {},
                                                    'is_crypto': False,
                                                    'is_out': False,
                                                    'name': 'RUB',
                                                    'precision': 2,
-                                                   'tech_max': '3000',
+                                                   'tech_max': '100',
                                                    'tech_min': '1'}],
                                    'is_active': True,
                                    'is_public': True,
                                    'type': 'sci'},
-                          'visamc': {'currencies': [{'fee': {'add': '0',
-                                                             'max': '0',
-                                                             'method': 'ceil',
-                                                             'min': '0',
-                                                             'mult': '0'},
+                          'visamc': {'currencies': [{'fee': {},
                                                      'is_crypto': False,
                                                      'is_out': False,
                                                      'name': 'RUB',
                                                      'precision': 2,
                                                      'tech_max': '3000',
-                                                     'tech_min': '10'},
-                                                    {'fee': {'add': '0',
-                                                             'max': '0',
-                                                             'method': 'ceil',
-                                                             'min': '0',
-                                                             'mult': '0'},
+                                                     'tech_min': '0.01'},
+                                                    {'fee': {},
                                                      'is_crypto': False,
                                                      'is_out': True,
                                                      'name': 'RUB',
                                                      'precision': 2,
                                                      'tech_max': '100',
                                                      'tech_min': '1'},
-                                                    {'fee': {'add': '0',
-                                                             'max': '0',
-                                                             'method': 'ceil',
-                                                             'min': '0',
-                                                             'mult': '0'},
+                                                    {'fee': {},
                                                      'is_crypto': False,
                                                      'is_out': True,
                                                      'name': 'UAH',
                                                      'precision': 2,
                                                      'tech_max': '100',
                                                      'tech_min': '1'},
-                                                    {'fee': {'add': '2',
-                                                             'max': '0',
-                                                             'method': 'ceil',
-                                                             'min': '0',
-                                                             'mult': '0.05'},
+                                                    {'fee': {},
                                                      'is_crypto': False,
                                                      'is_out': False,
                                                      'name': 'UAH',
                                                      'precision': 2,
-                                                     'tech_max': '3000',
-                                                     'tech_min': '10'}],
+                                                     'tech_max': '100',
+                                                     'tech_min': '1'}],
                                      'is_active': True,
                                      'is_public': True,
                                      'type': 'sci'},
@@ -1831,8 +1777,10 @@ class TestPaywayList:
         admin.set_pwmerchactive(merch_id=user1.merchant1.id, payway_id=admin.payway['btc']['id'], is_active=False)
         user1.merchant1.payway_list()
         # pprint.pprint(user1.merchant1.resp_payway_list)
-        assert user1.merchant1.resp_payway_list['error']['message'] == 'NotFound'
-        assert user1.merchant1.resp_payway_list['error']['data']['reason'] == 'No payway available'
+        assert user1.merchant1.resp_payway_list['error']['code'] == -32090
+        assert user1.merchant1.resp_payway_list['error']['message'] == 'EParamNotFound'
+        assert user1.merchant1.resp_payway_list['error']['data']['field'] == 'payway'
+        assert user1.merchant1.resp_payway_list['error']['data']['reason'] == 'Not found'
 
 
 class TestExchangeList:
@@ -1905,6 +1853,7 @@ class TestExchangeList:
                                 tech_min=bl(0.0105), tech_max=bl(3.82964), is_active=False)
         admin.set_rate_exchange(rate=bl(120.41), fee=0, in_currency='USDT', out_currency='LTC',
                                 tech_min=bl(0.12), tech_max=bl(35.75), is_active=False)
+        # pprint.pprint(user1.merchant1.exchange_list()['result'])
         assert user1.merchant1.exchange_list()['result'] == \
                {'RUB-UAH': {'fee': '0',
                             'i_rate': ['2.48757', '1'],
@@ -1958,7 +1907,13 @@ class TestExchangeList:
                                 tech_min=bl(0.26), tech_max=bl(100000), is_active=False)
         admin.set_rate_exchange(rate=bl(2.46305), fee=0, in_currency='UAH', out_currency='RUB',
                                 tech_min=bl(0.01), tech_max=bl(40700.04), is_active=False)
+        admin.set_rate_exchange(rate=bl(25.91463), fee=bl(0.04), in_currency='BTC', out_currency='ETH',
+                                tech_min=bl(0.26), tech_max=bl(100000), is_active=False)
+        admin.set_rate_exchange(rate=bl(2.46305), fee=0, in_currency='BTC', out_currency='USDT',
+                                tech_min=bl(0.01), tech_max=bl(40700.04), is_active=False)
         user1.merchant1.exchange_list()
         # pprint.pprint(user1.merchant1.resp_exchange_list)
-        assert user1.merchant1.resp_exchange_list['error']['message'] == 'NotFound'
-        assert user1.merchant1.resp_exchange_list['error']['data']['reason'] == 'No exchange available'
+        assert user1.merchant1.resp_exchange_list['error']['code'] == -32090
+        assert user1.merchant1.resp_exchange_list['error']['message'] == 'EParamNotFound'
+        assert user1.merchant1.resp_exchange_list['error']['data']['field'] == 'exchange'
+        assert user1.merchant1.resp_exchange_list['error']['data']['reason'] == 'Not found'

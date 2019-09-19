@@ -3322,71 +3322,67 @@ class TestGetCheque:
         6. Выключить аплинк
         7. Запустить test_GetCheque_00...test_GetCheque_3-6"""
 
-    def test_GetCheque_0(self): # Создание чека
-        """ Payout to kuna 100 UAH: UAH to UAN by OWNER without fee for payout. """
-        admin.set_wallet_amount(balance=bl(100), currency='UAH', merch_lid=user1.merchant1.lid)
-        admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=10, currency_id=admin.currency['UAH'],
-                      payway_id=admin.payway['kuna']['id'], is_active=True, merchant_id=user1.merchant1.id)
-        admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=10, currency_id=admin.currency['UAH'],
-                      payway_id=admin.payway['kuna']['id'], is_active=True)
-        admin.set_pwmerchactive(merch_id=user1.merchant1.id, payway_id=admin.payway['kuna']['id'], is_active=True)
-        admin.set_pwcurrency_min_max(payway=admin.payway['kuna']['id'], is_out=True, currency='UAH', is_active=True,
-                                     tech_min=bl(0.01), tech_max=bl(1000))
-        user1.delegate(params={'merch_model': 'payout', 'merch_method': 'create', 'externalid': user1.ex_id(),
-                               'payway': 'kuna', 'amount': '100', 'out_curr': 'UAH', 'm_lid': str(user1.merchant1.lid)})
-        # print('lid', user1.merchant1.lid)
-        pprint.pprint(user1.resp_delegate['lid'])
-        # assert user1.resp_delegate['status'] == 'done'
-
-    def test_GetCheque_1(self):
-        """ Getting payout get_cheque"""
-        # user1.merchant1.payout_in_curr_list(payway='payeer', out_curr='RUB')
-        user1.merchant1.payout_get_cheque(lid=65404)#user1.resp_delegate['lid'])
-        pprint.pprint(user1.merchant1.resp_payout_get_cheque)
-        assert user1.merchant1.resp_payout_get_cheque['cheque']['amount'] == '100'
-        assert user1.merchant1.resp_payout_get_cheque['cheque']['currency'] == 'UAH'
-        assert user1.merchant1.resp_payout_get_cheque['in_amount'] == '100'
-        assert user1.merchant1.resp_payout_get_cheque['in_curr'] == 'UAH'
-        assert user1.merchant1.resp_payout_get_cheque['in_fee_amount'] == '0'
-        assert user1.merchant1.resp_payout_get_cheque['orig_amount'] == '100'
-        assert user1.merchant1.resp_payout_get_cheque['out_amount'] == '100'
-        assert user1.merchant1.resp_payout_get_cheque['out_curr'] == 'UAH'
-        assert user1.merchant1.resp_payout_get_cheque['out_fee_amount'] == '0'
-        assert user1.merchant1.resp_payout_get_cheque['payway_name'] == 'kuna'
-        assert user1.merchant1.resp_payout_get_cheque['rate'] == None
-        assert user1.merchant1.resp_payout_get_cheque['reqdata']['amount'] == '100'
-        assert user1.merchant1.resp_payout_get_cheque['reqdata']['in_curr'] == None
-        assert user1.merchant1.resp_payout_get_cheque['reqdata']['out_curr'] == 'UAH'
-        assert user1.merchant1.resp_payout_get_cheque['reqdata']['payway'] == 'kuna'
-        assert user1.merchant1.resp_payout_get_cheque['reqdata']['userdata'] == {}
-        assert user1.merchant1.resp_payout_get_cheque['status'] == 'done'
-        assert user1.merchant1.resp_payout_get_cheque['tp'] == 'payout'
-        assert user1.merchant1.resp_payout_get_cheque['userdata'] ==  {'payee': ''}
-
-    def test_GetCheque_2(self):
-        """ Getting payout get_cheque"""
-        user1.delegate(params={'merch_model': 'payout', 'merch_method': 'get_cheque', 'lid': '65404',#str(user1.resp_delegate['lid']),
-                               'm_lid': str(user1.merchant1.lid)})
-        pprint.pprint(user1.resp_delegate)
-        assert user1.resp_delegate['cheque']['amount'] == '100'
-        assert user1.resp_delegate['cheque']['currency'] == 'UAH'
-        assert user1.resp_delegate['in_amount'] == '100'
-        assert user1.resp_delegate['in_curr'] == 'UAH'
-        assert user1.resp_delegate['in_fee_amount'] == '0'
-        assert user1.resp_delegate['orig_amount'] == '100'
-        assert user1.resp_delegate['out_amount'] == '100'
-        assert user1.resp_delegate['out_curr'] == 'UAH'
-        assert user1.resp_delegate['out_fee_amount'] == '0'
-        assert user1.resp_delegate['payway_name'] == 'kuna'
-        assert user1.resp_delegate['rate'] == None
-        assert user1.resp_delegate['reqdata']['amount'] == '100'
-        assert user1.resp_delegate['reqdata']['in_curr'] == None
-        assert user1.resp_delegate['reqdata']['out_curr'] == 'UAH'
-        assert user1.resp_delegate['reqdata']['payway'] == 'kuna'
-        assert user1.resp_delegate['reqdata']['userdata'] == {}
-        assert user1.resp_delegate['status'] == 'done'
-        assert user1.resp_delegate['tp'] == 'payout'
-        assert user1.resp_delegate['userdata'] ==  {'payee': ''}
+    # def test_GetCheque_0(self): # Создание чека
+    #     """ Payout to kuna 100 UAH: UAH to UAN by OWNER without fee for payout. """
+    #     admin.set_wallet_amount(balance=bl(100), currency='UAH', merch_lid=user1.merchant1.lid)
+    #     admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=10, currency_id=admin.currency['UAH'],
+    #                   payway_id=admin.payway['kuna']['id'], is_active=True, merchant_id=user1.merchant1.id)
+    #     admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=10, currency_id=admin.currency['UAH'],
+    #                   payway_id=admin.payway['kuna']['id'], is_active=True)
+    #     admin.set_pwmerchactive(merch_id=user1.merchant1.id, payway_id=admin.payway['kuna']['id'], is_active=True)
+    #     admin.set_pwcurrency_min_max(payway=admin.payway['kuna']['id'], is_out=True, currency='UAH', is_active=True,
+    #                                  tech_min=bl(0.01), tech_max=bl(1000))
+    #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'create', 'externalid': user1.ex_id(),
+    #                            'payway': 'kuna', 'amount': '100', 'out_curr': 'UAH', 'm_lid': str(user1.merchant1.lid)})
+    #     # print('lid', user1.merchant1.lid)
+    #     pprint.pprint(user1.resp_delegate['lid'])
+    #     # assert user1.resp_delegate['status'] == 'done'
+    #
+    # def test_GetCheque_1(self):
+    #     """ Getting payout get_cheque"""
+    #     # user1.merchant1.payout_in_curr_list(payway='payeer', out_curr='RUB')
+    #     user1.merchant1.payout_get_cheque(lid=65860)#user1.resp_delegate['lid'])
+    #     # pprint.pprint(user1.merchant1.resp_payout_get_cheque)
+    #     assert user1.merchant1.resp_payout_get_cheque['cheque']['amount'] == '100'
+    #     assert user1.merchant1.resp_payout_get_cheque['cheque']['currency'] == 'UAH'
+    #     assert user1.merchant1.resp_payout_get_cheque['in_amount'] == '100'
+    #     assert user1.merchant1.resp_payout_get_cheque['in_curr'] == 'UAH'
+    #     assert user1.merchant1.resp_payout_get_cheque['in_fee_amount'] == '0'
+    #     assert user1.merchant1.resp_payout_get_cheque['orig_amount'] == '100'
+    #     assert user1.merchant1.resp_payout_get_cheque['out_amount'] == '100'
+    #     assert user1.merchant1.resp_payout_get_cheque['out_curr'] == 'UAH'
+    #     assert user1.merchant1.resp_payout_get_cheque['out_fee_amount'] == '0'
+    #     assert user1.merchant1.resp_payout_get_cheque['payway_name'] == 'kuna'
+    #     assert user1.merchant1.resp_payout_get_cheque['rate'] == None
+    #     assert user1.merchant1.resp_payout_get_cheque['reqdata']['amount'] == '100'
+    #     assert user1.merchant1.resp_payout_get_cheque['reqdata']['in_curr'] == None
+    #     assert user1.merchant1.resp_payout_get_cheque['reqdata']['out_curr'] == 'UAH'
+    #     assert user1.merchant1.resp_payout_get_cheque['reqdata']['payway'] == 'kuna'
+    #     assert user1.merchant1.resp_payout_get_cheque['status'] == 'done'
+    #     assert user1.merchant1.resp_payout_get_cheque['tp'] == 'payout'
+    #
+    # def test_GetCheque_2(self):
+    #     """ Getting payout get_cheque"""
+    #     user1.delegate(params={'merch_model': 'payout', 'merch_method': 'get_cheque', 'lid': '65860',#str(user1.resp_delegate['lid']),
+    #                            'm_lid': str(user1.merchant1.lid)})
+    #     # pprint.pprint(user1.resp_delegate)
+    #     assert user1.resp_delegate['cheque']['amount'] == '100'
+    #     assert user1.resp_delegate['cheque']['currency'] == 'UAH'
+    #     assert user1.resp_delegate['in_amount'] == '100'
+    #     assert user1.resp_delegate['in_curr'] == 'UAH'
+    #     assert user1.resp_delegate['in_fee_amount'] == '0'
+    #     assert user1.resp_delegate['orig_amount'] == '100'
+    #     assert user1.resp_delegate['out_amount'] == '100'
+    #     assert user1.resp_delegate['out_curr'] == 'UAH'
+    #     assert user1.resp_delegate['out_fee_amount'] == '0'
+    #     assert user1.resp_delegate['payway_name'] == 'kuna'
+    #     assert user1.resp_delegate['rate'] == None
+    #     assert user1.resp_delegate['reqdata']['amount'] == '100'
+    #     assert user1.resp_delegate['reqdata']['in_curr'] == None
+    #     assert user1.resp_delegate['reqdata']['out_curr'] == 'UAH'
+    #     assert user1.resp_delegate['reqdata']['payway'] == 'kuna'
+    #     assert user1.resp_delegate['status'] == 'done'
+    #     assert user1.resp_delegate['tp'] == 'payout'
 
     def test_GetCheque_00(self): # Создание чека
         """ Payout to paymer 50 RUB: UAH to RUB by OWNER with internal exchange
@@ -3409,27 +3405,42 @@ class TestGetCheque:
     def test_GetCheque_3(self):
         """ Getting payout get_cheque"""
         user1.merchant1.payout_get_cheque(lid=user1.resp_delegate['lid'])
-        assert user1.merchant1.resp_payout_get_cheque['message'] == 'NotFound'
+        # pprint.pprint(user1.merchant1.resp_payout_get_cheque)
+        assert user1.merchant1.resp_payout_get_cheque['code'] == -32090
+        assert user1.merchant1.resp_payout_get_cheque['data']['field'] == 'order'
+        assert user1.merchant1.resp_payout_get_cheque['data']['reason'] == 'Not found'
+        assert user1.merchant1.resp_payout_get_cheque['message'] == 'EParamNotFound'
 
     def test_GetCheque_4(self):
         """ Getting payout get_cheque"""
         user1.delegate(params={'merch_model': 'payout', 'merch_method': 'get_cheque', 'lid': str(user1.resp_delegate['lid']),
                                'm_lid': str(user1.merchant1.lid)})
-        assert user1.resp_delegate['message']== 'NotFound'
+        # pprint.pprint(user1.resp_delegate)
+        assert user1.resp_delegate['code'] == -32090
+        assert user1.resp_delegate['data']['field'] == 'order'
+        assert user1.resp_delegate['data']['reason'] == 'Not found'
+        assert user1.resp_delegate['message'] == 'EParamNotFound'
 
     def test_GetCheque_5(self):
         """ Getting payout get_cheque"""
         # user1.merchant1.payout_in_curr_list(payway='payeer', out_curr='RUB')
-        user1.merchant1.payout_get_cheque(lid=65404)#user1.resp_delegate['lid'])
-        assert user1.merchant1.resp_payout_get_cheque['data']['reason'] == 'Missing report from core'
-        assert user1.merchant1.resp_payout_get_cheque['message'] == 'ApiError'
+        user1.merchant1.payout_get_cheque(lid=65860)#user1.resp_delegate['lid'])
+        # pprint.pprint(user1.merchant1.resp_payout_get_cheque)
+        assert user1.merchant1.resp_payout_get_cheque['code'] == -32002
+        assert user1.merchant1.resp_payout_get_cheque['data']['reason'] == \
+               'Unable to complete: Missing report from core'
+        assert user1.merchant1.resp_payout_get_cheque['data']['value'] == None
+        assert user1.merchant1.resp_payout_get_cheque['message'] == 'EParamInvalid'
 
     def test_GetCheque_6(self):
         """ Getting payout get_cheque"""
-        user1.delegate(params={'merch_model': 'payout', 'merch_method': 'get_cheque', 'lid': '65404',#str(user1.resp_delegate['lid']),
+        user1.delegate(params={'merch_model': 'payout', 'merch_method': 'get_cheque', 'lid': '65860',#str(user1.resp_delegate['lid']),
                                'm_lid': str(user1.merchant1.lid)})
-        assert user1.resp_delegate['data']['reason'] == 'Missing report from core'
-        assert user1.resp_delegate['message'] == 'ApiError'
+        # pprint.pprint(user1.resp_delegate)
+        assert user1.resp_delegate['code'] == -32002
+        assert user1.resp_delegate['data']['reason'] == 'Unable to complete: Missing report from core'
+        assert user1.resp_delegate['data']['value'] == None
+        assert user1.resp_delegate['message'] == 'EParamInvalid'
 
 @pytest.mark.usefixtures('_payout_fee', '_personal_exchange_fee')
 class TestPayoutGet:

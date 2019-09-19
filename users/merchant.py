@@ -1,5 +1,3 @@
-import pprint
-
 import requests
 import time
 import random
@@ -184,7 +182,6 @@ class Merchant:
         except KeyError:
             self.resp_convert = loads(r.text)['error']
 
-
     def convert_create(self, in_curr, out_curr, in_amount, out_amount):
         self.req_id = self._id()
         data = {'method': 'convert.create',
@@ -234,7 +231,7 @@ class Merchant:
 
     def payin(self, method, params):
         self.req_id = self._id()
-        data = {'method': 'convert.' + method, 'params': params, 'jsonrpc': 2.0, 'id': self.req_id}
+        data = {'method': 'payin.' + method, 'params': params, 'jsonrpc': 2.0, 'id': self.req_id}
         time_sent = self.time_sent()
         r = requests.post(url=self.japi_url, json=data, headers=self.headers(data, time_sent), verify=False)
         print(r.text)
@@ -331,7 +328,6 @@ class Merchant:
         r = requests.post(url=self.japi_url, json=data, headers=self.headers(data, time_sent), verify=False)
         try:
             self.resp_sci_pay = loads(r.text)['result']
-            # pprint.pprint(loads(r.text))
             self.sci_pay_lid = loads(r.text).get('result', {}).get('lid')
             self.sci_pay_token = loads(r.text).get('result', {}).get('token')
         except KeyError:

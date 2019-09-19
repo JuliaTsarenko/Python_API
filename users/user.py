@@ -1,6 +1,7 @@
 import requests
 import random
 import time
+import pprint
 from users.merchant import Merchant
 from json import loads
 from string import ascii_uppercase
@@ -345,7 +346,6 @@ class User:
             except KeyError:
                 self.resp_merch_renew_key = loads(r.text)
 
-
     def merchant_update(self, m_lid, title, params, payment_expiry, rotate_addr, apiip):
         r = requests.post(url=self.wapi_url,
                           json={'method': 'merchant.update',
@@ -363,7 +363,7 @@ class User:
         r = requests.post(url=self.wapi_url,
                           json={'method': 'pwmerchactive.' + method, 'params': params, 'jsonrpc': 2.0, 'id': self.ex_id()},
                           headers=self.headers, verify=False)
-        print(r.text)
+        pprint.pprint(loads(r.text))
         try:
             self.resp_pwmerchactive = loads(r.text)['result']
         except KeyError:
@@ -407,7 +407,6 @@ class User:
                                 'params': {'m_lid': m_lid, 'oid': oid},
                                 'jsonrpc': 2.0, 'id': self.ex_id()},
                           headers=self.headers, verify=False)
-        print(r.text)
         try:
             self.resp_bookmark_delete = loads(r.text)['result']
         except KeyError:
@@ -416,6 +415,7 @@ class User:
     def delegate(self, params):
         data = {'method': 'merchant.delegate', 'params': params, 'jsonrpc': 2.0, 'id': self.ex_id()}
         r = requests.post(url=self.wapi_url, json=data, headers=self.headers, verify=False)
+        pprint.pprint(loads(r.text))
         try:
             self.resp_delegate = loads(r.text)['result']
         except KeyError:
@@ -423,13 +423,8 @@ class User:
 
 
 if __name__ == '__main__':
-    # admin1 = Admin(token='_RmwXc_7QNNxBbOMwQLAZ3xu7UlR8iHuT0cSehrPDcA4QFeRfY2S2vmhGE3B9ePGpw0q')
     user1 = User()
-    user1.authorization_by_email(email='testjcash@gmail.com', pwd='aA/123')
-    # user1.logout()
-    # user1.forgot('testjcash@gmail.com')
-    # user1.confirm_registration(key=user1.forgot_key, code=admin1.get_onetime_code(email='testjcash@gmail.com'))
-    # user1.update_pwd('aA/123')
-    # print(user1.resp_authorization)
+    user1.authorization_by_email(email='anymoneyuser1@mailinator.com', pwd='123456')
+    user1.pwmerchactive(method='list', params={'m_lid': '37', 'curr': 'UAH', 'is_out': None})
 
 

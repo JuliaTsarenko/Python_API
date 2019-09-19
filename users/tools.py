@@ -43,7 +43,7 @@ def bl(numb):
 
 
 def orig(numb):
-    """ Number for admin response. """
+    """ Number from admin response. """
     return numb / 1000000000
 
 
@@ -53,4 +53,4 @@ def pers(numb):
 
 
 if __name__ == '__main__':
-    print(pers(0.01))
+    print(pers(15))

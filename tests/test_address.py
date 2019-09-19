@@ -829,10 +829,9 @@ class TestOutCurrencies:
         print(adm_ls, us_ls)
         assert us_ls == adm_ls
 
-    @pytest.mark.skip(reason='Fail')
     def test_address_out_currencies_2(self):
         """ Getting out_currencies for in_curr ETH by OWNER. """
-        adm_ls = [dct['out_currency_id'] for dct in admin.get_exchange(_filter='in_currency_id', value=admin.currency['LTC'])
+        adm_ls = [dct['out_currency_id'] for dct in admin.get_exchange(_filter='in_currency_id', value=admin.currency['ETH'])
                   if dct['is_active'] is True]
         adm_ls.sort()
         user1.delegate(params={'m_lid': user1.merchant1.lid, 'merch_model': 'address', 'merch_method': 'out_currencies', 'in_curr': 'ETH'})
@@ -1163,7 +1162,7 @@ class TestWrongAddressHistory:
         assert loads(r.text)['error'] == {'code': -32003, 'data': {'reason': 'Add x-utc-now-ms to headers'}, 'message': 'InvalidHeaders'}
 
 
-class TestCurrencies:
+class TestAddressCurrencies:
     """ Checking crypto currencies. """
 
     def test_0(self, start_session):

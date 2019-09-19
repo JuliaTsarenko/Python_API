@@ -44,20 +44,17 @@ def start_session(comline):
     admin.delete_sessions(email=user2.email)
     print('\n Finish session')
 
-
 @pytest.yield_fixture(scope='function')
 def _delete_user(email='anymoneyuser100@mailinator.com'):
     yield
     admin.delete_user(email=email)
     print('\n User Deleted')
 
-
 @pytest.yield_fixture(scope='function')
 def _delete_auth2type_token(email='@mailinator.com'):
     yield
     admin.delete_auth2type_token(email=email)
     print('\n auth2type token deleted')
-
 
 @pytest.yield_fixture(scope='function')
 def _disable_2type():
@@ -67,12 +64,10 @@ def _disable_2type():
     user1.set_2type(tp=None)
     user1.confirm_registration(code=admin.get_onetime_code(email=user1.email), key=user1.confirm_key, user=user1)
 
-
 @pytest.yield_fixture(scope='function')
 def _authorization():
     yield
     user1.authorization_by_email(email=user1.email, pwd=user1.pwd)
-
 
 @pytest.yield_fixture(scope='function')
 def _drop_email(email='anymoneyuser1000@mailinator.com'):
@@ -96,7 +91,6 @@ def _drop_email(email='anymoneyuser1000@mailinator.com'):
         pass
     print('\n\t Finish drop email')
 
-
 @pytest.yield_fixture(scope='function')
 def _drop_pwd():
     """ Drop pwd for user1"""
@@ -111,7 +105,6 @@ def _drop_pwd():
         user1.confirm_registration(key=user1.confirm_key, code=admin.get_onetime_code(email=user1.email), user=user1)
     except IndexError:
         pass
-
 
 @pytest.yield_fixture(scope='class')
 def _personal_exchange_fee():
@@ -132,7 +125,6 @@ def _personal_exchange_fee():
     print(' \n Deleting personal exchange fee')
     admin.delete_personal_exchange_fee(merchant_id=user1.merchant1.id)
 
-
 @pytest.yield_fixture(scope='class')
 def _transfer_fee():
     print('\n Creating transfer fee')
@@ -143,7 +135,6 @@ def _transfer_fee():
     yield
     print(' \n Deleting transfer fee')
     admin.delete_personal_fee(merchant_id=user1.merchant1.id, tp=30)
-
 
 @pytest.yield_fixture(scope='class')
 def _payout_fee():
@@ -159,9 +150,8 @@ def _payout_fee():
     print(' \n Deleting payout fee')
     admin.delete_personal_fee(merchant_id=user1.merchant1.id, tp=10)
 
-
 @pytest.yield_fixture(scope='class')
-def _sci_fee():
+def _refund_sci_fee():
     print('\n Creating sci fee')
     admin.create_personal_fee(currency='UAH', merchant_id=user1.merchant1.id, is_active=False, tp=40)
     admin.create_personal_fee(currency='RUB', merchant_id=user1.merchant1.id, is_active=False, tp=40)
@@ -199,6 +189,7 @@ def _sci_fee():
     admin.delete_personal_fee(merchant_id=user1.merchant1.id, tp=40)
     admin.delete_personal_fee(merchant_id=user1.merchant1.id, tp=45)
     admin.delete_personal_fee(merchant_id=user1.merchant1.id, tp=46)
+
 
 @pytest.yield_fixture(scope='class')
 def _personal_operation_fee():
@@ -243,6 +234,8 @@ def _personal_sub_pay_fee():
     print('\n Creating personal SUBPAY fee')
     admin.create_personal_fee(currency='USD', is_active=False, payway_id=admin.payway_id['perfect'],
                               merchant_id=user1.merchant1.id, tp=45)
+    admin.create_personal_fee(currency='USD', is_active=False, payway_id=admin.payway_id['payeer'],
+                              merchant_id=user1.merchant1.id, tp=45)
     admin.create_personal_fee(currency='USD', is_active=False, payway_id=admin.payway_id['cash_kiev'],
                               merchant_id=user1.merchant1.id, tp=45)
     admin.create_personal_fee(currency='BTC', is_active=False, payway_id=admin.payway_id['btc'],
@@ -251,9 +244,11 @@ def _personal_sub_pay_fee():
                               merchant_id=user1.merchant1.id, tp=45)
     admin.create_personal_fee(currency='UAH', is_active=False, payway_id=admin.payway_id['visamc'],
                               merchant_id=user1.merchant1.id, tp=45)
+    admin.create_personal_fee(currency='RUB', is_active=False, payway_id=admin.payway_id['payeer'],
+                              merchant_id=user1.merchant1.id, tp=45)
     yield
     print('\n Deleting personal SUBPAY fee')
-    admin.delete_personal_fee(merchant_id=user1.merchant1.id)
+    admin.delete_personal_fee(merchant_id=user1.merchant1.id, tp=45)
 
 
 @pytest.yield_fixture(scope='class')
@@ -482,6 +477,7 @@ def _activate_pwcurrency():
                   tech_min=bl(0.000001), tech_max=bl(3))
 
 
+
 @pytest.yield_fixture(scope='function')
 def _activate_merchant_payways():
     admin.set_pwmerchactive(merch_id=user1.merchant1.id, payway_id=admin.payway['eth']['id'], is_active=True)
@@ -531,6 +527,16 @@ def _create_other_type_order():
     yield
 
 
+@pytest.yield_fixture(scope='function')
+def _create_payin_order():
+    if not admin.get_model(model='order', _filter='tp', value=0):
+        print('Creating payin order ... ')
+        admin.set_pwc(pw_id=admin.payway_id['visamc'], currency='UAH', is_out=False, is_active=True, tech_min=bl(1), tech_max=bl(100))
+        user1.merchant1.payin(method='create',  params={'payway': 'visamc', 'amount': '50', 'in_curr': 'UAH', 'out_curr': 'UAH',
+                                                        'externalid': user1.merchant1.ex_id()})
+    yield
+
+
 @pytest.yield_fixture(scope='class')
 def _creating_payin_list():
     if len(admin.get_order({'merchant_id': user1.merchant1.id, 'tp': 0})) < 7:
@@ -573,14 +579,6 @@ def _create_convert_order():
     yield
 
 
-@pytest.yield_fixture(scope='class')
-def _create_sci_pay_order():
-    admin.set_pwc(pw_id=admin.payway_id['visamc'], currency='UAH', is_out=False, is_active=True, tech_min=bl(1), tech_max=bl(100))
-    user1.merchant1.sci_pay(method='create', params={'amount': '50', 'in_curr': 'UAH', 'out_curr': 'UAH', 'payway': 'visamc',
-                                                     'expiry': '60s', 'externalid': user1.merchant1._id()})
-    yield
-
-
 @pytest.fixture(scope='function')
 def create_payin_with_uaccount():
     if not admin.get_order(selector={'merchant_id': user1.merchant1.id, 'tp': 0, 'uaccount': '5168********7159'}):
@@ -596,7 +594,7 @@ def create_payout_with_uaccount():
 
 @pytest.yield_fixture(scope='class')
 def _create_sci_pay_list():
-    print('Calculating sci_pay orders ...')
+    print(' Calculating sci_pay orders... ')
     if len([dct for dct in admin.get_model(model='order', _filter='merchant_id', value=user1.merchant1.id) if dct['tp'] == 40]) < 5:
         print('Creating sci_pay orders ...')
         user1.merchant1.sci_pay(method='create', params={'amount': '50', 'in_curr': 'UAH', 'out_curr': 'UAH', 'payway': 'visamc',
@@ -611,3 +609,52 @@ def _create_sci_pay_list():
                                                          'expiry': '60s', 'externalid': user1.merchant1._id()})
     yield
 
+
+@pytest.yield_fixture(scope='class')
+def _create_sci_pay_order():
+    print(' Sci_pay order creating... ')
+    admin.set_fee(currency_id=admin.currency['UAH'], payway_id=admin.payway_id['visamc'], tp=40, is_active=True)
+    admin.set_pwc(pw_id=admin.payway_id['visamc'], currency='UAH', is_out=False, is_active=True, tech_min=bl(1), tech_max=bl(100))
+    user1.merchant1.sci_pay(method='create', params={'amount': '50', 'in_curr': 'UAH', 'out_curr': 'UAH', 'payway': 'visamc',
+                                                     'expiry': '2h', 'externalid': user1.merchant1._id()})
+    yield
+
+
+@pytest.yield_fixture(scope='function')
+def _start_sci_pay_order():
+    yield
+    print(' Cleaning base order... ')
+    b_id = [dct['id'] for dct in admin.get_model(model='order', _filter='merchant_id', value=user1.merchant1.id)
+            if dct['tp'] == 40][0]
+    print(type(b_id))
+    try:
+        sub_pay_order = admin.get_model(model='order', _filter='base_order_id', value=int(b_id))[0]
+        print(sub_pay_order)
+        admin.set_order_status(lid=sub_pay_order['lid'], status=100)
+        print('Finishing sub_pay order')
+    except IndexError:
+        pass
+    lid = [dct['lid'] for dct in admin.get_model(model='order', _filter='merchant_id', value=user1.merchant1.id) if dct['tp'] == 40][0]
+    admin.set_order_status(lid=lid, status=0)
+
+
+@pytest.yield_fixture(scope='class')
+def _create_sci_sub_pay_list():
+    print(' Creating list of sub_pay orders... ')
+    admin.set_fee(currency_id=admin.currency['UAH'], payway_id=admin.payway_id['visamc'], is_active=True)
+    admin.set_pwc(pw_id=admin.payway_id['visamc'], currency='UAH', is_out=False, is_active=True, tech_min=bl(1), tech_max=bl(100))
+    params = admin.get_model(model='payway', _filter='name', value='visamc')[0]['params']
+    params['payment_expiry'] = '1h'
+    admin.set_model(model='payway', data={'params': params}, selector={'name': ['eq', 'visamc']})
+    user1.delegate(params={'m_lid': user1.merchant1.lid, 'merch_model': 'sci_pay', 'merch_method': 'create', 'out_curr': 'UAH',
+                           'externalid': user1.ex_id(), 'payway': 'visamc', 'amount': '50', 'in_curr': 'UAH', 'expiry': '2h'})
+    user2.delegate(params={'m_lid': user2.merchant1.lid, 'merch_model': 'sci_subpay', 'merch_method': 'create', 'sci_pay_token': user1.resp_delegate['token'],
+                           'payway': 'visamc', 'amount': '10', 'in_curr': 'UAH', 'externalid': user2.merchant1._id()})
+    admin.set_order_status(lid=user2.resp_delegate['lid'], status=100)
+    admin.set_order_status(lid=user1.resp_delegate['lid'], status=0)
+    user2.delegate(params={'m_lid': user2.merchant1.lid, 'merch_model': 'sci_subpay', 'merch_method': 'create', 'sci_pay_token': user1.resp_delegate['token'],
+                           'payway': 'visamc', 'amount': '15', 'in_curr': 'UAH', 'externalid': user2.merchant1._id()})
+    admin.set_order_status(lid=user2.resp_delegate['lid'], status=100)
+    admin.set_order_status(lid=user1.resp_delegate['lid'], status=0)
+    user2.delegate(params={'m_lid': user2.merchant1.lid, 'merch_model': 'sci_subpay', 'merch_method': 'create', 'sci_pay_token': user1.resp_delegate['token'],
+                           'payway': 'visamc', 'amount': '15', 'in_curr': 'UAH', 'externalid': user2.merchant1._id()})

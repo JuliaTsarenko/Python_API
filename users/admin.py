@@ -8,6 +8,7 @@ import pprint
 from users.tools import *
 
 
+
 requests.packages.urllib3.disable_warnings()
 
 
@@ -276,7 +277,7 @@ class Admin:
         for data in data:
             yield dict(zip(fields, data))
 
-    def set_fee(self, mult=0, add=0, _min=0, _max=0, around='ceil', tp=0, currency_id=None, payway_id=None,
+    def set_fee(self, mult=0, add=0, _min=0, _max=0, around='ceil', tp=None, currency_id=None, payway_id=None,
                 is_active=True, merchant_id=None):
         requests.post(url=self.admin_url,
                       json={'model': 'fee', 'method': 'update',
@@ -342,13 +343,17 @@ class Admin:
                                              'out_currency_id': ['eq', self.currency[out_currency]]}},
                           headers=self.headers, verify=False)
 
+    def set_model(self, model, data, selector):
+        requests.post(url=self.admin_url,
+                      json={'model': model, 'method': 'update', 'data': data, 'selector': selector},
+                      headers=self.headers, verify=False)
+
     def set_order_status(self, lid, status, amount_paid=0):
         time.sleep(1)
         r = requests.post(url=self.admin_url,
                       json={'model': 'order', 'method': 'update', 'data': {'status': status, 'amount_paid': amount_paid},
                             'selector': {'lid': ['in', [lid]]}},
                       headers=self.headers, verify=False)
-        # print('\n', 'set_order_status', loads(r.text))
         self.resp_order_status = loads(r.text)
 
     def set_order(self, lid, data):
@@ -414,10 +419,13 @@ class Admin:
         fields = loads(r.text)[0]['fields']
         for i in loads(r.text)[0]['data']:
             order_list.append(dict(zip(fields, i)))
+        pprint.pprint(order_list)
         if loads(r.text)[0]['data']:
             return order_list
+            pprint.pprint(order_list)
         else:
             return []
+            print('empty')
 
     def get_crypto_adress(self, _filter, value):
         print('In crypto')
@@ -468,20 +476,9 @@ class Admin:
 
 
 if __name__ == '__main__':
-    admin = Admin(token='0K3PaUSGxL_cvJxjtpPCMvRwQU4CzpV_t8MKpje7sszEHJJQXbsRWWOkx4arn0pOQ3TX')
-    # admin.set_crypto_address(merchant_id=703687441778420)
-    admin.set_pwcurrency_min_max(payway=admin.payway['kuna']['id'], is_out=True, currency='UAH', is_active=True,
-                                 tech_min=bl(0.01), tech_max=bl(1000))
-    # admin.set_fee(currency_id=admin.currency['USD'], payway_id=admin.payway_id['perfect'], tp=0, is_active=True, mult=1000000)
-    #print(admin.get_model(model='session', _filter='token', value='nzhTv5TsVQSFGQ5ZsxqKa8b5eubJgn3FZZn5FWl34ZxSIyWWpUk2yyw6_4wqLj71hCTP'))
-    # admin.set_order_status(lid=61180, status=100)
-    # print(admin.get_model(model='pwmerchactive', _filter='merchant_id', value='703687441778420'))
-    # print(admin.set_pwmerchactive(merch_id='703687441778420', payway_id=None, is_active=True))
-    # admin = Admin(email='viktor.yahoda@gmail.com', pwd='*Anycash15')
-    # print(admin.get_order(selector={'tp': 0, 'uaccount': '5168********7159'}))
-    # print(admin.get_user(email='anymoneyuser1@mailinator.com'))
-    # admin.set_pwmerchactive(merch_id=703687441778420, payway_id=None, is_active=False)
-    # print(admin.get_order({'merchant_id': 703687441778495, 'tp': 0}))
-    # print([dct['id'] for dct in admin.get_crypto_adress(_filter=None, value=None) if dct['merchant_id'] != 703687441778420])
+    admin = Admin(token='d3ElK0cYY9mxyOcQGvTVGqciMh65hyu7ZLWWUkiQbLpIPT3CgvSKC4WHLFYtaXrpDi19')
+    print([dct['base_order_id'] for dct in admin.get_model(model='order', _filter='merchant_id', value=703687441778420) if dct['tp'] == 45
+           ])
+
 
 
