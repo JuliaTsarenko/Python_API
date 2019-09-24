@@ -70,7 +70,7 @@ class TestPayout:
         admin.set_pwcurrency_min_max(payway=admin.payway['kuna']['id'], is_out=True, currency='UAH', is_active=True,
                                      tech_min=bl(1), tech_max=bl(98))
 
-    @pytest.mark.skip
+    # @pytest.mark.skip
     def test_payout_3(self): # Перевод суммы равной сумме на счету списания
         """ Payout to payeer 1.02 RUB: RUB to RUB by MERCHANT without fee for payout. """
         admin.set_wallet_amount(balance=bl(1.02), currency='RUB', merch_lid=user1.merchant1.lid)
@@ -166,7 +166,7 @@ class TestPayout:
         admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=10, currency_id=admin.currency['LTC'],
                       payway_id=admin.payway['ltc']['id'], is_active=False)
 
-    @pytest.mark.skip
+    # @pytest.mark.skip
     def test_payout_7(self):
         """ Payout to qiwi 10 RUB: RUB to RUB by OWNER with common percent fee 5.5% for payout
          and common absolute fee 1 RUB for payout."""
@@ -232,6 +232,7 @@ class TestPayout:
                       is_active=True, merchant_id=user1.merchant1.id)
         admin.set_fee(mult=bl(0.1), add=bl(2), _min=0, _max=0, around='ceil', tp=10,
                       currency_id=admin.currency['USD'], payway_id=admin.payway['cash_kiev']['id'], is_active=True)
+        admin.set_payways(name='cash_kiev')
         admin.set_pwmerchactive(merch_id=user1.merchant1.id, payway_id=admin.payway['cash_kiev']['id'],
                                 is_active=True)
         admin.set_pwcurrency_min_max(payway=admin.payway['cash_kiev']['id'], is_out=True, currency='USD',

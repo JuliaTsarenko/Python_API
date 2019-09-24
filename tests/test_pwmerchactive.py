@@ -1,8 +1,8 @@
 import pytest
 from users.tools import *
-from users.user import User
 
 
+@pytest.mark.positive
 class TestPwmerchactivePublicList:
     """ Getting list of public and active payways. """
 
@@ -20,6 +20,7 @@ class TestPwmerchactivePublicList:
         assert admin_payway == user1.resp_pwmerchactive
 
 
+@pytest.mark.negative
 class TestWrongPwmerchactivePublicList:
     """ Test wrong requests  to public_list method. """
 
@@ -48,6 +49,7 @@ class TestWrongPwmerchactivePublicList:
         assert user1.resp_pwmerchactive == {'code': -32012, 'message': 'EParamHeadersInvalid', 'data': {'field': 'x-token', 'reason': 'Not present'}}
 
 
+@pytest.mark.positive
 class TestPwmerchactiveUpdate:
     """ Updating payways for merchant. """
 
@@ -56,11 +58,12 @@ class TestPwmerchactiveUpdate:
         global admin, user1, user2
         admin, user1, user2 = start_session
 
-    def test_pwmerchactive_update_1(self):
+    def test_pwmerchactive_update_1(self, _enable_pwmerchactive):
         """ Enabling payway for merchant. """
         admin_payway = [pw['name'] for pw in admin.get_model(model='payway', _filter='is_active', value=True) if pw['is_public'] is True][0]
         admin.set_pwmerchactive(merch_id=user1.merchant1.id, payway_id=admin.payway_id[admin_payway], is_active=False)
         admin.set_pwmerchactive(merch_id=user1.merchant2.id, payway_id=admin.payway_id[admin_payway], is_active=False)
+        admin.params['pw'] = {'m_id': user1.merchant2.id, 'pw_id': admin.payway_id[admin_payway]}
         user1.pwmerchactive(method='update', params={'m_lid': user1.merchant1.lid, 'payway': admin_payway, 'is_active': True})
         assert user1.resp_pwmerchactive == {'is_active': True, 'merchant_id': user1.merchant1.id, 'payway': admin_payway}
         assert admin.payway_id[admin_payway] in [pw['payway_id'] for pw in
@@ -69,20 +72,38 @@ class TestPwmerchactiveUpdate:
         assert admin.payway_id[admin_payway] in [pw['payway_id'] for pw in
                                                  admin.get_model(model='pwmerchactive', _filter='merchant_id', value=user1.merchant2.id)
                                                  if pw['is_active'] is False]
-        admin.set_pwmerchactive(merch_id=user1.merchant2.id, payway_id=admin.payway_id[admin_payway], is_active=True)
 
-    def test_pwmerchactive_update_2(self):
+    def test_pwmerchactive_update_2(self, _enable_pwmerchactive):
         """ Disabling payway for merchant. """
         admin_payway = [pw['name'] for pw in admin.get_model(model='payway', _filter='is_active', value=True) if pw['is_public'] is True][0]
-        admin.set_pwmerchactive(merch_id=user1.merchant1.id, payway_id=admin.payway_id[admin_payway], is_active=True)
         user1.pwmerchactive(method='update', params={'m_lid': user1.merchant1.lid, 'payway': admin_payway, 'is_active': False})
+        admin.params['pw'] = {'m_id': user1.merchant1.id, 'pw_id': admin.payway_id[admin_payway]}
         assert user1.resp_pwmerchactive == {'is_active': False, 'merchant_id': user1.merchant1.id, 'payway': admin_payway}
         assert admin.payway_id[admin_payway] in [pw['payway_id'] for pw in
                                                  admin.get_model(model='pwmerchactive', _filter='merchant_id', value=user1.merchant1.id)
                                                  if pw['is_active'] is False]
-        admin.set_pwmerchactive(merch_id=user1.merchant1.id, payway_id=admin.payway_id[admin_payway], is_active=True)
+
+    def test_pwmerchactive_update_3(self, _delete_merchant):
+        """ Disabling / enabling payway for special merchant. """
+        user1.merchant(method='create', params={'title': 'Title', 'payway': 'visamc'})
+        m_id = admin.get_model(model='merchant', _filter='lid', value=user1.resp_merchant['lid'])[0]['id']
+        admin.params['lid'] = user1.resp_merchant['lid']
+        admin.set_merchant(lid=user1.resp_merchant['lid'])
+        admin_payway = [pw['name'] for pw in admin.get_model(model='payway', _filter='is_active', value=True) if pw['is_public'] is True
+                        and pw['name'] != 'visamc'][0]
+        user1.pwmerchactive(method='update', params={'m_lid': str(user1.resp_merchant['lid']), 'payway': admin_payway, 'is_active': False})
+        assert user1.resp_pwmerchactive['is_active'] is False
+        assert user1.resp_pwmerchactive['payway'] == admin_payway
+        assert admin.payway_id[admin_payway] in [pw['payway_id'] for pw in
+                                                 admin.get_model(model='pwmerchactive', _filter='merchant_id', value=m_id) if pw['is_active'] is False]
+        user1.pwmerchactive(method='update', params={'m_lid': str(user1.resp_merchant['lid']), 'payway': admin_payway, 'is_active': True})
+        assert user1.resp_pwmerchactive['is_active'] is True
+        assert user1.resp_pwmerchactive['payway'] == admin_payway
+        assert admin.payway_id[admin_payway] in [pw['payway_id'] for pw in
+                                                 admin.get_model(model='pwmerchactive', _filter='merchant_id', value=m_id) if pw['is_active'] is True]
 
 
+@pytest.mark.negative
 class TestWrongPwmerchactiveUpdate:
     """ Wrong updating pwmerchactive. """
 
@@ -91,86 +112,95 @@ class TestWrongPwmerchactiveUpdate:
         global admin, user1, user2
         admin, user1, user2 = start_session
 
-    def test_wrong_pwmerchactive_update_1(self):
+    def test_wrong_pwmerchactive_update_1(self, _delete_merchant):
+        """ Banned on disabling payway for special merchant with equal payway. """
+        admin.set_payways(name='bchabc', is_active=True, is_public=True, is_disabled=False, is_linkable=True)
+        user1.merchant(method='create', params={'title': 'Title', 'payway': 'visamc'})
+        m_id = admin.get_model(model='merchant', _filter='lid', value=user1.resp_merchant['lid'])[0]['id']
+        admin.params['lid'] = user1.resp_merchant['lid']
+        admin.set_merchant(lid=user1.resp_merchant['lid'])
+        user1.pwmerchactive(method='update', params={'m_lid': str(user1.resp_merchant['lid']), 'payway': 'visamc', 'is_active': False})
+        assert user1.resp_pwmerchactive == {'code': -32032, 'data': {'reason': 'Forbidden'}, 'message': 'EStateForbidden'}
+        assert admin.payway_id['visamc'] in [pw['payway_id'] for pw in
+                                             admin.get_model(model='pwmerchactive', _filter='merchant_id', value=m_id) if pw['is_active'] is True]
+
+    def test_wrong_pwmerchactive_update_2(self):
         """ Banned on disabling payway with deactivated is_public option by payway's table. """
         admin.set_payways(name='bchabc', is_active=True, is_public=False, is_disabled=False)
         admin.set_pwmerchactive(merch_id=user1.merchant1.id, is_active=True, payway_id=admin.payway_id['bchabc'])
         user1.pwmerchactive(method='update', params={'m_lid': user1.merchant1.lid, 'payway': 'bchabc', 'is_active': False})
-        assert user1.resp_pwmerchactive == {'code': -32062, 'data': {'reason': "Payway name bchabc - can't be updated manually"},
-                                            'message': 'UnavailPayway'}
+        assert user1.resp_pwmerchactive == {'code': -32083, 'data': {'field': 'payway', 'reason': 'Disabled'},  'message': 'EStatePaywayUnavail'}
         assert admin.payway_id['bchabc'] in [pw['payway_id'] for pw in
                                              admin.get_model(model='pwmerchactive', _filter='merchant_id', value=user1.merchant1.id)
                                              if pw['is_active'] is True]
         admin.set_payways(name='bchabc', is_active=True, is_public=True, is_disabled=False)
         admin.set_pwmerchactive(merch_id=user1.merchant1.id, is_active=True, payway_id=admin.payway_id['bchabc'])
 
-    def test_wrong_pwmerchactive_update_2(self):
+    def test_wrong_pwmerchactive_update_3(self):
         """ Banned on enabling payway with deactivated is_public option by payway's table. """
         admin.set_payways(name='bchabc', is_active=True, is_public=False, is_disabled=False)
         admin.set_pwmerchactive(merch_id=user1.merchant1.id, is_active=False, payway_id=admin.payway_id['bchabc'])
         user1.pwmerchactive(method='update', params={'m_lid': user1.merchant1.lid, 'payway': 'bchabc', 'is_active': True})
-        assert user1.resp_pwmerchactive == {'code': -32062, 'data': {'reason': "Payway name bchabc - can't be updated manually"},
-                                            'message': 'UnavailPayway'}
+        assert user1.resp_pwmerchactive == {'code': -32083, 'data': {'field': 'payway', 'reason': 'Disabled'}, 'message': 'EStatePaywayUnavail'}
         assert admin.payway_id['bchabc'] in [pw['payway_id'] for pw in
                                              admin.get_model(model='pwmerchactive', _filter='merchant_id', value=user1.merchant1.id)
                                              if pw['is_active'] is False]
         admin.set_payways(name='bchabc', is_active=True, is_public=True, is_disabled=False)
 
     @pytest.mark.skip(reason='Need fix in admin')
-    def test_wrong_pwmerchactive_update_3(self):
+    def test_wrong_pwmerchactive_update_4(self):
         """ Requests with not active payway. """
         payway = [pw['name'] for pw in admin.get_model(model='payway', _filter='is_active', value=False)][0]
         user1.pwmerchactive(method='update', params={'m_lid': user1.merchant1.lid, 'payway': payway, 'is_active': True})
         assert user1.resp_pwmerchactive == ""
 
-    def test_wrong_pwmerchactive_update_4(self):
+    def test_wrong_pwmerchactive_update_5(self):
         """ Requests with not real payway. """
         user1.pwmerchactive(method='update', params={'m_lid': user1.merchant1.lid, 'payway': 'visam', 'is_active': True})
-        assert user1.resp_pwmerchactive == {'code': -32060, 'data': {'reason': 'payway'}, 'message': 'InvalidPayway'}
-
-    def test_wrong_pwmerchactive_update_5(self):
-        """ Requests with NONE payway. """
-        user1.pwmerchactive(method='update', params={'m_lid': user1.merchant1.lid, 'payway': None, 'is_active': True})
-        assert user1.resp_pwmerchactive == {'code': -32602, 'data': {'reason': "method 'pwmerchactive.update' missing 1 argument: 'payway_name'"},
-                                            'message': 'InvalidInputParams'}
+        assert user1.resp_pwmerchactive == {'code': -32081, 'data': {'field': 'payway', 'reason': 'Invalid payway name'},
+                                            'message': 'EParamPaywayInvalid'}
 
     def test_wrong_pwmerchactive_update_6(self):
-        """ Requests with wrong m_lid. """
-        user1.pwmerchactive(method='update', params={'m_lid': '01', 'payway': 'visamc', 'is_active': True})
-        assert user1.resp_pwmerchactive == {'code': -32090, 'data': {'field': 'm_lid', 'reason': 'Merchant with lid 1 was not found'},
-                                            'message': 'NotFound'}
+        """ Requests with NONE payway. """
+        user1.pwmerchactive(method='update', params={'m_lid': user1.merchant1.lid, 'payway': None, 'is_active': True})
+        assert user1.resp_pwmerchactive == {'code': -32002, 'data': {'field': 'payway', 'reason': 'Should be provided'}, 'message': 'EParamInvalid'}
 
     def test_wrong_pwmerchactive_update_7(self):
-        """ Requests with NONE m_lid. """
-        user1.pwmerchactive(method='update', params={'m_lid': None, 'payway': 'visamc', 'is_active': True})
-        assert user1.resp_pwmerchactive == {'code': -32602, 'data': {'reason': "method 'pwmerchactive.update' missing 1 argument: 'm_lid'"},
-                                            'message': 'InvalidInputParams'}
+        """ Requests with wrong m_lid. """
+        user1.pwmerchactive(method='update', params={'m_lid': '01', 'payway': 'visamc', 'is_active': True})
+        assert user1.resp_pwmerchactive == {'code': -32090, 'data': {'field': 'm_lid', 'reason': 'Not found'}, 'message': 'EParamNotFound'}
 
     def test_wrong_pwmerchactive_update_8(self):
-        """ Requests with not str m_lid. """
-        user1.pwmerchactive(method='update', params={'m_lid': int(user1.merchant1.lid), 'payway': 'visamc', 'is_active': True})
-        assert user1.resp_pwmerchactive == {'code': -32070, 'data': {'reason': "Key 'm_lid' must not be of 'int' type"}, 'message': 'InvalidParam'}
+        """ Requests with NONE m_lid. """
+        user1.pwmerchactive(method='update', params={'m_lid': None, 'payway': 'visamc', 'is_active': True})
+        assert user1.resp_pwmerchactive == {'code': -32002, 'data': {'field': 'm_lid', 'reason': 'Should be provided'}, 'message': 'EParamInvalid'}
 
     def test_wrong_pwmerchactive_update_9(self):
+        """ Requests with not str m_lid. """
+        user1.pwmerchactive(method='update', params={'m_lid': int(user1.merchant1.lid), 'payway': 'visamc', 'is_active': True})
+        assert user1.resp_pwmerchactive == {'code': -32003, 'data': {'field': 'm_lid', 'reason': "'m_lid' must not be of 'int' type",
+                                                                     'value': int(user1.merchant1.lid)}, 'message': 'EParamType'}
+
+    def test_wrong_pwmerchactive_update_10(self):
         """ Requests with NONE is_active parameter. """
         user1.pwmerchactive(method='update', params={'m_lid': user1.merchant1.lid, 'payway': 'visamc', 'is_active': None})
-        assert user1.resp_pwmerchactive == {'code': -32602, 'data': {'reason': "method 'pwmerchactive.update' missing 1 argument: 'is_active'"},
-                                            'message': 'InvalidInputParams'}
+        assert user1.resp_pwmerchactive == {'code': -32002, 'data': {'field': 'is_active', 'reason': 'Should be provided'}, 'message': 'EParamInvalid'}
 
-    def test_wrong_pwmerchactive_update_10(self, _authorization):
+    def test_wrong_pwmerchactive_update_11(self, _authorization):
         """ Requests with wrong x-token parameter. """
         user1.headers['x-token'] = user1.headers['x-token'] + '1'
         user1.pwmerchactive(method='update', params={'m_lid': user1.merchant1.lid, 'payway': 'visamc', 'is_active': True})
-        assert user1.resp_pwmerchactive == {'code': -32091, 'data': {'reason': 'Invalid or expired session token', 'token': user1.headers['x-token']},
-                                            'message': 'Unauth'}
+        assert user1.resp_pwmerchactive == {'code': -32034, 'data': {'field': 'token', 'reason': 'Expired or invalid',
+                                                                     'value': user1.headers['x-token']}, 'message': 'EStateUnauth'}
 
-    def test_wrong_pwmerchactive_update_11(self, _authorization):
+    def test_wrong_pwmerchactive_update_12(self, _authorization):
         """ Requests with NONE x-token parameter. """
         user1.headers['x-token'] = None
         user1.pwmerchactive(method='update', params={'m_lid': user1.merchant1.lid, 'payway': 'visamc', 'is_active': True})
-        assert user1.resp_pwmerchactive == {'code': -32003, 'data': {'reason': 'Add x-token to headers'}, 'message': 'InvalidHeaders'}
+        assert user1.resp_pwmerchactive == {'code': -32012, 'data': {'field': 'x-token', 'reason': 'Not present'}, 'message': 'EParamHeadersInvalid'}
 
 
+@pytest.mark.positive
 @pytest.mark.usefixtures('_personal_operation_payout_fee')
 class TestPwmerchactiveList:
 
@@ -274,6 +304,7 @@ class TestPwmerchactiveList:
         assert user1.resp_pwmerchactive['out']['visamc']['UAH'] == {'add': '0.5', 'max': '100', 'min': '1', 'mult': '0.005'}
 
 
+@pytest.mark.negative
 class TestWrongPwmerchactiveList:
     """ Wrong requests to pwmerchactive list method. """
 
@@ -335,3 +366,11 @@ class TestWrongPwmerchactiveList:
         user1.pwmerchactive(method='list', params={'m_lid': user1.merchant1.lid, 'curr': None, 'is_out': None})
         assert user1.resp_pwmerchactive == {'code': -32003, 'message': 'InvalidHeaders', 'data': {'reason': 'Add x-token to headers'}}
 
+
+class TestNew:
+
+    def test_0(self, start_session):
+        """ Warming up. """
+        global admin, user1, user2
+        admin, user1, user2 = start_session
+        print(user1.pwmerchant_PRIVAT24.lid)

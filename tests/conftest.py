@@ -151,6 +151,14 @@ def _payout_fee():
     admin.delete_personal_fee(merchant_id=user1.merchant1.id, tp=10)
 
 @pytest.yield_fixture(scope='class')
+def _payout_payway_fee():
+    print('\n Creating payway fee')
+    admin.create_payway_fee(currency='UAH', tp=10, payway_id=admin.payway['privat24']['id'])
+    yield
+    print(' \n Deleting payway fee')
+    admin.delete_payway_fee(tp=10)
+
+@pytest.yield_fixture(scope='class')
 def _refund_sci_fee():
     print('\n Creating sci fee')
     admin.create_personal_fee(currency='UAH', merchant_id=user1.merchant1.id, is_active=False, tp=40)
@@ -373,10 +381,12 @@ def _enable_exchange_operation_RUB_UAH():
     yield
     admin.set_rate_exchange(rate=bl(2.48757), fee=0, in_currency='RUB', out_currency='UAH')
 
+
 @pytest.yield_fixture(scope='function')
 def _enable_exchange_operation_USD_UAH():
     yield
     admin.set_rate_exchange(rate=bl(25.7355), fee=bl(0.03), in_currency='USD', out_currency='UAH')
+
 
 @pytest.yield_fixture(scope='function')
 def _enable_exchange_operation_ALL_USD():
@@ -626,7 +636,6 @@ def _start_sci_pay_order():
     print(' Cleaning base order... ')
     b_id = [dct['id'] for dct in admin.get_model(model='order', _filter='merchant_id', value=user1.merchant1.id)
             if dct['tp'] == 40][0]
-    print(type(b_id))
     try:
         sub_pay_order = admin.get_model(model='order', _filter='base_order_id', value=int(b_id))[0]
         print(sub_pay_order)
@@ -658,3 +667,16 @@ def _create_sci_sub_pay_list():
     admin.set_order_status(lid=user1.resp_delegate['lid'], status=0)
     user2.delegate(params={'m_lid': user2.merchant1.lid, 'merch_model': 'sci_subpay', 'merch_method': 'create', 'sci_pay_token': user1.resp_delegate['token'],
                            'payway': 'visamc', 'amount': '15', 'in_curr': 'UAH', 'externalid': user2.merchant1._id()})
+
+
+@pytest.yield_fixture(scope='function')
+def _delete_merchant():
+    yield
+    admin.delete_merchant(admin.params['lid'])
+
+
+@pytest.yield_fixture(scope='function')
+def _enable_pwmerchactive():
+    yield
+    admin.set_pwmerchactive(merch_id=admin.params['pw']['m_id'], payway_id=admin.params['pw']['pw_id'], is_active=True)
+

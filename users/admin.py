@@ -16,6 +16,7 @@ class Admin:
 
     user_url = 'https://anymoney.e-cash.pro/_handler/wapi/'
     admin_url = 'https://amadm.e-cash.pro/_handler/api'
+    json_rpc = '2.0'
 
     def __init__(self, email=None, pwd=None, token=None):
         if not token:
@@ -27,6 +28,7 @@ class Admin:
         self.payway = self.get_payways()
         self.lang_id = self._lang_id()
         self.front_params = self.get_front_params()
+        self.params = {}
 
     @staticmethod
     def ex_id():
@@ -186,10 +188,10 @@ class Admin:
                             'selector': {'name': ['eq', name]}},
                       headers=self.headers, verify=False)
 
-    def set_payways(self, name, is_active=True, is_public=True, is_disabled=False):
+    def set_payways(self, name, is_active=True, is_public=True, is_disabled=False, is_linkable=True):
         requests.post(url=self.admin_url,
                       json={'model': 'payway', 'method': 'update',
-                            'data': {'is_active': is_active, 'is_public': is_public, 'is_disabled': is_disabled},
+                            'data': {'is_active': is_active, 'is_public': is_public, 'is_disabled': is_disabled, 'is_linkable': is_linkable},
                             'selector': {'name': ['eq', name]}},
                       headers=self.headers, verify=False)
 
@@ -214,6 +216,7 @@ class Admin:
                     ls.append(dct)
             except KeyError:
                 ls.append(dct)
+        print(ls)
         return ls
 
     def get_exchange(self, _filter=None, value=None):
@@ -232,11 +235,11 @@ class Admin:
         return ls
 
     def set_pwmerchactive(self, merch_id, payway_id, is_active):
-        r = requests.post(url=self.admin_url,
-                          json={'model': 'pwmerchactive', 'method': 'update', 'data': {'is_active': is_active},
-                                'selector': {'merchant_id': ['in', [merch_id]], 'payway_id': ['in', [payway_id]]}},
-                          headers=self.headers, verify=False)
-        # print(r.text)
+        requests.post(url=self.admin_url,
+                      json={'model': 'pwmerchactive', 'method': 'update', 'data': {'is_active': is_active},
+                            'selector': {'merchant_id': ['in', [merch_id]], 'payway_id': ['in', [payway_id]]}},
+                      headers=self.headers, verify=False)
+
 
     def create_pwmerchactive(self, merch_id, payway_id, is_active):
         print('\n', 'merch_id', merch_id)
@@ -267,24 +270,61 @@ class Admin:
         except IndexError:
             return {'exception': "Merchant wasn't found"}
 
-    def get_merchants(self, owner_id):
+    def get_merchants(self, owner_id, pw='='):
         r = requests.post(url=self.admin_url,
                           json={'model': 'merchant', 'method': 'select',
-                                'selector': {'owner_id': ['in', [owner_id]]}},
+                                'selector': {'owner_id': ['in', [owner_id]], 'payway_id': [pw, None]}},
                           headers=self.headers, verify=False)
         fields = loads(r.text)[0]['fields']
         data = loads(r.text)[0]['data']
         for data in data:
             yield dict(zip(fields, data))
 
+
     def set_fee(self, mult=0, add=0, _min=0, _max=0, around='ceil', tp=None, currency_id=None, payway_id=None,
-                is_active=True, merchant_id=None):
+                is_active=True, merchant_id=None, is_bound=False):
         requests.post(url=self.admin_url,
                       json={'model': 'fee', 'method': 'update',
                             'data': {'fee': {'max': _max, 'add': add, 'm': around, 'mult': mult, 'min': _min},
-                                     'is_active': is_active},
+                                     'is_active': is_active, 'is_bound': is_bound},
                             'selector': {'currency_id': ['=', currency_id], 'payway_id': ['=', payway_id], 'tp': ['=', tp],
                                          'merchant_id': ['=', merchant_id]}},
+                      headers=self.headers, verify=False)
+
+    def create_payway_fee(self, mult=0, add=0, _min=0, _max=0, around='ceil', tp=0, payway_id=None, currency=None,
+                            is_active=False, is_bound=True):
+        r = requests.post(url=self.admin_url,
+                      json={'model': 'fee',
+                            'method': 'insert',
+                            'data': {'fee': {'max': _max, 'add': add, 'm': around, 'mult': mult, 'min': _min},
+                                     'tp': tp, 'currency_id': self.currency[currency], 'payway_id': payway_id,
+                                     'is_bound': is_bound, 'is_active': is_active}, 'selector': {}},
+                      headers=self.headers, verify=False)
+        # pprint.pprint(loads(r.text))
+        self.resp_create_personal_fee = loads(r.text)
+
+    def delete_payway_fee(self, tp=0, is_bound=True):
+        r = requests.post(url=self.admin_url,
+                      json={'model': 'fee', 'method': 'delete',
+                            'selector': {'is_bound': ['eq', is_bound], 'tp': ['eq', tp]}},
+                      headers=self.headers, verify=False)
+
+    def create_personal_fee(self, mult=0, add=0, _min=0, _max=0, around='ceil', tp=0, payway_id=None, currency=None,
+                            is_active=False, merchant_id=None):
+        r = requests.post(url=self.admin_url,
+                      json={'model': 'fee',
+                            'method': 'insert',
+                            'data': {'fee': {'max': _max, 'add': add, 'm': around, 'mult': mult, 'min': _min},
+                                     'tp': tp, 'currency_id': self.currency[currency], 'payway_id': payway_id,
+                                     'merchant_id': merchant_id, 'is_active': is_active}, 'selector': {}},
+                      headers=self.headers, verify=False)
+        # pprint.pprint(loads(r.text))
+        self.resp_create_personal_fee = loads(r.text)
+
+    def delete_personal_fee(self, merchant_id, tp=0):
+        r = requests.post(url=self.admin_url,
+                      json={'model': 'fee', 'method': 'delete',
+                            'selector': {'merchant_id': ['eq', merchant_id], 'tp': ['eq', tp]}},
                       headers=self.headers, verify=False)
 
     def create_personal_exchange_fee(self, in_curr, out_curr, merchant_id, fee, is_active):
@@ -307,24 +347,6 @@ class Admin:
                       json={'model': 'exchfee', 'method': 'delete', 'selector': {'merchant_id': ['eq', merchant_id]}},
                       headers=self.headers, verify=False)
 
-    def create_personal_fee(self, mult=0, add=0, _min=0, _max=0, around='ceil', tp=0, payway_id=None, currency=None,
-                            is_active=False, merchant_id=None):
-        r = requests.post(url=self.admin_url,
-                      json={'model': 'fee',
-                            'method': 'insert',
-                            'data': {'fee': {'max': _max, 'add': add, 'm': around, 'mult': mult, 'min': _min},
-                                     'tp': tp, 'currency_id': self.currency[currency], 'payway_id': payway_id,
-                                     'merchant_id': merchant_id, 'is_active': is_active}, 'selector': {}},
-                      headers=self.headers, verify=False)
-        # pprint.pprint(loads(r.text))
-        self.resp_create_personal_fee = loads(r.text)
-
-    def delete_personal_fee(self, merchant_id, tp=0):
-        r = requests.post(url=self.admin_url,
-                      json={'model': 'fee', 'method': 'delete',
-                            'selector': {'merchant_id': ['eq', merchant_id], 'tp': ['eq', tp]}},
-                      headers=self.headers, verify=False)
-
     def set_rate_exchange(self, rate, fee, in_currency, out_currency, tech_min=None, tech_max=None, is_active=True,
                           extfee=0):
         if tech_min is None and tech_max is None:
@@ -344,9 +366,10 @@ class Admin:
                           headers=self.headers, verify=False)
 
     def set_model(self, model, data, selector):
-        requests.post(url=self.admin_url,
+        r = requests.post(url=self.admin_url,
                       json={'model': model, 'method': 'update', 'data': data, 'selector': selector},
                       headers=self.headers, verify=False)
+        print(r.text)
 
     def set_order_status(self, lid, status, amount_paid=0):
         time.sleep(1)
@@ -476,9 +499,14 @@ class Admin:
 
 
 if __name__ == '__main__':
-    admin = Admin(token='d3ElK0cYY9mxyOcQGvTVGqciMh65hyu7ZLWWUkiQbLpIPT3CgvSKC4WHLFYtaXrpDi19')
-    print([dct['base_order_id'] for dct in admin.get_model(model='order', _filter='merchant_id', value=703687441778420) if dct['tp'] == 45
-           ])
+    admin = Admin(token='4edRlyz7MOlCwSuIy_RoaH9KeyDJrBh1lvjNhcOOCizBaQsV7OtTvNeQi_bSeE1Aj0Az')
+    # print(list(admin.get_merchants(owner_id=35184372090605)))
+    print(admin.payway_id)
+    print({v: k for k, v in admin.payway_id.items()})
+    # print(admin.get_model(model='merchant', _filter='lid', value=37)[0]['is_active'])
+    # admin.set_model(model='merchant', selector={'lid': ['=', 37]}, data={'apiip': ''})
+
+
 
 
 

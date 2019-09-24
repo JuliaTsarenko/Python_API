@@ -715,13 +715,14 @@ class TestSciPayCreate:
         global admin, user1, user2
         admin, user1, user2 = start_session
 
+
     def test_sci_pay_create_1(self):
         """ SCI payin from VISAMC 0.01 UAH by OWNER. """
         admin.set_wallet_amount(balance=0, currency='UAH', merch_lid=user1.merchant1.lid)
         admin.set_fee(currency_id=admin.currency['UAH'], payway_id=admin.payway_id['visamc'], tp=40, is_active=True)
         admin.set_pwc(pw_id=admin.payway_id['visamc'], currency='UAH', is_out=False, is_active=True, tech_min=bl(0.01), tech_max=bl(100))
         user1.delegate(params={'m_lid': user1.merchant1.lid,  'merch_model': 'sci_pay', 'merch_method': 'create', 'in_curr': 'UAH',
-                               'externalid': user1.ex_id(), 'payway': 'visamc', 'amount': '0.01', 'expiry': '7d', 'out_curr': 'UAH'})
+                               'externalid': user1.ex_id(), 'payway': 'visamc', 'amount': '0.01', 'expiry': '1h', 'out_curr': 'UAH'})
         assert user1.resp_delegate['account_amount'] == '0.01'
         assert user1.resp_delegate['in_amount'] == '0.01'
         assert user1.resp_delegate['in_curr'] == 'UAH'
@@ -737,7 +738,7 @@ class TestSciPayCreate:
         admin.set_fee(currency_id=admin.currency['USD'], payway_id=admin.payway_id['payeer'], tp=40, is_active=True)
         admin.set_pwc(pw_id=admin.payway_id['payeer'], currency='USD', is_out=False, is_active=True, tech_min=bl(1), tech_max=bl(100))
         user1.merchant1.sci_pay(method='create',  params={'payway': 'payeer', 'amount': '1.02', 'in_curr': 'USD', 'out_curr': None,
-                                                          'externalid': user1.merchant1._id(), 'expiry': '60s'})
+                                                          'externalid': user1.merchant1._id(), 'expiry': '1h'})
         assert user1.merchant1.resp_sci_pay['account_amount'] == '1.02'
         assert user1.merchant1.resp_sci_pay['in_amount'] == '1.02'
         assert user1.merchant1.resp_sci_pay['out_amount'] == '1.02'
@@ -753,7 +754,7 @@ class TestSciPayCreate:
         admin.set_fee(currency_id=admin.currency['BTC'], payway_id=admin.payway_id['btc'], tp=40, is_active=True)
         admin.set_pwc(pw_id=admin.payway_id['btc'], currency='BTC', is_out=False, is_active=True, tech_min=bl(0.0008), tech_max=bl(1))
         user1.merchant1.sci_pay(method='create',  params={'payway': 'btc', 'amount': '0.99999', 'in_curr': 'BTC', 'out_curr': 'BTC',
-                                                          'externalid': user1.merchant1._id(), 'expiry': '60s'})
+                                                          'externalid': user1.merchant1._id(), 'expiry': '1h'})
         assert user1.merchant1.resp_sci_pay['account_amount'] == '0.99999'
         assert user1.merchant1.resp_sci_pay['in_amount'] == '0.99999'
         assert user1.merchant1.resp_sci_pay['out_amount'] == '0.99999'
@@ -767,7 +768,7 @@ class TestSciPayCreate:
         admin.set_fee(currency_id=admin.currency['UAH'], payway_id=admin.payway_id['privat24'], tp=40, is_active=True, mult=pers(15))
         admin.set_pwc(pw_id=admin.payway_id['privat24'], currency='UAH', is_out=False, is_active=True, tech_min=bl(10), tech_max=bl(200))
         user1.delegate(params={'m_lid': user1.merchant1.lid, 'merch_model': 'sci_pay', 'merch_method': 'create', 'out_curr': 'UAH',
-                               'externalid': user1.ex_id(), 'payway': 'privat24', 'amount': '10', 'in_curr': 'UAH', 'expiry': '1000s' })
+                               'externalid': user1.ex_id(), 'payway': 'privat24', 'amount': '10', 'in_curr': 'UAH', 'expiry': '1h'})
         assert user1.resp_delegate['account_amount'] == '8.5'
         assert user1.resp_delegate['in_amount'] == '10'
         assert user1.resp_delegate['in_curr'] == 'UAH'
@@ -782,7 +783,7 @@ class TestSciPayCreate:
         admin.set_fee(currency_id=admin.currency['LTC'], payway_id=admin.payway_id['ltc'], tp=40, is_active=True, add=bl(0.001))
         admin.set_pwc(pw_id=admin.payway_id['ltc'], currency='LTC', is_out=False, is_active=True, tech_min=bl(0.4), tech_max=bl(200))
         user1.merchant1.sci_pay(method='create',  params={'payway': 'ltc', 'amount': '0.5', 'in_curr': 'LTC', 'out_curr': 'LTC',
-                                                          'externalid': user1.merchant1._id(), 'expiry': '60s'})
+                                                          'externalid': user1.merchant1._id(), 'expiry': '1h'})
         assert user1.merchant1.resp_sci_pay['account_amount'] == '0.499'
         assert user1.merchant1.resp_sci_pay['in_amount'] == '0.5'
         assert user1.merchant1.resp_sci_pay['out_amount'] == '0.5'
@@ -795,7 +796,7 @@ class TestSciPayCreate:
         admin.set_fee(currency_id=admin.currency['RUB'], payway_id=admin.payway_id['qiwi'], tp=40, is_active=True, mult=pers(5.5), add=bl(1))
         admin.set_pwc(pw_id=admin.payway_id['qiwi'], currency='RUB', is_out=False, is_active=True, tech_min=bl(8.45), tech_max=bl(1000))
         user1.delegate(params={'m_lid': user1.merchant1.lid, 'merch_model': 'sci_pay', 'merch_method': 'create', 'out_curr': None, 'payway': 'qiwi',
-                               'externalid': user1.ex_id(), 'amount': '10', 'in_curr': 'RUB', 'expiry': '100s'})
+                               'externalid': user1.ex_id(), 'amount': '10', 'in_curr': 'RUB', 'expiry': '1h'})
         assert user1.resp_delegate['account_amount'] == '8.45'
         assert user1.resp_delegate['in_amount'] == '10'
         assert user1.resp_delegate['out_amount'] == '10'
@@ -814,7 +815,7 @@ class TestSciPayCreate:
                       add=bl(1), merchant_id=user1.merchant1.id)
         admin.set_pwc(pw_id=admin.payway_id['perfect'], currency='USD', is_out=False, is_active=True, tech_min=bl(1), tech_max=bl(1000))
         user1.merchant1.sci_pay(method='create',  params={'payway': 'perfect', 'amount': '10', 'in_curr': 'USD', 'out_curr': 'USD',
-                                                          'externalid': user1.merchant1._id(), 'expiry': '60s'})
+                                                          'externalid': user1.merchant1._id(), 'expiry': '1h'})
         assert user1.merchant1.resp_sci_pay['account_amount'] == '8.45'
         assert user1.merchant1.resp_sci_pay['in_fee_amount'] == '1.55'
         assert user1.merchant1.resp_sci_pay['out_fee_amount'] == '1.55'
@@ -830,7 +831,7 @@ class TestSciPayCreate:
         admin.set_fee(currency_id=admin.currency['USD'], payway_id=admin.payway_id['cash_kiev'], tp=40, is_active=True, mult=pers(10), add=bl(2))
         admin.set_fee(currency_id=admin.currency['USD'], payway_id=admin.payway_id['cash_kiev'], tp=40, is_active=True, mult=pers(5.5),
                       add=bl(1), merchant_id=user1.merchant1.id)
-        user1.delegate(params={'m_lid': user1.merchant1.lid, 'merch_model': 'sci_pay', 'merch_method': 'create', 'out_curr': 'USD', 'expiry': '60s',
+        user1.delegate(params={'m_lid': user1.merchant1.lid, 'merch_model': 'sci_pay', 'merch_method': 'create', 'out_curr': 'USD', 'expiry': '1h',
                                'externalid': user1.ex_id(), 'payway': 'cash_kiev', 'amount': '10', 'in_curr': 'USD'})
         assert user1.resp_delegate['account_amount'] == '8.45'
         assert user1.resp_delegate['in_amount'] == '10'
@@ -844,7 +845,7 @@ class TestSciPayCreate:
         admin.set_fee(currency_id=admin.currency['RUB'], payway_id=admin.payway_id['qiwi'], tp=40, is_active=True)
         admin.set_pwc(pw_id=admin.payway_id['qiwi'], currency='RUB', is_out=False, is_active=True, tech_min=bl(1), tech_max=bl(100))
         admin.set_rate_exchange(fee=0, rate=bl(2.6666), in_currency='RUB', out_currency='UAH', tech_min=bl(1), tech_max=bl(100))
-        user1.delegate(params={'m_lid': user1.merchant1.lid, 'merch_model': 'sci_pay', 'merch_method': 'create', 'out_curr': 'UAH', 'expiry': '60s',
+        user1.delegate(params={'m_lid': user1.merchant1.lid, 'merch_model': 'sci_pay', 'merch_method': 'create', 'out_curr': 'UAH', 'expiry': '1h',
                                'externalid': user1.ex_id(), 'payway': 'qiwi', 'amount': '50', 'in_curr': 'RUB'})
         assert user1.resp_delegate['account_amount'] == '18.75'
         assert user1.resp_delegate['in_amount'] == '50'
@@ -862,7 +863,7 @@ class TestSciPayCreate:
         admin.set_personal_exchange_fee(fee=pers(1.55), in_curr=admin.currency['USD'], out_curr=admin.currency['UAH'],
                                         is_active=True, merchant_id=user1.merchant1.id)
         user1.merchant1.sci_pay(method='create', params={'payway': 'payeer', 'amount': '8.33', 'in_curr': 'USD', 'out_curr': 'UAH',
-                                                         'externalid': user1.merchant1._id(), 'expiry': '60s'})
+                                                         'externalid': user1.merchant1._id(), 'expiry': '1h'})
         assert user1.merchant1.resp_sci_pay['account_amount'] == '231.26'
         assert user1.merchant1.resp_sci_pay['rate'] == ['1', '27.7628']
         assert user1.merchant1.resp_sci_pay['in_amount'] == '8.33'
@@ -884,7 +885,7 @@ class TestSciPayCreate:
         admin.set_fee(currency_id=admin.currency['UAH'], payway_id=admin.payway_id['privat24'], tp=40, is_active=True,
                       mult=pers(3.5), add=bl(2), merchant_id=user1.merchant1.id)
         user1.merchant1.sci_pay(method='create',  params={'payway': 'privat24', 'amount': '115', 'in_curr': 'UAH', 'out_curr': 'USD',
-                                                          'externalid': user1.merchant1._id(), 'expiry': '60s'})
+                                                          'externalid': user1.merchant1._id(), 'expiry': '1h'})
         assert user1.merchant1.resp_sci_pay['account_amount'] == '3.78'
         assert user1.merchant1.resp_sci_pay['rate'] == ['28.7639', '1']
         assert user1.merchant1.resp_sci_pay['in_fee_amount'] == '6.03'
@@ -907,7 +908,7 @@ class TestSciPayCreate:
         admin.set_fee(currency_id=admin.currency['BTC'], payway_id=admin.payway_id['btc'], tp=40, is_active=True,
                       mult=pers(3.5), add=0, merchant_id=user1.merchant1.id)
         user1.delegate(params={'m_lid': user1.merchant1.lid, 'merch_model': 'sci_pay', 'merch_method': 'create', 'externalid': user1.ex_id(),
-                               'payway': 'btc', 'amount': '0.0067', 'in_curr': 'BTC', 'out_curr': 'USD', 'expiry': '60s'})
+                               'payway': 'btc', 'amount': '0.0067', 'in_curr': 'BTC', 'out_curr': 'USD', 'expiry': '1h'})
         assert user1.resp_delegate['rate'] == ['1', '3526.94428']
         assert user1.resp_delegate['account_amount'] == '22.8'
         assert user1.resp_delegate['out_amount'] == '23.63'
@@ -927,21 +928,21 @@ class TestWrongSciPayCreate:
         """ Payin with not active merchant. """
         admin.set_pwc(pw_id=admin.payway_id['visamc'], currency='UAH', is_out=False, is_active=True, tech_min=bl(1), tech_max=bl(150))
         user1.merchant1.sci_pay(method='create', params={'payway': 'visamc', 'amount': '2', 'in_curr': 'UAH', 'out_curr': 'UAH',
-                                                         'externalid': user1.merchant1._id(), 'expiry': '60s'})
+                                                         'externalid': user1.merchant1._id(), 'expiry': '1h'})
         assert user1.merchant1.resp_sci_pay == {'code': -32031, 'data': {'field': 'x-merchant', 'reason': 'Merchant inactive'}, 'message': 'EStateMerchantInactive'}
 
     def test_wrong_sci_pay_create_2(self):
         """ Payin with amount less than tech_min in pw_carrency table. """
         admin.set_pwc(pw_id=admin.payway_id['visamc'], currency='UAH', is_out=False, is_active=True, tech_min=bl(1), tech_max=bl(150))
         user1.merchant1.sci_pay(method='create', params={'payway': 'visamc', 'amount': '0.99', 'in_curr': 'UAH', 'out_curr': 'UAH',
-                                                         'externalid': user1.merchant1._id(), 'expiry': '60s'})
+                                                         'externalid': user1.merchant1._id(), 'expiry': '1h'})
         assert user1.merchant1.resp_sci_pay == {'code': -32074, 'message': 'EParamAmountTooSmall', 'data': {'field': 'amount', 'reason': 'Amount is too small', 'value': '0.99'}}
 
     def test_wrong_sci_pay_create_3(self):
         """ Payin with amount more than tech_max in pw_carrency table. """
         admin.set_pwc(pw_id=admin.payway_id['privat24'], currency='UAH', is_out=False, is_active=True, tech_min=bl(1), tech_max=bl(100))
         user1.merchant1.sci_pay(method='create', params={'payway': 'privat24', 'amount': '100.01', 'in_curr': 'UAH', 'out_curr': 'UAH',
-                                                         'externalid': user1.merchant1._id(), 'expiry': '60s'})
+                                                         'externalid': user1.merchant1._id(), 'expiry': '1h'})
         assert user1.merchant1.resp_sci_pay == {'code': -32073, 'message': 'EParamAmountTooBig', 'data': {'field': 'amount', 'reason': 'Amount is too big', 'value': '100.01'}}
 
     def test_wrong_sci_pay_create_4(self):
@@ -950,7 +951,7 @@ class TestWrongSciPayCreate:
         admin.set_pwc(pw_id=admin.payway_id['visamc'], currency='UAH', is_out=False, is_active=True, tech_min=bl(4), tech_max=bl(105))
         admin.set_rate_exchange(rate=bl(28.1999), fee=0, tech_min=bl(5), tech_max=bl(100), in_currency='UAH', out_currency='USD')
         user1.merchant1.sci_pay(method='create', params={'payway': 'visamc', 'amount': '4.99', 'in_curr': 'UAH', 'out_curr': 'USD',
-                                                         'externalid': user1.merchant1._id(), 'expiry': '60s'})
+                                                         'externalid': user1.merchant1._id(), 'expiry': '1h'})
         assert user1.merchant1.resp_sci_pay == {'code': -32074, 'message': 'EParamAmountTooSmall', 'data': {'field': 'in_amount', 'reason': 'Amount is too small', 'value': '4.99'}}
         user1.merchant1.sci_pay(method='create', params={'payway': 'visamc', 'amount': '100.01', 'in_curr': 'UAH', 'out_curr': 'USD',
                                                          'externalid': user1.merchant1._id(), 'expiry': '60s'})
@@ -959,20 +960,20 @@ class TestWrongSciPayCreate:
     def test_wrong_sci_pay_create_5(self):
         """ Payin with not real currency. """
         user1.merchant1.sci_pay(method='create', params={'payway': 'privat24', 'amount': '50', 'in_curr': 'UHA', 'out_curr': 'UHA',
-                                                         'externalid': user1.merchant1._id(), 'expiry': '60s'})
+                                                         'externalid': user1.merchant1._id(), 'expiry': '1h'})
         assert user1.merchant1.resp_sci_pay == {'code': -32014, 'message': 'EParamCurrencyInvalid', 'data': {'field': 'in_curr', 'reason': 'Invalid currency name'}}
 
     def test_wrong_sci_pay_create_6(self):
         """ Payin with not real payway. """
         user1.merchant1.sci_pay(method='create', params={'payway': 'visam', 'amount': '50', 'in_curr': 'UAH', 'out_curr': 'UAH',
-                                                         'externalid': user1.merchant1._id(), 'expiry': '60s'})
+                                                         'externalid': user1.merchant1._id(), 'expiry': '1h'})
         assert user1.merchant1.resp_sci_pay == {'code': -32081, 'message': 'EParamPaywayInvalid', 'data': {'field': 'payway', 'reason': 'Invalid payway name'}}
 
     def test_wrong_sci_pay_create_7(self):
         """ Payin with deactivated pair CURRENCY : PAYWAY by pw_carrency table. """
         admin.set_pwc(pw_id=admin.payway_id['visamc'], currency='UAH', is_out=False, is_active=False, tech_min=bl(1), tech_max=bl(150))
         user1.merchant1.sci_pay(method='create', params={'payway': 'visamc', 'amount': '50', 'in_curr': 'UAH', 'out_curr': 'UAH',
-                                                         'externalid': user1.merchant1._id(), 'expiry': '60s'})
+                                                         'externalid': user1.merchant1._id(), 'expiry': '1h'})
         assert user1.merchant1.resp_sci_pay == {'code': -32033, 'data': {'field': 'currency', 'reason': 'Inactive'}, 'message': 'EStateCurrencyInactive'}
         admin.set_pwc(pw_id=admin.payway_id['visamc'], currency='UAH', is_out=False, is_active=True, tech_min=bl(1), tech_max=bl(150))
 
@@ -980,7 +981,7 @@ class TestWrongSciPayCreate:
         """ Payin with deactivated PAYWAY by payway table. """
         admin.set_payways(name='visamc', is_active=False, is_public=True)
         user1.merchant1.sci_pay(method='create', params={'payway': 'visamc', 'amount': '50', 'in_curr': 'UAH', 'out_curr': 'UAH',
-                                                         'externalid': user1.merchant1._id(), 'expiry': '60s'})
+                                                         'externalid': user1.merchant1._id(), 'expiry': '1h'})
         assert user1.merchant1.resp_sci_pay == {'code': -32082, 'data': {'field': 'payway', 'reason': 'Inactive'}, 'message': 'EStatePaywayInactive'}
         admin.set_payways(name='visamc', is_active=True, is_public=True)
 
@@ -988,7 +989,7 @@ class TestWrongSciPayCreate:
         """ Payin with deactivated PAYWAY by pw_merchactive table. """
         admin.set_pwmerchactive(merch_id=user1.merchant1.id, payway_id=admin.payway_id['visamc'], is_active=False)
         user1.merchant1.sci_pay(method='create', params={'payway': 'visamc', 'amount': '50', 'in_curr': 'UAH', 'out_curr': 'UAH',
-                                                         'externalid': user1.merchant1._id(), 'expiry': '60s'})
+                                                         'externalid': user1.merchant1._id(), 'expiry': '1h'})
         assert user1.merchant1.resp_sci_pay == {'code': -32083, 'message': 'EStatePaywayUnavail', 'data': {'field': 'payway', 'reason': 'Disabled'}}
         admin.set_pwmerchactive(merch_id=user1.merchant1.id, payway_id=admin.payway_id['visamc'], is_active=True)
 
@@ -996,7 +997,7 @@ class TestWrongSciPayCreate:
     def test_wrong_sci_pay_create_10(self):
         """ Payin with convert in to not active currency. """
         user1.merchant1.sci_pay(method='create', params={'payway': 'visamc', 'amount': '50', 'in_curr': 'UAH', 'out_curr': 'BCHABC',
-                                                         'externalid': user1.merchant1._id(), 'expiry': '60s'})
+                                                         'externalid': user1.merchant1._id(), 'expiry': '1h'})
         assert user1.merchant1.resp_sci_pay == {'code': -32033, 'data': {'field': 'curr', 'reason': 'Inactive'}, 'message': 'EStateCurrencyInactive'}
 
     @pytest.mark.skip(reason='Not inactive currency')
@@ -1004,14 +1005,14 @@ class TestWrongSciPayCreate:
         """ Payin with convert from not active currency. """
         admin.set_pwc(pw_id=admin.payway_id['bchabc'], currency='BCHABC', is_out=False, is_active=True, tech_min=bl(0.01), tech_max=bl(2))
         user1.merchant1.sci_pay(method='create', params={'payway': 'bchabc', 'amount': '2', 'in_curr': 'BCHABC', 'out_curr': 'UAH',
-                                                         'externalid': user1.merchant1._id(), 'expiry': '60s'})
+                                                         'externalid': user1.merchant1._id(), 'expiry': '1h'})
         assert user1.merchant1.resp_sci_pay == {'code': -32033, 'data': {'field': 'curr', 'reason': 'Inactive'}, 'message': 'EStateCurrencyInactive'}
 
     def test_wrong_sci_pay_create_12(self):
         """ Payin with convert by not active exchange pair. """
         admin.set_pwc(pw_id=admin.payway_id['ltc'], currency='LTC', is_out=False, is_active=True, tech_min=bl(1), tech_max=bl(150))
         user1.merchant1.sci_pay(method='create', params={'payway': 'ltc', 'amount': '2', 'in_curr': 'LTC', 'out_curr': 'ETH',
-                                                         'externalid': user1.merchant1._id(), 'expiry': '60s'})
+                                                         'externalid': user1.merchant1._id(), 'expiry': '1h'})
         assert user1.merchant1.resp_sci_pay == {'code': -32084, 'message': 'EStateExchangeUnavail',
                                                 'data': {'reason': 'Unavailable exchange from LTC to ETH'}}
 
@@ -1019,21 +1020,21 @@ class TestWrongSciPayCreate:
         """ Payin by not real pair payway+currency. """
         admin.set_pwc(pw_id=admin.payway_id['payeer'], currency='UAH', is_out=False, is_active=True, tech_min=bl(1), tech_max=bl(150))
         user1.merchant1.sci_pay(method='create', params={'payway': 'payeer', 'amount': '10', 'in_curr': 'UAH', 'out_curr': 'UAH',
-                                                         'externalid': user1.merchant1._id(), 'expiry': '60s'})
+                                                         'externalid': user1.merchant1._id(), 'expiry': '1h'})
         assert user1.merchant1.resp_sci_pay == {'code': -32055, 'data': {'field': 'currency', 'reason': 'Not able to be used', 'value': 'UAH'},
                                                 'message': 'EStateCurrencyUnavail'}
 
     def test_wrong_sci_pay_create_14(self):
         """ Payin without in_curr parameter. """
         user1.merchant1.sci_pay(method='create', params={'payway': 'visamc', 'amount': '10', 'out_curr': 'UAH',
-                                                         'externalid': user1.merchant1._id(), 'expiry': '60s'})
+                                                         'externalid': user1.merchant1._id(), 'expiry': '1h'})
         assert user1.merchant1.resp_sci_pay == {'code': -32002, 'data': {'field': 'in_curr', 'reason': 'Should be provided'},
                                                 'message': 'EParamInvalid'}
 
     def test_wrong_sci_pay_create_15(self):
         """ Payin without payway parameter. """
         user1.merchant1.sci_pay(method='create', params={'amount': '10', 'in_curr': 'UAH', 'out_curr': 'UAH',
-                                                         'externalid': user1.merchant1._id(), 'expiry': '60s'})
+                                                         'externalid': user1.merchant1._id(), 'expiry': '1h'})
         assert user1.merchant1.resp_sci_pay == {'code': -32002, 'data': {'field': 'payway', 'reason': 'Should be provided'},
                                                 'message': 'EParamInvalid'}
 
@@ -1046,55 +1047,56 @@ class TestWrongSciPayCreate:
     def test_wrong_sci_pay_create_17(self):
         """ Payin without externalid parameter. """
         user1.merchant1.sci_pay(method='create', params={'amount': '10', 'payway': 'visamc', 'in_curr': 'UAH', 'out_curr': 'UAH',
-                                                         'contact': '+380661111111', 'expiry': '60s'})
+                                                         'contact': '+380661111111', 'expiry': '1h'})
         assert user1.merchant1.resp_sci_pay == {'code': -32002, 'data': {'field': 'externalid', 'reason': 'Should be provided'},
                                                 'message': 'EParamInvalid'}
 
     def test_wrong_sci_pay_create_18(self):
         """ Payin without AMOUNT parameter. """
         user1.merchant1.sci_pay(method='create', params={'payway': 'visamc', 'in_curr': 'UAH', 'out_curr': 'UAH', 'externalid': user1.merchant1._id(),
-                                                         'expiry': '60s'})
+                                                         'expiry': '1h'})
         assert user1.merchant1.resp_sci_pay == {'code': -32002, 'data': {'field': 'amount', 'reason': 'Should be provided'},
                                                 'message': 'EParamInvalid'}
 
     def test_wrong_sci_pay_create_19(self):
         """ Payin with wrong format amount. """
         user1.merchant1.sci_pay(method='create', params={'payway': 'visamc', 'amount': '10.999', 'in_curr': 'UAH', 'out_curr': 'UAH',
-                                                         'externalid': user1.merchant1._id(), 'expiry': '60s'})
+                                                         'externalid': user1.merchant1._id(), 'expiry': '1h'})
         assert user1.merchant1.resp_sci_pay == {'code': -32082, 'message': 'EParamAmountFormatInvalid', 'data': {'field': 'amount'}}
         user1.merchant1.sci_pay(method='create', params={'payway': 'visamc', 'amount': 'String', 'in_curr': 'UAH', 'out_curr': 'UAH',
-                                                         'externalid': user1.merchant1._id(), 'expiry': '60s'})
+                                                         'externalid': user1.merchant1._id(), 'expiry': '1h'})
         assert user1.merchant1.resp_sci_pay == {'code': -32002, 'message': 'EParamInvalid',
                                                 'data': {'field': 'amount', 'reason': 'Should be a Number'}}
         user1.merchant1.sci_pay(method='create', params={'payway': 'visamc', 'amount': 10, 'in_curr': 'UAH', 'out_curr': 'UAH',
-                                                         'externalid': user1.merchant1._id(), 'expiry': '60s'})
+                                                         'externalid': user1.merchant1._id(), 'expiry': '1h'})
         assert user1.merchant1.resp_sci_pay == {'code': -32003, 'message': 'EParamType',
                                                 'data': {'field': 'amount', 'reason': "'amount' must not be of 'int' type", 'value': 10}}
         user1.merchant1.sci_pay(method='create', params={'payway': 'visamc', 'amount': [1, 2], 'in_curr': 'UAH', 'out_curr': 'UAH',
-                                                         'externalid': user1.merchant1._id(), 'expiry': '60s'})
+                                                         'externalid': user1.merchant1._id(), 'expiry': '1h'})
         assert user1.merchant1.resp_sci_pay == {'code': -32003, 'message': 'EParamType',
                                                 'data': {'field': 'amount', 'reason': "'amount' must not be of 'list' type", 'value': [1, 2]}}
         user1.merchant1.sci_pay(method='create', params={'payway': 'visamc', 'amount': {'1': 1}, 'in_curr': 'UAH', 'out_curr': 'UAH',
-                                                         'externalid': user1.merchant1._id(), 'expiry': '60s'})
+                                                         'externalid': user1.merchant1._id(), 'expiry': '1h'})
         assert user1.merchant1.resp_sci_pay == {'code': -32003, 'data': {'field': 'amount', 'reason': "'amount' must not be of 'dict' type",
                                                                          'value': {'1': 1}},  'message': 'EParamType'}
         user1.merchant1.sci_pay(method='create', params={'payway': 'visamc', 'amount': '-10', 'in_curr': 'UAH', 'out_curr': 'UAH',
-                                                         'externalid': user1.merchant1._id(), 'expiry': '60s'})
-        assert user1.merchant1.resp_sci_pay == {'code': -32002, 'data': {'field': 'amount', 'reason': 'Should be a positive Number'}, 'message': 'EParamInvalid'}
+                                                         'externalid': user1.merchant1._id(), 'expiry': '1h'})
+        assert user1.merchant1.resp_sci_pay == {'code': -32002, 'data': {'field': 'amount', 'reason': 'Should be a positive Number'},
+                                                'message': 'EParamInvalid'}
 
     def test_wrong_sci_pay_create_20(self):
         """ Payin with duplicate externalid parameter. """
         user1.merchant1.sci_pay(method='create', params={'payway': 'visamc', 'amount': '50', 'in_curr': 'UAH', 'out_curr': 'UAH',
-                                                         'externalid': user1.merchant1._id(), 'expiry': '60s'})
+                                                         'externalid': user1.merchant1._id(), 'expiry': '1h'})
         user1.merchant1.sci_pay(method='create', params={'payway': 'visamc', 'amount': '50', 'in_curr': 'UAH', 'out_curr': 'UAH',
-                                                         'externalid': user1.merchant1.resp_sci_pay['externalid'], 'expiry': '60s'})
+                                                         'externalid': user1.merchant1.resp_sci_pay['externalid'], 'expiry': '1h'})
         assert user1.merchant1.resp_sci_pay == {'code': -32091, 'data': {'field': 'externalid', 'reason': 'Such externalid already present'},
                                                 'message': 'EParamUnique'}
 
     def test_wrong_sci_pay_create_21(self):
         """ Payin with wrong merchant. """
         data = {'method': 'sci_pay.create',
-                'params': {'payway': 'visamc', 'amount': '10', 'out_curr': 'UAH', 'externalid': user1.merchant1._id(), 'expiry': '60s'},
+                'params': {'payway': 'visamc', 'amount': '10', 'out_curr': 'UAH', 'externalid': user1.merchant1._id(), 'expiry': '1h'},
                 'jsonrpc': 2.0, 'id': user1.merchant1._id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
@@ -1106,7 +1108,7 @@ class TestWrongSciPayCreate:
     def test_wrong_sci_pay_create_22(self):
         """ Payin without merchant. """
         data = {'method': 'sci_pay.create',
-                'params': {'payway': 'visamc', 'amount': '10', 'out_curr': 'UAH', 'externalid': user1.merchant1._id(), 'expiry': '60s'},
+                'params': {'payway': 'visamc', 'amount': '10', 'out_curr': 'UAH', 'externalid': user1.merchant1._id(), 'expiry': '1h'},
                 'jsonrpc': 2.0, 'id': user1.merchant1._id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
@@ -1118,7 +1120,7 @@ class TestWrongSciPayCreate:
     def test_wrong_sci_pay_create_23(self):
         """ Payin with wrong sign. """
         data = {'method': 'sci_pay.create',
-                'params': {'payway': 'visamc', 'amount': '10', 'out_curr': 'UAH', 'externalid': user1.merchant1._id(), 'expiry': '60s'},
+                'params': {'payway': 'visamc', 'amount': '10', 'out_curr': 'UAH', 'externalid': user1.merchant1._id(), 'expiry': '1h'},
                 'jsonrpc': 2.0, 'id': user1.merchant1._id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
@@ -1130,7 +1132,7 @@ class TestWrongSciPayCreate:
     def test_wrong_sci_pay_create_24(self):
         """ Payin without sign. """
         data = {'method': 'sci_pay.create',
-                'params': {'payway': 'visamc', 'amount': '10', 'out_curr': 'UAH', 'externalid': user1.merchant1._id(), 'expiry': '60s'},
+                'params': {'payway': 'visamc', 'amount': '10', 'out_curr': 'UAH', 'externalid': user1.merchant1._id(), 'expiry': '1h'},
                 'jsonrpc': 2.0, 'id': user1.merchant1._id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
@@ -1141,7 +1143,7 @@ class TestWrongSciPayCreate:
     def test_wrong_sci_pay_create_25(self):
         """ Payin without utc_time. """
         data = {'method': 'sci_pay.create',
-                'params': {'payway': 'visamc', 'amount': '10', 'out_curr': 'UAH', 'externalid': user1.merchant1._id(), 'expiry': '60s'},
+                'params': {'payway': 'visamc', 'amount': '10', 'out_curr': 'UAH', 'externalid': user1.merchant1._id(), 'expiry': '1h'},
                 'jsonrpc': 2.0, 'id': user1.merchant1._id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,

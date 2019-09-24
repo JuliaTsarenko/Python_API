@@ -269,121 +269,114 @@ class TestWrongConvertCalc:
         """ Calc convert with inactive merchant. """
         admin.set_wallet_amount(balance=bl(100), currency='UAH', merch_lid=user1.merchant1.lid)
         user1.merchant1.convert(method='calc', params={'in_amount': '50', 'out_amount': None, 'in_curr': 'UAH', 'out_curr': 'USD'})
-        assert user1.merchant1.resp_convert == {'code': -32010, 'message': 'InvalidMerchant', 'data': {'reason': 'Merchant Is Not Active'}}
+        assert user1.merchant1.resp_convert == {'code': -32031, 'message': 'EStateMerchantInactive',
+                                                'data': {'field': 'x-merchant', 'reason': 'Merchant inactive'}}
 
     def test_wrong_convert_calc_2(self):
         """ Request with int's and float's in in_curr and out_curr. """
         admin.set_wallet_amount(balance=bl(100), currency='UAH', merch_lid=user1.merchant1.lid)
         user1.merchant1.convert(method='calc', params={'in_amount': 50, 'out_amount': None, 'in_curr': 'UAH', 'out_curr': 'USD'})
-        assert user1.merchant1.resp_convert == {'code': -32070, 'message': 'InvalidParam',
-                                                'data': {'reason': "Key 'in_amount' must not be of 'int' type"}}
+        assert user1.merchant1.resp_convert == {'code': -32003, 'message': 'EParamType',
+                                                'data': {'field': 'in_amount', 'reason': "'in_amount' must not be of 'int' type", 'value': 50}}
         user1.merchant1.convert(method='calc', params={'in_amount': None, 'out_amount': 1.5, 'in_curr': 'UAH', 'out_curr': 'USD'})
-        assert user1.merchant1.resp_convert == {'code': -32070, 'message': 'InvalidParam',
-                                                'data': {'reason': "Key 'out_amount' must not be of 'float' type"}}
+        assert user1.merchant1.resp_convert == {'code': -32003, 'message': 'EParamType',
+                                                'data': {'field': 'out_amount', 'reason': "'out_amount' must not be of 'float' type", 'value': 1.5}}
 
     def test_wrong_convert_calc_3(self):
         """ Calc with in_amount wrong format. """
         admin.set_wallet_amount(balance=bl(2), currency='UAH', merch_lid=user1.merchant1.lid)
         user1.merchant1.convert(method='calc', params={'in_amount': '1.122', 'out_amount': None, 'in_curr': 'UAH', 'out_curr': 'USD'})
-        assert user1.merchant1.resp_convert == {'code': -32071, 'message': 'InvalidAmountFormat',
-                                                'data': {'reason': 'Invalid format 1.122 for UAH'}}
+        assert user1.merchant1.resp_convert == {'code': -32082, 'data': {'field': 'amount'}, 'message': 'EParamAmountFormatInvalid'}
         user1.merchant1.convert(method='calc', params={'in_amount': 'String', 'out_amount': None, 'in_curr': 'UAH', 'out_curr': 'USD'})
-        assert user1.merchant1.resp_convert == {'code': -32070, 'message': 'InvalidParam',
-                                                'data': {'field': 'in_amount', 'reason': 'Should be a Number'}}
+        assert user1.merchant1.resp_convert == {'code': -32002, 'data': {'field': 'in_amount', 'reason': 'Should be a Number'},
+                                                'message': 'EParamInvalid'}
 
     def test_wrong_convert_calc_4(self):
         """ Calc with out_amount wrong format. """
         admin.set_wallet_amount(balance=bl(10), currency='UAH', merch_lid=user1.merchant1.lid)
         user1.merchant1.convert(method='calc', params={'in_amount': None, 'out_amount': '0.015', 'in_curr': 'UAH', 'out_curr': 'USD'})
-        assert user1.merchant1.resp_convert == {'code': -32071, 'message': 'InvalidAmountFormat',
-                                                'data': {'reason': 'Invalid format 0.015 for USD'}}
+        assert user1.merchant1.resp_convert == {'code': -32082, 'data': {'field': 'amount'}, 'message': 'EParamAmountFormatInvalid'}
         user1.merchant1.convert(method='calc', params={'in_amount': None, 'out_amount': 'String', 'in_curr': 'UAH', 'out_curr': 'USD'})
-        assert user1.merchant1.resp_convert == {'code': -32070, 'message': 'InvalidParam',
-                                                'data':  {'field': 'out_amount', 'reason': 'Should be a Number'}}
+        assert user1.merchant1.resp_convert == {'code': -32002, 'data': {'field': 'out_amount', 'reason': 'Should be a Number'},
+                                                'message': 'EParamInvalid'}
 
     def test_wrong_convert_calc_5(self):
         """ Calc with equal pair of currency. """
         admin.set_wallet_amount(balance=bl(10), currency='UAH', merch_lid=user1.merchant1.lid)
         user1.merchant1.convert(method='calc', params={'in_amount': None, 'out_amount': '0.5', 'in_curr': 'UAH', 'out_curr': 'UAH'})
-        assert user1.merchant1.resp_convert == {'code': -32065, 'message': 'UnavailExchange',
-                                                'data': {'reason': 'Unavailable exchange from UAH to UAH'}}
+        assert user1.merchant1.resp_convert == {'code': -32084, 'data': {'reason': 'Unavailable exchange from UAH to UAH'},
+                                                'message': 'EStateExchangeUnavail'}
 
     def test_wrong_convert_calc_6(self):
         """ Calc without pair of currencies. """
         admin.set_wallet_amount(balance=bl(10), currency='UAH', merch_lid=user1.merchant1.lid)
         user1.merchant1.convert(method='calc', params={'in_amount': None, 'out_amount': '0.5', 'in_curr': None, 'out_curr': None})
-        assert user1.merchant1.resp_convert == {'code': -32070, 'message': 'InvalidParam',
-                                                'data': {'reason': "method 'convert.calc' missing 2 arguments: 'in_curr' and 'out_curr'"}}
+        assert user1.merchant1.resp_convert == {'code': -32002, 'data': {'field': 'in_curr', 'reason': 'Should be provided'},
+                                                'message': 'EParamInvalid'}
 
     def test_wrong_convert_calc_7(self):
-        """ Calc without in_curr. """
-        admin.set_wallet_amount(balance=bl(10), currency='UAH', merch_lid=user1.merchant1.lid)
-        user1.merchant1.convert(method='calc', params={'in_amount': None, 'out_amount': '0.2', 'in_curr': None, 'out_curr': 'BTC'})
-        assert user1.merchant1.resp_convert == {'code': -32070, 'message': 'InvalidParam',
-                                                'data': {'reason': "method 'convert.calc' missing 2 arguments: 'in_curr' and 'out_curr'"}}
-
-    def test_wrong_convert_calc_8(self):
         """ Exchange without out_curr. """
         admin.set_wallet_amount(balance=bl(10), currency='UAH', merch_lid=user1.merchant1.lid)
         user1.merchant1.convert(method='calc', params={'in_amount': None, 'out_amount': '0.2', 'in_curr': 'UAH', 'out_curr': None})
-        assert user1.merchant1.resp_convert == {'code': -32602, 'message': 'InvalidInputParams',
-                                                'data': {'reason': "method 'convert.calc' missing 1 argument: 'out_curr'"}}
+        assert user1.merchant1.resp_convert == {'code': -32002, 'data': {'field': 'out_curr', 'reason': 'Should be provided'},
+                                                'message': 'EParamInvalid'}
 
     def test_wrong_convert_calc_9(self):
         """ Calc exchange in to not real currency. """
         admin.set_wallet_amount(balance=bl(10), currency='UAH', merch_lid=user1.merchant1.lid)
         user1.merchant1.convert(method='calc', params={'in_amount': None, 'out_amount': '0.2', 'in_curr': 'UAH', 'out_curr': 'UDS'})
-        assert user1.merchant1.resp_convert == {'code': -32076, 'message': 'InvalidCurrency',
-                                                'data': {'field': 'out_curr', 'reason': 'Invalid currency name'}}
+        assert user1.merchant1.resp_convert == {'code': -32014, 'data': {'field': 'out_curr', 'reason': 'Invalid currency name'},
+                                                'message': 'EParamCurrencyInvalid'}
 
     def test_wrong_convert_calc_10(self):
         """ Exchange from not real currency. """
         user1.merchant1.convert(method='calc', params={'in_amount': None, 'out_amount': '0.2', 'in_curr': 'UHA', 'out_curr': 'UDS'})
-        assert user1.merchant1.resp_convert == {'code': -32076, 'message': 'InvalidCurrency',
-                                                'data': {'field': 'in_curr', 'reason': 'Invalid currency name'}}
+        assert user1.merchant1.resp_convert == {'code': -32014, 'data': {'field': 'in_curr', 'reason': 'Invalid currency name'},
+                                                'message': 'EParamCurrencyInvalid'}
 
     @pytest.mark.skip(reason='Not inactive currency')
     def test_wrong_convert_calc_11(self):
         """ Exchange in to not active currency."""
         admin.set_wallet_amount(balance=bl(10), currency='UAH', merch_lid=user1.merchant1.lid)
         user1.merchant1.convert(method='calc', params={'in_amount': None, 'out_amount': '0.2', 'in_curr': 'UHA', 'out_curr': 'ETH'})
-        assert user1.merchant1.resp_convert == {'code': -32076, 'message': 'InvalidCurrency'}
+        assert user1.merchant1.resp_convert == {'code': -32033, 'data': {'field': 'curr', 'reason': 'Inactive'}, 'message': 'EStateCurrencyInactive'}
 
     @pytest.mark.skip(reason='Not inactive currency')
     def test_wrong_convert_calc_12(self):
         """ Exchange from not active currency. """
         admin.set_wallet_amount(balance=bl(0.5), currency='ETH', merch_lid=user1.merchant1.lid)
         user1.merchant1.convert(method='calc', params={'in_amount': None, 'out_amount': '0.2', 'in_curr': 'ETH', 'out_curr': 'UAH'})
-        assert user1.merchant1.resp_convert == {'code': -32076, 'message': 'InvalidCurrency'}
+        assert user1.merchant1.resp_convert == {'code': -32033, 'data': {'field': 'curr', 'reason': 'Inactive'}, 'message': 'EStateCurrencyInactive'}
 
     @pytest.mark.skip(reason='Not disabled exchange pair')
     def test_wrong_convert_calc_13(self):
         """ Exchange with not active exchange pair. """
         admin.set_wallet_amount(balance=bl(0.5), currency='ETH', merch_lid=user1.merchant1.lid)
         user1.merchant1.convert(method='calc', params={'in_amount': '0.1', 'out_amount': None, 'in_curr': 'ETH', 'out_curr': 'LTC'})
-        assert user1.merchant1.resp_convert == {'code': -32065, 'message': 'UnavailExchange'}
+        assert user1.merchant1.resp_convert == {'code': -32084, 'data': {'reason': 'Unavailable exchange from ETH to LTC'},
+                                                'message': 'EStateExchangeUnavail'}
 
     def test_wrong_convert_calc_14(self):
         """ Exchange WITH in_amount and out_amount. """
         admin.set_wallet_amount(balance=bl(10), currency='UAH', merch_lid=user1.merchant1.lid)
         user1.merchant1.convert(method='calc', params={'in_amount': '0.1', 'out_amount': '0.1', 'in_curr': 'UAH', 'out_curr': 'USD'})
-        assert user1.merchant1.resp_convert == {'code': -32071, 'data': {'reason': "Must be provided one amount: 'in_amount' or 'out_amount'"},
-                                                'message': 'InvalidAmount'}
+        assert user1.merchant1.resp_convert == {'code': -32002, 'data': {'reason': 'Unable to complete: both/no amounts passed',
+                                                                         'value': "['0.1', '0.1']"}, 'message': 'EParamInvalid'}
 
     def test_wrong_convert_calc_15(self):
         """ Exchange WITHOUT in_amount and out_amount. """
         admin.set_wallet_amount(balance=bl(10), currency='UAH', merch_lid=user1.merchant1.lid)
         user1.merchant1.convert(method='calc', params={'in_amount': None, 'out_amount': None, 'in_curr': 'UAH', 'out_curr': 'USD'})
-        assert user1.merchant1.resp_convert == {'code': -32071, 'data': {'reason': "Must be provided one amount: 'in_amount' or 'out_amount'"},
-                                                'message': 'InvalidAmount'}
+        assert user1.merchant1.resp_convert == {'code': -32002, 'data': {'reason': 'Unable to complete: both/no amounts passed',
+                                                                         'value': '[None, None]'}, 'message': 'EParamInvalid'}
 
     def test_wrong_convert_calc_16(self):
         """ Exchange UAH to USD: baying 1 USD, in_amount with fee less than user has in his balance. """
         admin.set_wallet_amount(balance=bl(31.01), currency='UAH', merch_lid=user1.merchant1.lid)
         admin.set_rate_exchange(rate=bl(28.1999), fee=pers(10), in_currency='UAH', out_currency='USD')
         user1.merchant1.convert(method='calc', params={'in_amount': None, 'out_amount': '1', 'in_curr': 'UAH', 'out_curr': 'USD'})
-        assert user1.merchant1.resp_convert == {'code': -32072, 'message': 'InsufficientFunds',
-                                                'data': {'reason': 'Balance 31.01 less then amount 31.02 in UAH'}}
+        assert user1.merchant1.resp_convert == {'code': -32056, 'message': 'EStateInsufficientFunds',
+                                                'data': {'reason': 'Balance 31.01 less then amount 31.02'}}
 
     def test_wrong_convert_calc_17(self):
         """ Exchange UAH to USD: selling 50.01 UAH, in_amount less than user has in his balance. """

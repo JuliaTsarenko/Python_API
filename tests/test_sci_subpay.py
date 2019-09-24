@@ -1,10 +1,9 @@
-import requests
 import pytest
-from json import loads
 from users.tools import *
-from users.sign import create_sign
 
 
+
+@pytest.mark.positive
 @pytest.mark.usefixtures('_personal_sub_pay_fee', '_personal_exchange_fee', '_create_sci_pay_order')
 class TestSciSubPayCalc:
     """ Checking calc sub_pay order for created SCI_PAY order. """
@@ -148,6 +147,7 @@ class TestSciSubPayCalc:
                                                    'out_amount': '58.13', 'out_fee_amount': '1.24', 'rate': ['2.75216', '1']}
 
 
+@pytest.mark.negative
 @pytest.mark.usefixtures('_create_sci_pay_order')
 class TestWrongSciSubPayCalc:
     """ Checking wrong request to sci_subpay calc method. """
@@ -177,7 +177,7 @@ class TestWrongSciSubPayCalc:
         payin_order = admin.get_model(model='order', _filter='tp', value=0)[0]
         admin.set_pwc(pw_id=admin.payway_id['visamc'], currency='UAH', is_out=False, is_active=True, tech_min=bl(1), tech_max=bl(100))
         user1.merchant1.sci_subpay(method='calc', params={'sci_pay_token': payin_order['token'], 'payway': 'visamc', 'in_curr': 'UAH', 'amount': '50'})
-        assert user1.merchant1.resp_sci_subpay == {'code': -32002, 'data': {'field': 'order_token', 'reason': 'Invalid order_token value',
+        assert user1.merchant1.resp_sci_subpay == {'code': -32002, 'data': {'field': 'sci_pay_token', 'reason': 'Invalid sci_pay_token value',
                                                    'value': payin_order['token']}, 'message': 'EParamInvalid'}
 
     def test_wrong_sci_sub_pay_calc_4(self):
@@ -243,6 +243,7 @@ class TestWrongSciSubPayCalc:
                                                    'message': 'EParamInvalid'}
 
 
+@pytest.mark.positive
 @pytest.mark.usefixtures('_personal_sub_pay_fee', '_personal_exchange_fee', '_create_sci_pay_order')
 class TestSciSubPayCreate:
     """ Checking creating sci_subpay order. """
@@ -468,6 +469,7 @@ class TestSciSubPayCreate:
         assert user2.merchant1.resp_sci_subpay['rate'] == ['2.75216', '1']
 
 
+@pytest.mark.negative
 @pytest.mark.usefixtures('_create_sci_pay_order')
 class TestWrongSciSubPayCreate:
     """ Wrong request sci_subpay.create. """
@@ -500,7 +502,7 @@ class TestWrongSciSubPayCreate:
         admin.set_pwc(pw_id=admin.payway_id['visamc'], currency='UAH', is_out=False, is_active=True, tech_min=bl(1), tech_max=bl(100))
         user1.merchant1.sci_subpay(method='create', params={'sci_pay_token': payin_order['token'], 'payway': 'visamc', 'in_curr': 'UAH', 'amount': '50',
                                                             'externalid': user1.merchant1._id()})
-        assert user1.merchant1.resp_sci_subpay == {'code': -32002, 'data': {'field': 'order_token', 'reason': 'Invalid order_token value',
+        assert user1.merchant1.resp_sci_subpay == {'code': -32002, 'data': {'field': 'sci_pay_token', 'reason': 'Invalid sci_pay_token value',
                                                    'value': payin_order['token']}, 'message': 'EParamInvalid'}
 
     def test_wrong_sci_sub_pay_create_4(self):
@@ -587,10 +589,11 @@ class TestWrongSciSubPayCreate:
                                                             'externalid': user1.merchant1._id()})
         user1.merchant1.sci_subpay(method='create', params={'sci_pay_token': token, 'payway': 'visamc', 'in_curr': 'UAH', 'amount': '50',
                                                             'externalid': user1.merchant1._id()})
-        assert user1.merchant1.resp_sci_subpay == {'code': -32002, 'data': {'field': 'order_token', 'reason': 'Invalid order_token value',
+        assert user1.merchant1.resp_sci_subpay == {'code': -32002, 'data': {'field': 'sci_pay_token', 'reason': 'Invalid sci_pay_token value',
                                                    'value': token}, 'message': 'EParamInvalid'}
 
 
+@pytest.mark.positive
 @pytest.mark.usefixtures('_personal_sub_pay_fee', '_personal_exchange_fee', '_create_sci_pay_order')
 class TestSciSubPayParams:
     """ Getting params for sci_sub params. """
@@ -624,7 +627,6 @@ class TestSciSubPayParams:
         assert user2.resp_delegate['out_fee'] == {'add': '0', 'max': '0', 'method': 'ceil', 'min': '0', 'mult': '0'}
         assert user2.resp_delegate['payway'] == 'perfect'
         assert user2.resp_delegate['is_convert'] is True
-
 
     def test_sci_sub_pay_params_3(self, _custom_fee, _disable_personal_exchange_fee):
         """ Getting params for RUB:payeer with common exchange fee and with personal exchange fee by MERCHANT. """
@@ -705,7 +707,61 @@ class TestSciSubPayParams:
         assert user1.merchant1.resp_sci_subpay['rate'] == ['1', '27.31638']
 
 
-# @pytest.mark.usefixtures('_create_sci_sub_pay_list')
+@pytest.mark.negative
+class TestWrongSciSubPayParams:
+    """ Wrong requests to sci_subpay params method. """
+
+    def test_0(self, start_session):
+        """ Warm. """
+        global admin, user1, user2
+        admin, user1, user2 = start_session
+
+    def test_wrong_sci_sub_pay_params_1(self, _create_payin_order):
+        """ Request with not sci_pay token. """
+        payin_order = admin.get_model(model='order', _filter='tp', value=0)[0]
+        user1.merchant1.sci_subpay(method='params', params={'sci_pay_token': payin_order['token'], 'payway': 'visamc', 'in_curr': 'UAH'})
+        assert user1.merchant1.resp_sci_subpay == {'code': -32002, 'message': 'EParamInvalid',  'data': {'field': 'sci_pay_token',
+                                                   'reason': 'Invalid sci_pay_token value', 'value': payin_order['token']}}
+
+    def test_wrong_sci_sub_pay_params_2(self):
+        """ Request with not real in_curr. """
+        user1.merchant1.sci_subpay(method='params', params={'sci_pay_token': '123', 'payway': 'visamc', 'in_curr': 'UHA'})
+        assert user1.merchant1.resp_sci_subpay == {'code': -32014, 'data': {'field': 'in_curr', 'reason': 'Invalid currency name'},
+                                                   'message': 'EParamCurrencyInvalid'}
+
+    def test_wrong_sci_sub_pay_params_3(self):
+        """ Request with not real payway. """
+        user1.merchant1.sci_subpay(method='params', params={'sci_pay_token': '123', 'payway': 'visam', 'in_curr': 'UAH'})
+        assert user1.merchant1.resp_sci_subpay == {'code': -32081, 'data': {'field': 'payway', 'reason': 'Invalid payway name'},
+                                                   'message': 'EParamPaywayInvalid'}
+
+    def test_wrong_sci_sub_pay_params_4(self):
+        """ Request without sci_pay_token. """
+        user1.merchant1.sci_subpay(method='params', params={'sci_pay_token': None, 'payway': 'visam', 'in_curr': 'UAH'})
+        assert user1.merchant1.resp_sci_subpay == {'code': -32002, 'data': {'field': 'sci_pay_token', 'reason': 'Should be provided'},
+                                                   'message': 'EParamInvalid'}
+
+    def test_wrong_sci_sub_pay_params_5(self):
+        """ Request without in_curr parameter. """
+        user1.merchant1.sci_subpay(method='params', params={'sci_pay_token': '123', 'payway': 'visam'})
+        assert user1.merchant1.resp_sci_subpay == {'code': -32002, 'data': {'field': 'in_curr', 'reason': 'Should be provided'},
+                                                   'message': 'EParamInvalid'}
+
+    def test_wrong_sci_sub_pay_params_6(self):
+        """ Request without in_curr parameter. """
+        user1.merchant1.sci_subpay(method='params', params={'sci_pay_token': '123', 'in_curr': 'UAH'})
+        assert user1.merchant1.resp_sci_subpay == {'code': -32002, 'data': {'field': 'payway', 'reason': 'Should be provided'},
+                                                   'message': 'EParamInvalid'}
+
+    def test_wrong_sci_sub_pay_params_7(self):
+        """ Request with excess parameter. """
+        user1.merchant1.sci_subpay(method='params', params={'sci_pay_token': '123', 'in_curr': 'UAH', 'payway': 'visamc', 'par': '123'})
+        assert user1.merchant1.resp_sci_subpay == {'code': -32002, 'data': {'field': 'par', 'reason': 'Should not be provided'},
+                                                   'message': 'EParamInvalid'}
+
+
+@pytest.mark.positive
+@pytest.mark.usefixtures('_create_sci_sub_pay_list')
 class TestSciSubPayList:
     """ Checking sub_pay orders list. """
 
@@ -761,6 +817,7 @@ class TestSciSubPayList:
         assert adm_ls == us_ls
 
 
+@pytest.mark.negative
 class TestWrongSciSubPayList:
     """ Wrong request to sci_subpay method. """
 
@@ -813,6 +870,7 @@ class TestWrongSciSubPayList:
                                                    'value': payin_order['token']}, 'message': 'EParamInvalid'}
 
 
+@pytest.mark.positive
 @pytest.mark.usefixtures('_create_sci_sub_pay_list')
 class TestSciSubPayGet:
     """ Checking sub_pay orders list. """
@@ -825,22 +883,54 @@ class TestSciSubPayGet:
     def test_sci_sub_pay_get_1(self):
         """ Getting lust sub_pay order by MERCHANT. """
         sub_pay_order = [dct for dct in admin.get_model(model='order', _filter='merchant_id', value=user1.merchant1.id) if dct['tp'] == 45][0]
-        user1.merchant1.sci_subpay(method='get', params={'sci_pay_token': sub_pay_order['token']})
+        user1.merchant1.sci_subpay(method='get', params={'sci_subpay_token': sub_pay_order['token']})
         assert user1.merchant1.resp_sci_subpay['token'] == sub_pay_order['token']
         assert user1.merchant1.resp_sci_subpay['lid'] == sub_pay_order['lid']
 
     def test_sci_sub_pay_get_2(self):
         """ Getting before lust sub_pay order by OWNER. """
         sub_pay_order = [dct for dct in admin.get_model(model='order', _filter='merchant_id', value=user1.merchant1.id) if dct['tp'] == 45][1]
-        admin.set_order_status(lid=sub_pay_order['lid'], status=100)
-        user1.delegate = user1.delegate(params={'m_lid': user1.merchant1.lid, 'merch_model': 'sci_subpay', 'merch_method': 'get',
-                                                'sci_pay_token': sci_pay_order['token']})
         user1.delegate(params={'m_lid': user1.merchant1.lid, 'merch_model': 'sci_subpay', 'merch_method': 'get',
-                               'sci_pay_token': sci_pay_order['token']})
+                               'sci_subpay_token': sub_pay_order['token']})
         assert user1.resp_delegate['token'] == sub_pay_order['token']
         assert user1.resp_delegate['lid'] == sub_pay_order['lid']
 
 
+@pytest.mark.negative
+class TestWrongSciSubPayGet:
+    """ Wrong request to sci_subpay.get. """
+
+    def test_0(self, start_session):
+        """ Warm. """
+        global admin, user1, user2
+        admin, user1, user2 = start_session
+
+    def test_wrong_sci_sub_pay_get_1(self):
+        """ Request with not real sci_subpay order. """
+        user1.merchant1.sci_subpay(method='get', params={'sci_subpay_token': '123'})
+        assert user1.merchant1.resp_sci_subpay == {'code': -32090, 'data': {'field': None, 'reason': 'Not found'}, 'message': 'EParamNotFound'}
+
+    def test_wrong_sci_sub_pay_get_2(self, _create_payin_order):
+        """ Request with not real sci_subpay order. """
+        payin_order = admin.get_model(model='order', _filter='tp', value=0)[0]
+        user1.merchant1.sci_subpay(method='get', params={'sci_subpay_token': payin_order['token']})
+        assert user1.merchant1.resp_sci_subpay == {'code': -32090, 'data': {'field': None, 'reason': 'Not found'}, 'message': 'EParamNotFound'}
+
+    def test_wrong_sci_sub_pay_get_3(self):
+        """ Request without sci_subpay parameter. """
+        user1.merchant1.sci_subpay(method='get', params={})
+        assert user1.merchant1.resp_sci_subpay == {'code': -32002, 'data': {'field': 'sci_subpay_token', 'reason': 'Should be provided'},
+                                                   'message': 'EParamInvalid'}
+
+    def test_wrong_sci_sub_pay_get_4(self, _create_payin_order):
+        """ Request with excess parameter. """
+        user1.merchant1.sci_subpay(method='get', params={'sci_subpay_token': '123', 'par': '123'})
+        assert user1.merchant1.resp_sci_subpay == {'code': -32002, 'data': {'field': 'par', 'reason': 'Should not be provided'},
+                                                   'message': 'EParamInvalid'}
+
+
+@pytest.mark.positive
+@pytest.mark.usefixtures('_create_sci_pay_order')
 class TestSciSubPayCancel:
     """ Checking sub_pay orders list. """
 
@@ -850,9 +940,73 @@ class TestSciSubPayCancel:
         admin, user1, user2 = start_session
 
     def test_sci_sub_pay_cancel_1(self):
-        """ Getting lust sub_pay order by MERCHANT. """
-        sub_pay_order = [dct for dct in admin.get_model(model='order', _filter='merchant_id', value=user1.merchant1.id) if dct['tp'] == 45][0]
-        user1.merchant1.sci_subpay(method='get', params={'sci_pay_token': sub_pay_order['token']})
-        assert user1.merchant1.resp_sci_subpay['token'] == sub_pay_order['token']
-        assert user1.merchant1.resp_sci_subpay['lid'] == sub_pay_order['lid']
+        """ Cancelling sub_pay_order adn creating new sub pay order. """
+        sci_pay = [dct for dct in admin.get_model(model='order', _filter='merchant_id', value=user1.merchant1.id) if dct['tp'] == 40][0]
+        user2.merchant1.sci_subpay(method='create', params={'sci_pay_token': sci_pay['token'], 'payway': 'visamc', 'in_curr': 'UAH',
+                                                            'amount': '25', 'externalid': user2.merchant1._id()})
+        params = admin.get_model(model='payway', _filter='name', value='visamc')[0]['params']
+        params['payment_expiry'] = '1h'
+        admin.set_model(model='payway', data={'params': params}, selector={'name': ['eq', 'visamc']})
+        user2.merchant1.sci_subpay(method='cancel', params={'sci_subpay_token': user2.merchant1.resp_sci_subpay['token']})
+        assert user2.merchant1.resp_sci_subpay['status'] == 'canceled'
+        assert user2.merchant1.resp_sci_subpay['payway_name'] == 'visamc'
+        assert [dct['status'] for dct in admin.get_model(model='order', _filter='merchant_id', value=user1.merchant1.id) if dct['tp'] == 45][0] == 130
+        assert [dct['status'] for dct in admin.get_model(model='order', _filter='merchant_id', value=user1.merchant1.id) if dct['tp'] == 40][0] == 0
+        user2.merchant1.sci_subpay(method='create', params={'sci_pay_token': sci_pay['token'], 'payway': 'visamc', 'in_curr': 'UAH',
+                                                            'amount': '30', 'externalid': user2.merchant1._id()})
+        assert [dct['status'] for dct in admin.get_model(model='order', _filter='merchant_id', value=user1.merchant1.id) if dct['tp'] == 45][0] == 0
+        assert [dct['status'] for dct in admin.get_model(model='order', _filter='merchant_id', value=user1.merchant1.id) if dct['tp'] == 40][0] == 20
 
+
+@pytest.mark.negative
+@pytest.mark.usefixtures('_create_sci_pay_order')
+class TestWrongSciSubPayCancel:
+    """ Wrong request to sub_pay cancel method. """
+
+    def test_0(self, start_session):
+        """ Warm. """
+        global admin, user1, user2
+        admin, user1, user2 = start_session
+
+    def test_wrong_sci_sub_pay_cancel_1(self, _start_sci_pay_order):
+        """ Cancelling finished sub_pay order. """
+        sci_pay = [dct for dct in admin.get_model(model='order', _filter='merchant_id', value=user1.merchant1.id) if dct['tp'] == 40][0]
+        user2.merchant1.sci_subpay(method='create', params={'sci_pay_token': sci_pay['token'], 'payway': 'visamc', 'in_curr': 'UAH',
+                                                            'amount': '25', 'externalid': user2.merchant1._id()})
+        token = user2.merchant1.resp_sci_subpay['token']
+        admin.set_order_status(lid=user2.merchant1.resp_sci_subpay['lid'], status=100)
+        user2.merchant1.sci_subpay(method='cancel', params={'sci_subpay_token': user2.merchant1.resp_sci_subpay['token']})
+        assert user2.merchant1.resp_sci_subpay == {'code': -32002, 'data': {'field': 'sci_subpay_token', 'reason': 'Invalid sci_subpay_token value',
+                                                   'value': token}, 'message': 'EParamInvalid'}
+        assert [dct['status'] for dct in admin.get_model(model='order', _filter='merchant_id', value=user1.merchant1.id) if dct['tp'] == 45][0] == 100
+
+    def test_wrong_sci_sub_pay_cancel_2(self, _start_sci_pay_order):
+        """ Cancelling not real sci_sub_pay order. """
+        sci_pay = [dct for dct in admin.get_model(model='order', _filter='merchant_id', value=user1.merchant1.id) if dct['tp'] == 40][0]
+        user2.merchant1.sci_subpay(method='create', params={'sci_pay_token': sci_pay['token'], 'payway': 'visamc', 'in_curr': 'UAH',
+                                                            'amount': '25', 'externalid': user2.merchant1._id()})
+        user2.merchant1.sci_subpay(method='cancel', params={'sci_subpay_token': '123'})
+        assert user2.merchant1.resp_sci_subpay == {'code': -32002, 'data': {'field': 'sci_subpay_token', 'reason': 'Invalid sci_subpay_token value',
+                                                                            'value': '123'},
+                                                   'message': 'EParamInvalid'}
+        assert [dct['status'] for dct in admin.get_model(model='order', _filter='merchant_id', value=user1.merchant1.id) if dct['tp'] == 45][0] == 0
+
+    def test_wrong_sci_sub_pay_cancel_3(self):
+        """ Cancelling not sci_sub_pay order. """
+        sci_pay = [dct for dct in admin.get_model(model='order', _filter='merchant_id', value=user1.merchant1.id) if dct['tp'] == 40][0]
+        user2.merchant1.sci_subpay(method='cancel', params={'sci_subpay_token': sci_pay['token']})
+        assert user2.merchant1.resp_sci_subpay == {'code': -32002, 'data': {'field': 'sci_subpay_token', 'reason': 'Invalid sci_subpay_token value',
+                                                                            'value': sci_pay['token']}, 'message': 'EParamInvalid'}
+        assert admin.get_model(model='order', _filter='token', value=sci_pay['token'])[0]['status'] == sci_pay['status']
+
+    def test_wrong_sci_sub_pay_cancel_4(self):
+        """ Request without sci_sub_pay token. """
+        user2.merchant1.sci_subpay(method='cancel', params={})
+        assert user2.merchant1.resp_sci_subpay == {'code': -32002, 'data': {'field': 'sci_subpay_token', 'reason': 'Should be provided'},
+                                                   'message': 'EParamInvalid'}
+
+    def test_wrong_sci_sub_pay_cancel_5(self):
+        """ Request with excess parameter . """
+        user2.merchant1.sci_subpay(method='cancel', params={'sci_subpay_token': '123', 'par': '123'})
+        assert user2.merchant1.resp_sci_subpay == {'code': -32002, 'data': {'field': 'par', 'reason': 'Should not be provided'},
+                                                   'message': 'EParamInvalid'}
