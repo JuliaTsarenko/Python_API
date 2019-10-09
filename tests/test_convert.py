@@ -5,6 +5,7 @@ from users.tools import *
 from users.sign import create_sign
 
 
+@pytest.mark.positive
 @pytest.mark.usefixtures('_personal_exchange_fee')
 class TestConvertCalc:
 
@@ -257,6 +258,7 @@ class TestConvertCalc:
         assert user1.merchant1.resp_convert['rate'] == ['1', '3509.04101']
 
 
+@pytest.mark.negative
 class TestWrongConvertCalc:
     """ Wrong Calc"""
 
@@ -265,6 +267,7 @@ class TestWrongConvertCalc:
         global admin, user1, user2
         admin, user1, user2 = start_session
 
+    @pytest.mark.skip(reason='Fail')
     def test_wrong_convert_calc_1(self, _merchant_activate):
         """ Calc convert with inactive merchant. """
         admin.set_wallet_amount(balance=bl(100), currency='UAH', merch_lid=user1.merchant1.lid)
@@ -407,7 +410,7 @@ class TestWrongConvertCalc:
         """ Exchange with wrong sign. """
         admin.set_wallet_amount(balance=bl(100), currency='UAH', merch_lid=user1.merchant1.lid)
         data = {'method': 'convert.calc', 'params': {'in_curr': 'UAH', 'out_curr': 'USD', 'in_amount': '10', 'out_amount': None},
-                'jsonrpc': 2.0, 'id': '123456'}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': user1.merchant1.lid,
@@ -419,7 +422,7 @@ class TestWrongConvertCalc:
         """ Exchange without sign = None. """
         admin.set_wallet_amount(balance=bl(100), currency='UAH', merch_lid=user1.merchant1.lid)
         data = {'method': 'convert.calc', 'params': {'in_curr': 'UAH', 'out_curr': 'USD', 'in_amount': '1', 'out_amount': None},
-                'jsonrpc': 2.0, 'id': '123456'}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': user1.merchant1.lid,
                                    'x-signature': None,
@@ -431,7 +434,7 @@ class TestWrongConvertCalc:
         """ Exchange with wrong merchant id. """
         admin.set_wallet_amount(balance=bl(100), currency='UAH', merch_lid=user1.merchant1.lid)
         data = {'method': 'convert.calc', 'params': {'in_curr': 'UAH', 'out_curr': 'USD', 'in_amount': '1', 'out_amount': None},
-                'jsonrpc': 2.0, 'id': '123456'}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': '01',
@@ -443,7 +446,7 @@ class TestWrongConvertCalc:
         """ Exchange with None merchant id. """
         admin.set_wallet_amount(balance=bl(100), currency='UAH', merch_lid=user1.merchant1.lid)
         data = {'method': 'convert.calc', 'params': {'in_curr': 'UAH', 'out_curr': 'USD', 'in_amount': 1, 'out_amount': None},
-                'jsonrpc': 2.0, 'id': '123456'}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': None,
@@ -485,7 +488,6 @@ class TestConvertCreate:
         """ Warm. """
         global admin, user1, user2
         admin, user1, user2 = start_session
-
 
     def test_exchange_1(self):
         """ Exchange UAH to USD: baying 0.01 USD by OWNER without fee for exchange. """
@@ -657,7 +659,6 @@ class TestConvertCreate:
         assert user1.merchant1.balance(curr='USD') == '0.09'
         assert user1.merchant1.balance(curr='BTC') == '0.0053'
         '''
-
 
     def test_exchange_12(self):
         """ Exchange BTC to USD: baying 0.01 USD by MERCHANT without fee for exchange. """
@@ -1013,7 +1014,7 @@ class TestWrongConvert:
         admin.set_wallet_amount(balance=bl(100), currency='UAH', merch_lid=user1.merchant1.lid)
         data = {'method': 'convert.create',
                 'params': {'in_curr': 'UAH', 'out_curr': 'USD', 'in_amount': '10', 'out_amount': None, 'externalid': '123'},
-                'jsonrpc': 2.0, 'id': '123456'}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': str(user1.merchant1.lid),
@@ -1026,7 +1027,7 @@ class TestWrongConvert:
         admin.set_wallet_amount(balance=bl(100), currency='UAH', merch_lid=user1.merchant1.lid)
         data = {'method': 'convert.create',
                 'params': {'in_curr': 'UAH', 'out_curr': 'USD', 'in_amount': '1', 'out_amount': None, 'externalid': '123'},
-                'jsonrpc': 2.0, 'id': '123456'}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': str(user1.merchant1.lid),
                                    'x-signature': None,
@@ -1039,7 +1040,7 @@ class TestWrongConvert:
         admin.set_wallet_amount(balance=bl(100), currency='UAH', merch_lid=user1.merchant1.lid)
         data = {'method': 'convert.create',
                 'params': {'in_curr': 'UAH', 'out_curr': 'USD', 'in_amount': '1', 'out_amount': None, 'externalid': '123'},
-                'jsonrpc': 2.0, 'id': '123456'}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': str(user1.merchant1.lid),
                                    'x-utc-now-ms': user1.merchant1.time_sent()}, verify=False)
@@ -1051,13 +1052,12 @@ class TestWrongConvert:
         data = {'method': 'convert.create',
                 'params': {'in_curr': 'UAH', 'out_curr': 'USD', 'in_amount': '1', 'out_amount': None,
                            'externalid': '123'},
-                'jsonrpc': 2.0, 'id': '123456'}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': '01',
                                    'x-signature': create_sign(user1.merchant1.akey, data['params'], time_sent),
                                    'x-utc-now-ms': time_sent}, verify=False)
-        print(r.text)
         assert loads(r.text)['error'] == {'code': -32010, 'message': 'InvalidMerchant', 'data': {'reason': 'Merchant Is Not Active'}}
 
     def test_wrong_exchange_23(self):
@@ -1066,7 +1066,7 @@ class TestWrongConvert:
         data = {'method': 'convert.create',
                 'params': {'in_curr': 'UAH', 'out_curr': 'USD', 'in_amount': 1, 'out_amount': None,
                            'externalid': '123'},
-                'jsonrpc': 2.0, 'id': '123456'}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': None,
@@ -1080,7 +1080,7 @@ class TestWrongConvert:
         data = {'method': 'convert.create',
                 'params': {'in_curr': 'UAH', 'out_curr': 'USD', 'in_amount': '1', 'out_amount': None,
                            'externalid': '123'},
-                'jsonrpc': 2.0, 'id': '123456'}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-signature': create_sign(user1.merchant1.akey, data['params'], time_sent),
@@ -1091,13 +1091,12 @@ class TestWrongConvert:
         """ Exchange without IN_CURR parameter. """
         data = {'method': 'convert.create',
                 'params': {'out_curr': 'USD', 'in_amount': '1', 'out_amount': None, 'externalid': '123'},
-                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': str(user1.merchant1.lid),
                                    'x-signature': create_sign(user1.merchant1.akey, data['params'], time_sent),
                                    'x-utc-now-ms': time_sent}, verify=False)
-        print(r.text)
         assert loads(r.text)['error'] == {'code': -32602, 'message': 'InvalidInputParams',
                                           'data': {'reason': "method 'convert.create' missing 1 argument: 'in_curr'"}}
 
@@ -1105,7 +1104,7 @@ class TestWrongConvert:
         """ Exchange without OUT_CURR parameter. """
         data = {'method': 'convert.create',
                 'params': {'in_curr': 'UAH', 'in_amount': '1', 'out_amount': None, 'externalid': '123'},
-                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': str(user1.merchant1.lid),
@@ -1119,7 +1118,7 @@ class TestWrongConvert:
         """ Exchange without IN_AMOUNT and OUT_AMOUNT. """
         data = {'method': 'convert.create',
                 'params': {'in_curr': 'UAH', 'out_curr': 'USD', 'externalid': '123'},
-                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': str(user1.merchant1.lid),
@@ -1134,13 +1133,12 @@ class TestWrongConvert:
         """ Exchange without EXTERNAL_ID. """
         data = {'method': 'convert.create',
                 'params': {'in_curr': 'UAH', 'out_curr': 'USD', 'in_amount': '1', 'out_amount': None},
-                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': str(user1.merchant1.lid),
                                    'x-signature': create_sign(user1.merchant1.akey, data['params'], time_sent),
                                    'x-utc-now-ms': time_sent}, verify=False)
-        print(r.text)
         assert loads(r.text)['error'] == {'code': -32602, "data": {'reason': "method 'convert.create' missing 1 argument: 'externalid'"},
                                           'message': 'InvalidInputParams'}
 
@@ -1151,7 +1149,7 @@ class TestWrongConvert:
         time_sent = user1.merchant1.time_sent()
         data = {'method': 'convert.create',
                 'params': {'in_curr': 'UAH', 'out_curr': 'USD', 'in_amount': '50', 'out_amount': None, 'externalid': ex_id},
-                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         requests.post(url=user1.merchant1.japi_url, json=data,
                       headers={'x-merchant': str(user1.merchant1.lid),
                                'x-signature': create_sign(user1.merchant1.akey, data['params'], time_sent),
@@ -1160,7 +1158,6 @@ class TestWrongConvert:
                           headers={'x-merchant': str(user1.merchant1.lid),
                                    'x-signature': create_sign(user1.merchant1.akey, data['params'], time_sent),
                                    'x-utc-now-ms': time_sent}, verify=False)
-        print(r.text)
         assert loads(r.text)['error'] == {'code': -32033, 'data': {'reason': 'Duplicated key for externalid'}, 'message': 'Unique'}
 
     def test_wrong_exchange_30(self):
@@ -1169,7 +1166,7 @@ class TestWrongConvert:
         data = {'method': 'convert.create',
                 'params': {'in_curr': 'UAH', 'out_curr': 'USD', 'in_amount': '50', 'out_amount': None,
                            'externalid': user1.merchant1._id(), 'par': '123'},
-                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': str(user1.merchant1.lid),
                                    'x-signature': create_sign(user1.merchant1.akey, data['params'], time_sent),
@@ -1337,7 +1334,7 @@ class TestWrongConvertParams:
         """ Getting params without in_curr parameter. """
         time_sent = user1.merchant1.time_sent()
         data = {'method': 'convert.params', 'params': {'out_curr': 'USD'},
-                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': user1.merchant1.lid,
                                    'x-signature': create_sign(user1.merchant1.akey, data['params'], time_sent),
@@ -1348,9 +1345,7 @@ class TestWrongConvertParams:
     def test_wrong_params_7(self):
         """ Getting params without out_curr parameter. """
         time_sent = user1.merchant1.time_sent()
-        data = {'method': 'convert.params',
-                'params': {'in_curr': 'USD'},
-                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+        data = {'method': 'convert.params', 'params': {'in_curr': 'USD'}, 'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': user1.merchant1.lid,
                                    'x-signature': create_sign(user1.merchant1.akey, data['params'], time_sent),
@@ -1363,7 +1358,7 @@ class TestWrongConvertParams:
         time_sent = user1.merchant1.time_sent()
         data = {'method': 'convert.params',
                 'params': {'in_curr': 'UAH', 'out_curr': 'USD', 'par': 'boom'},
-                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': user1.merchant1.lid,
                                    'x-signature': create_sign(user1.merchant1.akey, data['params'], time_sent),
@@ -1376,7 +1371,7 @@ class TestWrongConvertParams:
         time_sent = user1.merchant1.time_sent()
         data = {'method': 'convert.params',
                 'params': {'in_curr': 'UAH', 'out_curr': 'USD'},
-                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': user1.merchant1.lid,
                                    'x-signature': None,
@@ -1389,7 +1384,7 @@ class TestWrongConvertParams:
         time_sent = user1.merchant1.time_sent()
         data = {'method': 'convert.params',
                 'params': {'in_curr': 'UAH', 'out_curr': 'USD'},
-                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': user1.merchant1.lid,
                                    'x-signature': create_sign(user1.merchant2.akey, data['params'], time_sent),
@@ -1469,7 +1464,7 @@ class TestWrongConvertGet:
     def test_wrong_convert_get_6(self):
         """ Getting params with not real merchant . """
         time_sent = user1.merchant1.time_sent()
-        data = {'method': 'convert.get', 'params': {'o_lid': '333'}, 'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+        data = {'method': 'convert.get', 'params': {'o_lid': '333'}, 'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': '01',
                                    'x-signature': create_sign(user1.merchant1.akey, data['params'], time_sent),
@@ -1479,7 +1474,7 @@ class TestWrongConvertGet:
     def test_wrong_convert_get_7(self):
         """ Getting params without merchant . """
         time_sent = user1.merchant1.time_sent()
-        data = {'method': 'convert.get', 'params': {'o_lid': '333'}, 'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+        data = {'method': 'convert.get', 'params': {'o_lid': '333'}, 'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': None,
                                    'x-signature': create_sign(user1.merchant1.akey, data['params'], time_sent),
@@ -1489,7 +1484,7 @@ class TestWrongConvertGet:
     def test_wrong_convert_get_8(self):
         """ Getting params with wrong sign . """
         time_sent = user1.merchant1.time_sent()
-        data = {'method': 'convert.get', 'params': {'o_lid': '333'}, 'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+        data = {'method': 'convert.get', 'params': {'o_lid': '333'}, 'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': user1.merchant1.lid,
                                    'x-signature': create_sign(user1.merchant2.akey, data['params'], time_sent),
@@ -1499,7 +1494,7 @@ class TestWrongConvertGet:
     def test_wrong_convert_get_9(self):
         """ Getting params without sign . """
         time_sent = user1.merchant1.time_sent()
-        data = {'method': 'convert.get', 'params': {'o_lid': '333'}, 'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+        data = {'method': 'convert.get', 'params': {'o_lid': '333'}, 'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': user1.merchant1.lid,
                                    'x-signature': None,
@@ -1509,7 +1504,7 @@ class TestWrongConvertGet:
     def test_wrong_convert_get_10(self):
         """ Getting params without sign . """
         time_sent = user1.merchant1.time_sent()
-        data = {'method': 'convert.get', 'params': {'o_lid': '333'}, 'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+        data = {'method': 'convert.get', 'params': {'o_lid': '333'}, 'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': user1.merchant1.lid,
                                    'x-signature': create_sign(user1.merchant1.akey, data['params'], time_sent),

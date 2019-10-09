@@ -4,6 +4,7 @@ import random
 from users import sign
 from json import loads
 from string import ascii_uppercase
+import pprint
 
 
 class Merchant:
@@ -326,7 +327,6 @@ class Merchant:
         data = {'method': 'sci_pay.' + method, 'params': params, 'jsonrpc': self.json_rpc, 'id': self.req_id}
         time_sent = self.time_sent()
         r = requests.post(url=self.japi_url, json=data, headers=self.headers(data, time_sent), verify=False)
-        print(r.text)
         try:
             self.resp_sci_pay = loads(r.text)['result']
             self.sci_pay_lid = loads(r.text).get('result', {}).get('lid')
@@ -339,7 +339,6 @@ class Merchant:
         data = {'method': 'sci_subpay.' + method, 'params': params, 'jsonrpc': self.json_rpc, 'id': self.req_id}
         time_sent = self.time_sent()
         r = requests.post(url=self.japi_url, json=data, headers=self.headers(data, time_sent), verify=False)
-        print(r.text)
         try:
             self.resp_sci_subpay = loads(r.text)['result']
             self.sci_subpay_lid = loads(r.text).get('result', {}).get('lid')
@@ -366,6 +365,7 @@ class Merchant:
                 'jsonrpc': self.json_rpc, 'id': self.req_id}
         time_sent = self.time_sent()
         r = requests.post(url=self.japi_url, json=data, headers=self.headers(data, time_sent), verify=False)
+        # pprint.pprint(loads(r.text))
         self.resp_transfer_create = loads(r.text)
 
     def transfer_params(self, out_curr, in_curr=None):
@@ -584,20 +584,6 @@ class Merchant:
             self.resp_payout_calc = loads(r.text)['error']
 
 
-    def currency_list(self):
-        self.req_id = self._id()
-        data = {'method': 'merchant.currency_list', 'params': {}, 'jsonrpc': self.json_rpc, 'id': self.req_id}
-        time_sent = self.time_sent()
-        r = requests.post(url=self.japi_url, json=data,
-                          headers={'x-merchant': str(self.lid),
-                                   'x-signature': sign.create_sign(self.akey, data['params'], time_sent),
-                                   'x-utc-now-ms': time_sent},
-                          verify=False)
-        # pprint.pprint(loads(r.text))
-        self.resp_currency_list = loads(r.text)
-        return loads(r.text)
-
-
     def exchange_list(self):
         self.req_id = self._id()
         data = {'method': 'merchant.exchange_list', 'params': {}, 'jsonrpc': self.json_rpc, 'id': self.req_id}
@@ -609,20 +595,6 @@ class Merchant:
                           verify=False)
         # pprint.pprint(loads(r.text))
         self.resp_exchange_list = loads(r.text)
-        return loads(r.text)
-
-
-    def payway_list(self):
-        self.req_id = self._id()
-        data = {'method': 'merchant.payway_list', 'params': {}, 'jsonrpc': self.json_rpc, 'id': self.req_id}
-        time_sent = self.time_sent()
-        r = requests.post(url=self.japi_url, json=data,
-                          headers={'x-merchant': str(self.lid),
-                                   'x-signature': sign.create_sign(self.akey, data['params'], time_sent),
-                                   'x-utc-now-ms': time_sent},
-                          verify=False)
-        # pprint.pprint(loads(r.text))
-        self.resp_payway_list = loads(r.text)
         return loads(r.text)
 
     def convert_list(self, in_curr=None, out_curr=None, first=None, count=None):

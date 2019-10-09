@@ -1,8 +1,17 @@
-Запуск отдельного модуля с тестами: pytest -p no:warnings tests/test_{module_name}.py -s -v -x
+Запуск отдельного модуля с тестами: pytest -p no:warnings tests/test_{module_name}.py -s -v -x -vv
 Запуск отдельного класса с тестами в модуле: pytest -p no:warnings tests/test_{module_name}.py::{Class_name} -s -v
-Запуск отдельного теста: pytest -p no:warnings tests/test_{module_name}.py::{Class_name}::{Test_name} -s -v  # НЕ ЗАПУСКАТЬ, СТОИТ ЗАВИСИМОСТЬ ОТ НУЛЕВОГО ТЕСТА
+
 
 Параметры запуска :
---ADMIN=_iFb8_FMw8vghZNdqz2XBb1wHMv3POY5nLHHE7QGI_eqNsLK_qd0UGS2dMKVyXQV4Ngy
---USER1=testjcash@gmail.com:aA/123
---USER2=testjcash2@gmail.com:aA/123
+--ADMIN={токен сессии админа}
+--USER1={логин:пароль}
+--USER2={логин:пароль}
+
+
+1. После старта тестов общие мерчанты именуются user1.merchant2/1
+2. После старта тестов мерчанты, привязаные к платежной системе, если они существуют, именуются user1.pwmerchant_{Название пейвея большими буквами}
+
+
+При написании тестов нужно использовать именование общего мерчанта как раньше, мерчанта для валюты как описано в пункте 2
+
+

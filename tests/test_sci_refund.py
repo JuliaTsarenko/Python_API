@@ -329,7 +329,9 @@ class TestSciRefundCreate:
         admin.set_wallet_amount(balance=bl(100), currency='RUB', merch_lid=user1.merchant1.lid)
         admin.set_fee(currency_id=admin.currency['RUB'], payway_id=admin.payway_id['qiwi'], tp=40, is_active=True)
         admin.set_pwc(pw_id=admin.payway_id['qiwi'], currency='RUB', is_out=False, is_active=True,
-                      tech_min=bl(1), tech_max=bl(100))
+                      tech_min=bl(0.01), tech_max=bl(3000))
+        admin.set_pwc(pw_id=admin.payway_id['anycash'], currency='RUB', is_out=True, is_active=True,
+                      tech_min=bl(0.01), tech_max=bl(3000))
         admin.set_rate_exchange(fee=0, rate=bl(2.6666), in_currency='RUB', out_currency='UAH')
         user1.delegate(params={'m_lid': user1.merchant1.lid, 'merch_model': 'sci_pay', 'merch_method': 'create',
                                'out_curr': 'UAH', 'expiry': '7d', 'externalid': user1.ex_id(), 'payway': 'qiwi',
@@ -354,7 +356,7 @@ class TestSciRefundCreate:
         assert user1.resp_delegate['out_amount'] == '20'
         assert user1.resp_delegate['out_fee_amount'] == '0'
         assert user1.resp_delegate['out_curr'] == 'RUB'
-        assert user1.resp_delegate['rate'] == None
+        assert user1.resp_delegate['rate'] is None
 
     def test_sci_refund_create_10(self, _custom_fee, _disable_personal_exchange_fee):
         """ SCI payin from PAYEER 8.33 USD by MERCHANT with exchange to UAH with common exchange fee 3%,
@@ -477,6 +479,930 @@ class TestSciRefundCreate:
         assert user1.resp_delegate['out_amount'] == '0.00579'
         assert user1.resp_delegate['out_fee_amount'] == '0.00021'
         assert user1.resp_delegate['payway_name'] == 'anycash'
+
+    def test_sci_refund_create_13(self):
+        """ Refund for sci_pay from VISAMC 0.5 of 1 UAH by MERCHANT. """
+        admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=40, currency_id=admin.currency['UAH'],
+                      payway_id=admin.payway['visamc']['id'], is_active=True)
+        admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=45, currency_id=admin.currency['UAH'],
+                      payway_id=admin.payway['visamc']['id'], is_active=True)
+        admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=46, currency_id=admin.currency['UAH'],
+                      payway_id=admin.payway['anycash']['id'], is_active=True)
+        admin.set_pwc(pw_id=admin.payway_id['visamc'], currency='UAH', is_out=False, is_active=True, tech_min=bl(0.01),
+                      tech_max=bl(100))
+        user1.merchant1.sci_pay(method='create',
+                                params={'externalid': user1.ex_id(), 'payway': 'visamc', 'amount': '1',
+                                        'in_curr': 'UAH', 'expiry': '7d'})
+        # pprint.pprint(user1.merchant1.resp_sci_pay)
+        user1.merchant1.sci_subpay(method='create',
+                                   params={'sci_pay_token': user1.merchant1.sci_pay_token,
+                                           'externalid': user1.ex_id(), 'payway': 'visamc', 'amount': '0.5',
+                                           'in_curr': 'UAH', 'contact': '4731185613244273'})
+        # pprint.pprint(user1.merchant1.resp_sci_subpay)
+        admin.set_order_status(lid=user1.merchant1.sci_subpay_lid, status=0)
+        admin.set_order_status(lid=user1.merchant1.sci_subpay_lid, status=100)
+        user1.merchant1.sci_subpay(method='get', params={'sci_subpay_token': user1.merchant1.sci_subpay_token})
+        # print('\n', 'sci_subpay status', user1.merchant1.resp_sci_subpay['status'])
+        admin.set_order_status(lid=user1.merchant1.sci_pay_lid, status=120, amount_paid=bl(0.5))
+        # print('\n', 'sci_pay status', user1.merchant1.resp_sci_pay['status'])
+        # admin.set_order_status(lid=user1.merchant1.sci_pay_lid, status=30, amount_paid=0.5)
+        user1.merchant1.sci_pay(method='get', params={'pay_token': user1.merchant1.sci_pay_token})
+        # print('\n', 'sci_pay status', user1.merchant1.resp_sci_pay['status'])
+        user1.merchant1.sci_refund(method='create', params={'sci_pay_token': user1.merchant1.sci_pay_token})
+        # pprint.pprint(user1.merchant1.resp_sci_refund)
+        assert user1.merchant1.resp_sci_refund['account_amount'] == '0.5'
+        assert user1.merchant1.resp_sci_refund['in_amount'] == '0.5'
+        assert user1.merchant1.resp_sci_refund['in_curr'] == 'UAH'
+        assert user1.merchant1.resp_sci_refund['in_fee_amount'] == '0'
+        assert user1.merchant1.resp_sci_refund['orig_amount'] == '0.5'
+        assert user1.merchant1.resp_sci_refund['out_amount'] == '0.5'
+        assert user1.merchant1.resp_sci_refund['out_curr'] == 'UAH'
+        assert user1.merchant1.resp_sci_refund['out_fee_amount'] == '0'
+
+@pytest.mark.usefixtures('_refund_sci_fee', '_personal_exchange_fee')
+class TestSciRefundCreateSubpayPayway:
+    """ Create refund sci_pay. """
+
+    def test_0(self, start_session):
+        """ Warm. """
+        global admin, user1, user2
+        admin, user1, user2 = start_session
+        admin.set_currency_precision(is_crypto=False, admin_min=bl(0.01), admin_max=bl(3000), precision=2)
+        admin.set_currency_precision(is_crypto=True, admin_min=bl(0.000001), admin_max=bl(3), precision=8)
+        admin.set_pwc(pw_id=admin.payway_id['anycash'], currency='USD', is_out=True, is_active=True,
+                      tech_min=bl(0.01), tech_max=bl(3000))
+        admin.set_pwc(pw_id=admin.payway_id['anycash'], currency='UAH', is_out=True, is_active=True,
+                      tech_min=bl(0.01), tech_max=bl(3000))
+        admin.set_pwc(pw_id=admin.payway_id['anycash'], currency='RUB', is_out=True, is_active=True,
+                      tech_min=bl(0.01), tech_max=bl(3000))
+        admin.set_pwc(pw_id=admin.payway_id['anycash'], currency='BTC', is_out=True, is_active=True,
+                      tech_min=bl(0.000001), tech_max=bl(3))
+
+    # def test_sci_refund_create_1_1(self):
+    #     """ Refund for sci_pay from VISAMC 0.5 of 1 UAH by MERCHANT. """
+    #     admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=40, currency_id=admin.currency['UAH'],
+    #                   payway_id=admin.payway['visamc']['id'], is_active=True)
+    #     admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=45, currency_id=admin.currency['UAH'],
+    #                   payway_id=admin.payway['visamc']['id'], is_active=True)
+    #     admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=46, currency_id=admin.currency['UAH'],
+    #                   payway_id=admin.payway['anycash']['id'], is_active=True)
+    #     admin.set_pwc(pw_id=admin.payway_id['visamc'], currency='UAH', is_out=False, is_active=True, tech_min=bl(0.01),
+    #                   tech_max=bl(100))
+    #     user1.merchant1.sci_pay(method='create',
+    #                             params={'externalid': user1.ex_id(), 'payway': 'visamc', 'amount': '1',
+    #                                     'in_curr': 'UAH', 'expiry': '7d'})
+    #     # pprint.pprint(user1.merchant1.resp_sci_pay)
+    #     assert user1.merchant1.resp_sci_pay['account_amount'] == '1'
+    #     user1.merchant1.sci_subpay(method='create',
+    #                                params={'sci_pay_token': user1.merchant1.sci_pay_token,
+    #                                        'externalid': user1.ex_id(), 'payway': 'privat24', 'amount': '0.5',
+    #                                        'in_curr': 'UAH', 'contact': '4731185613244273'})
+    #     # pprint.pprint(user1.merchant1.resp_sci_subpay)
+    #     assert user1.merchant1.resp_sci_subpay['code'] == -32081
+    #     assert user1.merchant1.resp_sci_subpay['data']['field'] == 'payway'
+    #     assert user1.merchant1.resp_sci_subpay['data']['reason'] == 'Invalid payway name'
+    #     assert user1.merchant1.resp_sci_subpay['message'] == 'EParamPaywayInvalid'
+    #
+    # def test_sci_refund_create_1_2(self):
+    #     """ Refund for sci_pay from VISAMC 0.5 of 1 UAH by MERCHANT. """
+    #     admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=40, currency_id=admin.currency['UAH'],
+    #                   is_active=True)
+    #     admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=45, currency_id=admin.currency['UAH'],
+    #                   payway_id=admin.payway['visamc']['id'], is_active=True)
+    #     admin.set_fee(mult=0, add=0, _min=0, _max=0, around='ceil', tp=46, currency_id=admin.currency['UAH'],
+    #                   payway_id=admin.payway['anycash']['id'], is_active=True)
+    #     admin.set_pwc(pw_id=admin.payway_id['visamc'], currency='UAH', is_out=False, is_active=True, tech_min=bl(0.01),
+    #                   tech_max=bl(100))
+    #     user1.merchant1.sci_pay(method='create',
+    #                             params={'externalid': user1.ex_id(), 'amount': '1', 'in_curr': 'UAH', 'expiry': '7d'})
+    #     # pprint.pprint(user1.merchant1.resp_sci_pay)
+    #     assert user1.merchant1.resp_sci_pay['account_amount'] == '1'
+    #     user1.merchant1.sci_subpay(method='create',
+    #                                params={'sci_pay_token': user1.merchant1.sci_pay_token,
+    #                                        'externalid': user1.ex_id(), 'payway': 'visamc', 'amount': '0.5',
+    #                                        'in_curr': 'UAH', 'contact': '4731185613244273'})
+    #     # pprint.pprint(user1.merchant1.resp_sci_subpay)
+    #     assert (float(user1.merchant1.resp_sci_subpay['in_amount']) -
+    #             float(user1.merchant1.resp_sci_subpay['in_fee_amount'])) == 0.5
+    #     admin.set_order_status(lid=user1.merchant1.sci_subpay_lid, status=0)
+    #     admin.set_order_status(lid=user1.merchant1.sci_subpay_lid, status=100)
+    #     user1.merchant1.sci_subpay(method='get', params={'sci_subpay_token': user1.merchant1.sci_subpay_token})
+    #     # print('\n', 'sci_subpay status', user1.merchant1.resp_sci_subpay['status'])
+    #     admin.set_order_status(lid=user1.merchant1.sci_pay_lid, status=0, amount_paid=bl(0.5))
+    #     # print('\n', 'sci_pay status', user1.merchant1.resp_sci_pay['status'])
+    #     # admin.set_order_status(lid=user1.merchant1.sci_pay_lid, status=30, amount_paid=0.5)
+    #     user1.merchant1.sci_pay(method='get', params={'pay_token': user1.merchant1.sci_pay_token})
+    #     # print('\n', 'sci_pay status', user1.merchant1.resp_sci_pay['status'])
+    #     user1.merchant1.sci_refund(method='create', params={'sci_pay_token': user1.merchant1.sci_pay_token})
+    #     # pprint.pprint(user1.merchant1.resp_sci_refund)
+    #     assert user1.merchant1.resp_sci_refund['account_amount'] == '0.5'
+    #     assert user1.merchant1.resp_sci_refund['in_amount'] == '0.5'
+    #     assert user1.merchant1.resp_sci_refund['in_curr'] == 'UAH'
+    #     assert user1.merchant1.resp_sci_refund['in_fee_amount'] == '0'
+    #     assert user1.merchant1.resp_sci_refund['orig_amount'] == '0.5'
+    #     assert user1.merchant1.resp_sci_refund['out_amount'] == '0.5'
+    #     assert user1.merchant1.resp_sci_refund['out_curr'] == 'UAH'
+    #     assert user1.merchant1.resp_sci_refund['out_fee_amount'] == '0'
+    #
+    # def test_sci_refund_create_2_1(self):
+    #     """ Calc for sci_pay from PAYEER 1.02 USD by OWNER. """
+    #     admin.set_fee(currency_id=admin.currency['USD'], payway_id=admin.payway_id['payeer'], tp=40, is_active=True)
+    #     admin.set_fee(currency_id=admin.currency['USD'], payway_id=admin.payway_id['payeer'], tp=45, is_active=True)
+    #     admin.set_fee(currency_id=admin.currency['USD'], payway_id=admin.payway_id['anycash'], tp=46, is_active=True)
+    #     admin.set_pwc(pw_id=admin.payway_id['payeer'], currency='USD', is_out=False, is_active=True,
+    #                   tech_min=bl(0.5), tech_max=bl(100))
+    #     user1.delegate(params={'externalid': user1.ex_id(), 'expiry': '7d', 'm_lid': user1.merchant1.lid,
+    #                            'merch_model': 'sci_pay', 'merch_method': 'create',
+    #                            'payway': 'payeer', 'amount': '1.02', 'in_curr': 'USD'})
+    #     # pprint.pprint(user1.resp_delegate)
+    #     assert user1.resp_delegate['account_amount'] == '1.02'
+    #     sci_pay_lid = user1.resp_delegate['lid']
+    #     sci_pay_token = user1.resp_delegate['token']
+    #     user1.delegate(params={'sci_pay_token': sci_pay_token, 'externalid': user1.ex_id(), 'contact': 'P14812343',
+    #                            'm_lid': user1.merchant1.lid,  'merch_model': 'sci_subpay', 'merch_method': 'create',
+    #                            'payway': 'paymer', 'amount': '0.52', 'in_curr': 'USD'})
+    #     # pprint.pprint(user1.resp_delegate)
+    #     assert user1.resp_delegate['code'] == -32081
+    #     assert user1.resp_delegate['data']['field'] == 'payway'
+    #     assert user1.resp_delegate['data']['reason'] == 'Invalid payway name'
+    #     assert user1.resp_delegate['message'] == 'EParamPaywayInvalid'
+    #
+    # def test_sci_refund_create_2_2(self):
+    #     """ Calc for sci_pay from PAYEER 1.02 USD by OWNER. """
+    #     admin.set_fee(currency_id=admin.currency['USD'], tp=40, is_active=True)
+    #     admin.set_fee(currency_id=admin.currency['USD'], payway_id=admin.payway_id['payeer'], tp=45, is_active=True)
+    #     admin.set_fee(currency_id=admin.currency['USD'], payway_id=admin.payway_id['anycash'], tp=46, is_active=True)
+    #     admin.set_pwc(pw_id=admin.payway_id['payeer'], currency='USD', is_out=False, is_active=True,
+    #                   tech_min=bl(0.5), tech_max=bl(100))
+    #     user1.delegate(params={'externalid': user1.ex_id(), 'expiry': '7d', 'm_lid': user1.merchant1.lid,
+    #                            'merch_model': 'sci_pay', 'merch_method': 'create', 'amount': '1.02', 'in_curr': 'USD'})
+    #     # pprint.pprint(user1.resp_delegate)
+    #     assert user1.resp_delegate['account_amount'] == '1.02'
+    #     sci_pay_lid = user1.resp_delegate['lid']
+    #     sci_pay_token = user1.resp_delegate['token']
+    #     user1.delegate(params={'sci_pay_token': sci_pay_token, 'externalid': user1.ex_id(), 'contact': 'P14812343',
+    #                            'm_lid': user1.merchant1.lid, 'merch_model': 'sci_subpay', 'merch_method': 'create',
+    #                            'payway': 'payeer', 'amount': '0.52', 'in_curr': 'USD'})
+    #     # pprint.pprint(user1.resp_delegate)
+    #     assert (float(user1.resp_delegate['in_amount']) -
+    #             float(user1.resp_delegate['in_fee_amount'])) == 0.52
+    #     admin.set_order_status(lid=user1.resp_delegate['lid'], status=100)
+    #     admin.set_order_status(lid=sci_pay_lid, status=0, amount_paid=bl(0.52))
+    #     user1.delegate(params={'m_lid': user1.merchant1.lid, 'merch_model': 'sci_refund', 'merch_method': 'create',
+    #                            'sci_pay_token': sci_pay_token})
+    #     # pprint.pprint(user1.resp_delegate)
+    #     assert user1.resp_delegate['account_amount'] == '0.52'
+    #     assert user1.resp_delegate['in_amount'] == '0.52'
+    #     assert user1.resp_delegate['in_curr'] == 'USD'
+    #     assert user1.resp_delegate['in_fee_amount'] == '0'
+    #     assert user1.resp_delegate['orig_amount'] == '0.52'
+    #     assert user1.resp_delegate['out_amount'] == '0.52'
+    #     assert user1.resp_delegate['out_curr'] == 'USD'
+    #     assert user1.resp_delegate['out_fee_amount'] == '0'
+
+    def test_sci_refund_create_3_1(self):
+        """ Calc for sci_pay from BTC 0.99999 BTC by OWNER. """
+        admin.set_fee(currency_id=admin.currency['BTC'], payway_id=admin.payway_id['btc'], tp=40, is_active=True)
+        admin.set_fee(currency_id=admin.currency['BTC'], payway_id=admin.payway_id['btc'], tp=45, is_active=True)
+        admin.set_fee(currency_id=admin.currency['BTC'], payway_id=admin.payway_id['anycash'], tp=46, is_active=True)
+        admin.set_pwc(pw_id=admin.payway_id['btc'], currency='BTC', is_out=False, is_active=True,
+                      tech_min=bl(0.0008), tech_max=bl(1))
+        # print('\n', 'user1.merchant1.id', user1.merchant1.id)
+        # admin.create_pwmerchactive(merch_id=user1.merchant1.id, payway_id=admin.payway_id['btc'], is_active=True)
+        admin.set_pwmerchactive(merch_id=user1.merchant1.id, payway_id=admin.payway_id['btc'], is_active=True)
+        user1.delegate(params={'externalid': user1.ex_id(), 'expiry': '7d',  'm_lid': user1.merchant1.lid,
+                               'merch_model': 'sci_pay', 'merch_method': 'create',
+                               'payway': 'btc', 'amount': '0.99999', 'in_curr': 'BTC'})
+        # pprint.pprint(user1.resp_delegate)
+        sci_pay_lid = user1.resp_delegate['lid']
+        sci_pay_token = user1.resp_delegate['token']
+        user1.delegate(params={'sci_pay_token': sci_pay_token, 'externalid': user1.ex_id(), 'm_lid': user1.merchant1.lid,
+                               'merch_model': 'sci_subpay', 'merch_method': 'create',
+                               'contact': '32LdQGCG1PHYNP2sRkZgrP6UAfQYTSkshx',
+                               'payway': 'ltc', 'amount': '0.01999', 'in_curr': 'BTC'})
+        # pprint.pprint(user1.resp_delegate)
+        assert user1.resp_delegate['code'] == -32081
+        assert user1.resp_delegate['data']['field'] == 'payway'
+        assert user1.resp_delegate['data']['reason'] == 'Invalid payway name'
+        assert user1.resp_delegate['message'] == 'EParamPaywayInvalid'
+
+    def test_sci_refund_create_3_2(self):
+        """ Calc for sci_pay from BTC 0.99999 BTC by OWNER. """
+        admin.set_fee(currency_id=admin.currency['BTC'], tp=40, is_active=True)
+        admin.set_fee(currency_id=admin.currency['BTC'], payway_id=admin.payway_id['btc'], tp=45, is_active=True)
+        admin.set_fee(currency_id=admin.currency['BTC'], payway_id=admin.payway_id['anycash'], tp=46, is_active=True)
+        admin.set_pwc(pw_id=admin.payway_id['btc'], currency='BTC', is_out=False, is_active=True,
+                      tech_min=bl(0.0008), tech_max=bl(1))
+        # print('\n', 'user1.merchant1.id', user1.merchant1.id)
+        # admin.create_pwmerchactive(merch_id=user1.merchant1.id, payway_id=admin.payway_id['btc'], is_active=True)
+        admin.set_pwmerchactive(merch_id=user1.merchant1.id, payway_id=admin.payway_id['btc'], is_active=True)
+        user1.delegate(params={'externalid': user1.ex_id(), 'expiry': '7d',  'm_lid': user1.merchant1.lid,
+                               'merch_model': 'sci_pay', 'merch_method': 'create', 'amount': '0.99999', 'in_curr': 'BTC'})
+        # pprint.pprint(user1.resp_delegate)
+        assert user1.resp_delegate['account_amount'] == '0.99999'
+        sci_pay_lid = user1.resp_delegate['lid']
+        sci_pay_token = user1.resp_delegate['token']
+        user1.delegate(params={'sci_pay_token': sci_pay_token, 'externalid': user1.ex_id(), 'm_lid': user1.merchant1.lid,
+                               'merch_model': 'sci_subpay', 'merch_method': 'create',
+                               'contact': '32LdQGCG1PHYNP2sRkZgrP6UAfQYTSkshx',
+                               'payway': 'btc', 'amount': '0.01999', 'in_curr': 'BTC'})
+        # pprint.pprint(user1.resp_delegate)
+        assert (float(user1.resp_delegate['in_amount']) -
+                float(user1.resp_delegate['in_fee_amount'])) == 0.01999
+        admin.set_order_status(lid=user1.resp_delegate['lid'], status=100)
+        admin.set_order_status(lid=sci_pay_lid, status=0, amount_paid=bl(0.01))
+        user1.delegate(params={'sci_pay_token': sci_pay_token, 'externalid': user1.ex_id(), 'm_lid': user1.merchant1.lid,
+                               'merch_model': 'sci_subpay', 'merch_method': 'create',
+                               'contact': '32LdQGCG1PHYNP2sRkZgrP6UAfQYTSkshx',
+                               'payway': 'btc', 'amount': '0.01', 'in_curr': 'BTC'})
+        # pprint.pprint(user1.resp_delegate)
+        assert (float(user1.resp_delegate['in_amount']) -
+                float(user1.resp_delegate['in_fee_amount'])) == 0.01
+        admin.set_order_status(lid=user1.resp_delegate['lid'], status=100)
+        admin.set_order_status(lid=sci_pay_lid, status=0, amount_paid=bl(0.02999))
+        user1.delegate(params={'m_lid': user1.merchant1.lid,  'merch_model': 'sci_refund', 'merch_method': 'create',
+                               'sci_pay_token': sci_pay_token})
+        # pprint.pprint(user1.resp_delegate)
+        assert user1.resp_delegate['account_amount'] == '0.02999'
+        assert user1.resp_delegate['in_amount'] == '0.02999'
+        assert user1.resp_delegate['in_curr'] == 'BTC'
+        assert user1.resp_delegate['in_fee_amount'] == '0'
+        assert user1.resp_delegate['orig_amount'] == '0.02999'
+        assert user1.resp_delegate['out_amount'] == '0.02999'
+        assert user1.resp_delegate['out_curr'] == 'BTC'
+        assert user1.resp_delegate['out_fee_amount'] == '0'
+
+    def test_sci_refund_create_4_1(self):
+        """ Calc for sci_pay from PRIVAT24 10 UAH by MERCHANT with common percent fee 15. """
+        admin.set_wallet_amount(balance=bl(0), currency='UAH', merch_lid=user1.merchant1.lid)
+        admin.set_fee(currency_id=admin.currency['UAH'], payway_id=admin.payway_id['privat24'], tp=40, is_active=True,
+                      mult=pers(15))
+        admin.set_fee(currency_id=admin.currency['UAH'], payway_id=admin.payway_id['privat24'], tp=45, is_active=True,
+                      mult=pers(15))
+        admin.set_fee(currency_id=admin.currency['UAH'], payway_id=admin.payway_id['anycash'], tp=46, is_active=True,
+                      mult=pers(15))
+        admin.set_pwc(pw_id=admin.payway_id['privat24'], currency='UAH', is_out=False, is_active=True,
+                      tech_min=bl(3), tech_max=bl(200))
+        admin.set_pwmerchactive(merch_id=user1.merchant1.id, payway_id=admin.payway_id['privat24'], is_active=True)
+        user1.merchant1.sci_pay(method='create',
+                                params={'externalid': user1.ex_id(), 'payway': 'privat24', 'amount': '10',
+                                        'in_curr': 'UAH', 'expiry': '7d'})
+        # pprint.pprint(user1.merchant1.resp_sci_pay)
+        assert user1.merchant1.resp_sci_pay['account_amount'] == '8.5'
+        user1.merchant1.sci_subpay(method='create',
+                                   params={'sci_pay_token': user1.merchant1.sci_pay_token,
+                                           'externalid': user1.ex_id(), 'payway': 'visamc', 'amount': '3',
+                                           'in_curr': 'UAH', 'contact': '4731185613244273'})
+        # pprint.pprint(user1.merchant1.resp_sci_subpay)
+        assert user1.merchant1.resp_sci_subpay['code'] == -32081
+        assert user1.merchant1.resp_sci_subpay['data']['field'] == 'payway'
+        assert user1.merchant1.resp_sci_subpay['data']['reason'] == 'Invalid payway name'
+        assert user1.merchant1.resp_sci_subpay['message'] == 'EParamPaywayInvalid'
+
+    def test_sci_refund_create_4_2(self):
+        """ Calc for sci_pay from PRIVAT24 10 UAH by MERCHANT with common percent fee 15. """
+        admin.set_wallet_amount(balance=bl(0), currency='UAH', merch_lid=user1.merchant1.lid)
+        admin.set_fee(currency_id=admin.currency['UAH'], tp=40, is_active=True, mult=pers(15))
+        admin.set_fee(currency_id=admin.currency['UAH'], payway_id=admin.payway_id['privat24'], tp=45, is_active=True,
+                      mult=pers(15))
+        admin.set_fee(currency_id=admin.currency['UAH'], payway_id=admin.payway_id['anycash'], tp=46, is_active=True,
+                      mult=pers(15))
+        admin.set_pwc(pw_id=admin.payway_id['privat24'], currency='UAH', is_out=False, is_active=True,
+                      tech_min=bl(3), tech_max=bl(200))
+        admin.set_pwmerchactive(merch_id=user1.merchant1.id, payway_id=admin.payway_id['privat24'], is_active=True)
+        user1.merchant1.sci_pay(method='create',
+                                params={'externalid': user1.ex_id(),  'amount': '10', 'in_curr': 'UAH', 'expiry': '7d'})
+        # pprint.pprint(user1.merchant1.resp_sci_pay)
+        assert user1.merchant1.resp_sci_pay['account_amount'] == '8.5'
+        user1.merchant1.sci_subpay(method='create',
+                                   params={'sci_pay_token': user1.merchant1.sci_pay_token,
+                                           'externalid': user1.ex_id(), 'payway': 'privat24', 'amount': '3',
+                                           'in_curr': 'UAH', 'contact': '4731185613244273'})
+        # pprint.pprint(user1.merchant1.resp_sci_subpay)
+        assert (float(user1.merchant1.resp_sci_subpay['in_amount']) -
+                float(user1.merchant1.resp_sci_subpay['in_fee_amount'])) == 2.55
+        admin.set_order_status(lid=user1.merchant1.sci_subpay_lid, status=0)
+        admin.set_order_status(lid=user1.merchant1.sci_subpay_lid, status=100)
+        user1.merchant1.sci_subpay(method='get', params={'sci_subpay_token': user1.merchant1.sci_subpay_token})
+        # print('\n', 'sci_subpay status', user1.merchant1.resp_sci_subpay['status'])
+        admin.set_order_status(lid=user1.merchant1.sci_pay_lid, status=0, amount_paid=bl(3))
+        # admin.set_order_status(lid=user1.merchant1.sci_pay_lid, status=30, amount_paid=0.5)
+        user1.merchant1.sci_subpay(method='create',
+                                   params={'sci_pay_token': user1.merchant1.sci_pay_token,
+                                           'externalid': user1.ex_id(), 'payway': 'privat24', 'amount': '9',
+                                           'in_curr': 'UAH', 'contact': '4731185613244273'})
+        # pprint.pprint(user1.merchant1.resp_sci_subpay)
+        assert (float(user1.merchant1.resp_sci_subpay['in_amount']) -
+                float(user1.merchant1.resp_sci_subpay['in_fee_amount'])) == 7.65
+        admin.set_order_status(lid=user1.merchant1.sci_subpay_lid, status=0)
+        admin.set_order_status(lid=user1.merchant1.sci_subpay_lid, status=100)
+        admin.set_order_status(lid=user1.merchant1.sci_pay_lid, status=100, amount_paid=bl(12))
+        user1.merchant1.balance(curr='UAH')
+        # pprint.pprint(user1.merchant1.resp_balance)
+        assert user1.merchant1.resp_balance['UAH'] == '8.5'
+        user1.merchant1.sci_pay(method='get', params={'sci_pay_token': user1.merchant1.sci_pay_token})
+        # print('\n', 'sci_pay status', user1.merchant1.resp_sci_pay['status'])
+        user1.merchant1.sci_refund(method='create', params={'sci_pay_token': user1.merchant1.sci_pay_token})
+        # pprint.pprint(user1.merchant1.resp_sci_refund)
+        assert user1.merchant1.resp_sci_refund['account_amount'] == '1.7'
+        assert user1.merchant1.resp_sci_refund['in_amount'] == '2'
+        assert user1.merchant1.resp_sci_refund['in_curr'] == 'UAH'
+        assert user1.merchant1.resp_sci_refund['in_fee_amount'] == '0.3'
+        assert user1.merchant1.resp_sci_refund['orig_amount'] == '2'
+        assert user1.merchant1.resp_sci_refund['out_amount'] == '1.7'
+        assert user1.merchant1.resp_sci_refund['out_curr'] == 'UAH'
+        assert user1.merchant1.resp_sci_refund['out_fee_amount'] == '0.3'
+
+    def test_sci_refund_create_5_1(self):
+        """ Calc for sci_pay from LTC 0.5 BTC by OWNER with common absolute fee 0.001 BTC. """
+        admin.set_wallet_amount(balance=bl(0), currency='BTC', merch_lid=user1.merchant1.lid)
+        admin.set_fee(currency_id=admin.currency['BTC'], payway_id=admin.payway_id['btc'], tp=40, is_active=True,
+                      add=bl(0.001))
+        admin.set_fee(currency_id=admin.currency['BTC'], payway_id=admin.payway_id['btc'], tp=45, is_active=True,
+                      add=bl(0.001))
+        admin.set_fee(currency_id=admin.currency['BTC'], payway_id=admin.payway_id['anycash'], tp=46, is_active=True,
+                      add=bl(0.001))
+        admin.set_pwc(pw_id=admin.payway_id['btc'], currency='BTC', is_out=False, is_active=True,
+                      tech_min=bl(0.0008), tech_max=bl(200))
+        admin.set_pwmerchactive(merch_id=user1.merchant1.id, payway_id=admin.payway_id['btc'], is_active=True)
+        user1.delegate(params={'externalid': user1.ex_id(), 'expiry': '7d', 'm_lid': user1.merchant1.lid,
+                               'merch_model': 'sci_pay', 'merch_method': 'create',
+                               'payway': 'btc', 'amount': '0.5', 'in_curr': 'BTC'})
+        # pprint.pprint(user1.resp_delegate)
+        assert user1.resp_delegate['account_amount'] == '0.499'
+        sci_pay_lid = user1.resp_delegate['lid']
+        sci_pay_token = user1.resp_delegate['token']
+        user1.delegate(params={'sci_pay_token': sci_pay_token, 'externalid': user1.ex_id(), 'm_lid': user1.merchant1.lid,
+                               'merch_model': 'sci_subpay', 'merch_method': 'create', 'payway': 'ltc', 'amount': '0.4',
+                               'in_curr': 'BTC', 'contact': '32LdQGCG1PHYNP2sRkZgrP6UAfQYTSkshx'})
+        # pprint.pprint(user1.resp_delegate)
+        assert user1.resp_delegate['code'] == -32081
+        assert user1.resp_delegate['data']['field'] == 'payway'
+        assert user1.resp_delegate['data']['reason'] == 'Invalid payway name'
+        assert user1.resp_delegate['message'] == 'EParamPaywayInvalid'
+
+    def test_sci_refund_create_5_2(self):
+        """ Calc for sci_pay from LTC 0.5 BTC by OWNER with common absolute fee 0.001 BTC. """
+        admin.set_wallet_amount(balance=bl(0), currency='BTC', merch_lid=user1.merchant1.lid)
+        admin.set_fee(currency_id=admin.currency['BTC'], tp=40, is_active=True, add=bl(0.001))
+        admin.set_fee(currency_id=admin.currency['BTC'], payway_id=admin.payway_id['btc'], tp=45, is_active=True,
+                      add=bl(0.001))
+        admin.set_fee(currency_id=admin.currency['BTC'], payway_id=admin.payway_id['anycash'], tp=46, is_active=True,
+                      add=bl(0.001))
+        admin.set_pwc(pw_id=admin.payway_id['btc'], currency='BTC', is_out=False, is_active=True,
+                      tech_min=bl(0.0008), tech_max=bl(200))
+        admin.set_pwmerchactive(merch_id=user1.merchant1.id, payway_id=admin.payway_id['btc'], is_active=True)
+        user1.delegate(params={'externalid': user1.ex_id(), 'expiry': '7d', 'm_lid': user1.merchant1.lid,
+                               'merch_model': 'sci_pay', 'merch_method': 'create',
+                               'payway': 'btc', 'amount': '0.5', 'in_curr': 'BTC'})
+        # pprint.pprint(user1.resp_delegate)
+        assert user1.resp_delegate['account_amount'] == '0.499'
+        sci_pay_lid = user1.resp_delegate['lid']
+        sci_pay_token = user1.resp_delegate['token']
+        user1.delegate(params={'sci_pay_token': sci_pay_token, 'externalid': user1.ex_id(), 'm_lid': user1.merchant1.lid,
+                               'merch_model': 'sci_subpay', 'merch_method': 'create', 'payway': 'btc', 'amount': '0.4',
+                               'in_curr': 'BTC', 'contact': '32LdQGCG1PHYNP2sRkZgrP6UAfQYTSkshx'})
+        # pprint.pprint(user1.resp_delegate)
+        assert (float(user1.resp_delegate['in_amount']) -
+                float(user1.resp_delegate['in_fee_amount'])) == 0.399
+        admin.set_order_status(lid=user1.resp_delegate['lid'], status=100)
+        admin.set_order_status(lid=sci_pay_lid, status=0, amount_paid=bl(0.4))
+        user1.delegate(params={'sci_pay_token': sci_pay_token, 'externalid': user1.ex_id(), 'm_lid': user1.merchant1.lid,
+                               'merch_model': 'sci_subpay', 'merch_method': 'create', 'payway': 'btc', 'amount': '0.1',
+                               'in_curr': 'BTC', 'contact': '32LdQGCG1PHYNP2sRkZgrP6UAfQYTSkshx'})
+        # pprint.pprint(user1.resp_delegate)
+        assert (float(user1.resp_delegate['in_amount']) -
+                float(user1.resp_delegate['in_fee_amount'])) == 0.099
+        admin.set_order_status(lid=user1.resp_delegate['lid'], status=100)
+        admin.set_order_status(lid=sci_pay_lid, status=100, amount_paid=bl(0.5))
+        user1.merchant1.balance(curr='BTC')
+        assert user1.merchant1.resp_balance['BTC'] == '0.499'
+        user1.delegate(params={'m_lid': user1.merchant1.lid,  'merch_model': 'sci_refund', 'merch_method': 'create',
+                               'sci_pay_token': sci_pay_token})
+        # pprint.pprint(user1.resp_delegate)
+        assert user1.resp_delegate['code'] == -32002
+        assert user1.resp_delegate['data']['value'] == f'{sci_pay_token}'
+        assert user1.resp_delegate['data']['reason'] == 'Unable to complete: unavailable refund'
+        assert user1.resp_delegate['message'] == 'EParamInvalid'
+
+    def test_sci_refund_create_6_1(self):
+        """ SCI payin from QIWI 10 RUB by OWNER with common absolute fee 1 RUB and common percent fee 5.5% . """
+        admin.set_wallet_amount(balance=0, currency='UAH', merch_lid=user1.merchant1.lid)
+        admin.set_fee(currency_id=admin.currency['UAH'], payway_id=admin.payway_id['qiwi'], tp=40, is_active=True,
+                      mult=pers(5.5), add=bl(1))
+        admin.set_fee(currency_id=admin.currency['UAH'], tp=45, is_active=True, payway_id=admin.payway_id['qiwi'],
+                      mult=pers(5.5), add=bl(1))
+        admin.set_fee(currency_id=admin.currency['UAH'], tp=46, is_active=True, payway_id=admin.payway_id['anycash'],
+                      mult=pers(5.5), add=bl(1))
+        admin.set_pwc(pw_id=admin.payway_id['qiwi'], currency='UAH', is_out=False, is_active=True,
+                      tech_min=bl(0.05), tech_max=bl(1000))
+        user1.delegate(params={'m_lid': user1.merchant1.lid, 'merch_model': 'sci_pay', 'merch_method': 'create',
+                               'out_curr': None, 'payway': 'qiwi', 'externalid': user1.ex_id(), 'amount': '10',
+                               'in_curr': 'UAH', 'expiry': '7d'})
+        # pprint.pprint(user1.resp_delegate)
+        assert user1.resp_delegate['account_amount'] == '8.45'
+        sci_pay_lid = user1.resp_delegate['lid']
+        sci_pay_token = user1.resp_delegate['token']
+        user1.delegate(params={'sci_pay_token': sci_pay_token, 'externalid': user1.ex_id(), 'm_lid': user1.merchant1.lid,
+                               'merch_model': 'sci_subpay', 'merch_method': 'create',
+                               'payway': 'privat24', 'amount': '4', 'in_curr': 'UAH', 'contact': '+123@gmail.com',
+                               'payer': '+380663319145'})
+        # pprint.pprint(user1.resp_delegate)
+        assert user1.resp_delegate['code'] == -32081
+        assert user1.resp_delegate['data']['field'] == 'payway'
+        assert user1.resp_delegate['data']['reason'] == 'Invalid payway name'
+        assert user1.resp_delegate['message'] == 'EParamPaywayInvalid'
+
+    def test_sci_refund_create_6_2(self):
+        """ SCI payin from QIWI 10 RUB by OWNER with common absolute fee 1 RUB and common percent fee 5.5% . """
+        admin.set_wallet_amount(balance=0, currency='UAH', merch_lid=user1.merchant1.lid)
+        admin.set_fee(currency_id=admin.currency['UAH'], tp=40, is_active=True, mult=pers(5.5), add=bl(1))
+        admin.set_fee(currency_id=admin.currency['UAH'], tp=45, is_active=True, payway_id=admin.payway_id['qiwi'],
+                      mult=pers(5.5), add=bl(1))
+        admin.set_fee(currency_id=admin.currency['UAH'], tp=46, is_active=True, payway_id=admin.payway_id['anycash'],
+                      mult=pers(5.5), add=bl(1))
+        admin.set_pwc(pw_id=admin.payway_id['qiwi'], currency='UAH', is_out=False, is_active=True,
+                      tech_min=bl(0.05), tech_max=bl(1000))
+        user1.delegate(params={'m_lid': user1.merchant1.lid, 'merch_model': 'sci_pay', 'merch_method': 'create',
+                               'out_curr': None, 'payway': 'qiwi', 'externalid': user1.ex_id(), 'amount': '10',
+                               'in_curr': 'UAH', 'expiry': '7d'})
+        # pprint.pprint(user1.resp_delegate)
+        assert user1.resp_delegate['account_amount'] == '8.45'
+        sci_pay_lid = user1.resp_delegate['lid']
+        sci_pay_token = user1.resp_delegate['token']
+        user1.delegate(params={'sci_pay_token': sci_pay_token, 'externalid': user1.ex_id(), 'm_lid': user1.merchant1.lid,
+                               'merch_model': 'sci_subpay', 'merch_method': 'create',
+                               'payway': 'qiwi', 'amount': '4', 'in_curr': 'UAH', 'contact': '+123@gmail.com',
+                               'payer': '+380663319145'})
+        # pprint.pprint(user1.resp_delegate)
+        subpay = (float(user1.resp_delegate['in_amount']) - float(user1.resp_delegate['in_fee_amount']))
+        assert round(subpay, 2) == 2.78
+        admin.set_order_status(lid=user1.resp_delegate['lid'], status=100)
+        admin.set_order_status(lid=sci_pay_lid, status=0, amount_paid=bl(4))
+        user1.delegate(params={'m_lid': user1.merchant1.lid,  'merch_model': 'sci_refund', 'merch_method': 'create',
+                               'sci_pay_token': sci_pay_token})
+        # pprint.pprint(user1.resp_delegate)
+        assert user1.resp_delegate['account_amount'] == '2.78'
+        assert user1.resp_delegate['in_amount'] == '4'
+        assert user1.resp_delegate['in_fee_amount'] == '1.22'
+        assert user1.resp_delegate['orig_amount'] == '4'
+        assert user1.resp_delegate['out_amount'] == '2.78'
+        assert user1.resp_delegate['out_fee_amount'] == '1.22'
+
+    def test_sci_refund_create_7_1(self, _custom_fee, _set_fee):
+        """ SCI payin from PERFECT 10 USD by MERCHANT with personal absolute fee 1 USD and personal percent fee 5.5%. """
+        admin.set_wallet_amount(balance=bl(2), currency='USD', merch_lid=user1.merchant1.lid)
+        admin.set_fee(currency_id=admin.currency['USD'], payway_id=admin.payway_id['perfect'], tp=40, is_active=True)
+        admin.set_fee(currency_id=admin.currency['USD'], payway_id=admin.payway_id['perfect'], tp=40, is_active=True,
+                      mult=pers(5.5), add=bl(1), merchant_id=user1.merchant1.id)
+        admin.set_fee(currency_id=admin.currency['USD'], tp=45, is_active=True, payway_id=admin.payway_id['perfect'])
+        admin.set_fee(currency_id=admin.currency['USD'], tp=45, is_active=True, mult=pers(5.5), add=bl(1),
+                      merchant_id=user1.merchant1.id, payway_id=admin.payway_id['perfect'])
+        admin.set_fee(currency_id=admin.currency['USD'], tp=46, is_active=True, payway_id=admin.payway_id['anycash'])
+        admin.set_fee(currency_id=admin.currency['USD'], tp=46, is_active=True, mult=pers(5.5), add=bl(1),
+                      merchant_id=user1.merchant1.id, payway_id=admin.payway_id['anycash'])
+        admin.set_pwc(pw_id=admin.payway_id['perfect'], currency='USD', is_out=False, is_active=True,
+                      tech_min=bl(1), tech_max=bl(1000))
+        user1.merchant1.sci_pay(method='create',
+                                params={'externalid': user1.ex_id(), 'payway': 'perfect', 'amount': '10',
+                                        'in_curr': 'USD', 'expiry': '7d'})
+        # pprint.pprint(user1.merchant1.resp_sci_pay)
+        assert user1.merchant1.resp_sci_pay['account_amount'] == '8.45'
+        user1.merchant1.sci_subpay(method='create',
+                                   params={'sci_pay_token': user1.merchant1.sci_pay_token,
+                                           'externalid': user1.ex_id(), 'payway': 'payeer', 'amount': '20',
+                                           'in_curr': 'USD', 'contact': '+380661111111'})
+        # pprint.pprint(user1.merchant1.resp_sci_subpay)
+        assert user1.merchant1.resp_sci_subpay['code'] == -32081
+        assert user1.merchant1.resp_sci_subpay['data']['field'] == 'payway'
+        assert user1.merchant1.resp_sci_subpay['data']['reason'] == 'Invalid payway name'
+        assert user1.merchant1.resp_sci_subpay['message'] == 'EParamPaywayInvalid'
+
+    def test_sci_refund_create_7_2(self, _custom_fee, _set_fee):
+        """ SCI payin from PERFECT 10 USD by MERCHANT with personal absolute fee 1 USD and personal percent fee 5.5%. """
+        admin.set_wallet_amount(balance=bl(2), currency='USD', merch_lid=user1.merchant1.lid)
+        admin.set_fee(currency_id=admin.currency['USD'], tp=40, is_active=True)
+        admin.set_fee(currency_id=admin.currency['USD'], tp=40, is_active=True, mult=pers(5.5), add=bl(1),
+                      merchant_id=user1.merchant1.id)
+        admin.set_fee(currency_id=admin.currency['USD'], tp=45, is_active=True, payway_id=admin.payway_id['perfect'])
+        admin.set_fee(currency_id=admin.currency['USD'], tp=45, is_active=True, mult=pers(5.5), add=bl(1),
+                      merchant_id=user1.merchant1.id, payway_id=admin.payway_id['perfect'])
+        admin.set_fee(currency_id=admin.currency['USD'], tp=46, is_active=True, payway_id=admin.payway_id['anycash'])
+        admin.set_fee(currency_id=admin.currency['USD'], tp=46, is_active=True, mult=pers(5.5), add=bl(1),
+                      merchant_id=user1.merchant1.id, payway_id=admin.payway_id['anycash'])
+        admin.set_pwc(pw_id=admin.payway_id['perfect'], currency='USD', is_out=False, is_active=True,
+                      tech_min=bl(1), tech_max=bl(1000))
+        user1.merchant1.sci_pay(method='create',
+                                params={'externalid': user1.ex_id(), 'amount': '10', 'in_curr': 'USD', 'expiry': '7d'})
+        # pprint.pprint(user1.merchant1.resp_sci_pay)
+        assert user1.merchant1.resp_sci_pay['account_amount'] == '8.45'
+        user1.merchant1.sci_subpay(method='create',
+                                   params={'sci_pay_token': user1.merchant1.sci_pay_token,
+                                           'externalid': user1.ex_id(), 'payway': 'perfect', 'amount': '20',
+                                           'in_curr': 'USD', 'contact': '+380661111111'})
+        # pprint.pprint(user1.merchant1.resp_sci_subpay)
+        assert (float(user1.merchant1.resp_sci_subpay['in_amount']) -
+                float(user1.merchant1.resp_sci_subpay['in_fee_amount'])) == 17.9
+        admin.set_order_status(lid=user1.merchant1.sci_subpay_lid, status=100)
+        admin.set_order_status(lid=user1.merchant1.sci_pay_lid, status=100, amount_paid=bl(20))
+        user1.merchant1.sci_pay(method='get', params={'sci_pay_token': user1.merchant1.sci_pay_token})
+        user1.merchant1.sci_refund(method='create', params={'sci_pay_token': user1.merchant1.sci_pay_token})
+        # pprint.pprint(user1.merchant1.resp_sci_refund)
+        assert user1.merchant1.resp_sci_refund['account_amount'] == '8.45'
+        assert user1.merchant1.resp_sci_refund['in_amount'] == '10'
+        assert user1.merchant1.resp_sci_refund['in_curr'] == 'USD'
+        assert user1.merchant1.resp_sci_refund['in_fee_amount'] == '1.55'
+        assert user1.merchant1.resp_sci_refund['orig_amount'] == '10'
+        assert user1.merchant1.resp_sci_refund['out_amount'] == '8.45'
+        assert user1.merchant1.resp_sci_refund['out_curr'] == 'USD'
+        assert user1.merchant1.resp_sci_refund['out_fee_amount'] == '1.55'
+        assert user1.merchant1.resp_sci_refund['tp'] == 'sci_refund'
+
+    def test_sci_refund_create_8_1(self, _custom_fee, _set_fee):
+        """ SCI payin from CASH_KIEV 10 USD by OWNER with common absolute fee 2 USD and common percent fee 10%,
+            with personal absolute fee 1 USD and personal percent fee 5.5%. """
+        admin.set_pwc(pw_id=admin.payway_id['cash_kiev'], currency='USD', is_out=False, is_active=True,
+                      tech_min=bl(1), tech_max=bl(100))
+        admin.set_fee(currency_id=admin.currency['USD'], payway_id=admin.payway_id['cash_kiev'], tp=40, is_active=True,
+                      mult=pers(10), add=bl(2))
+        admin.set_fee(currency_id=admin.currency['USD'], payway_id=admin.payway_id['cash_kiev'], tp=40, is_active=True,
+                      mult=pers(5.5), add=bl(1), merchant_id=user1.merchant1.id)
+        admin.set_fee(currency_id=admin.currency['USD'], payway_id=admin.payway_id['cash_kiev'], tp=45, is_active=True,
+                      mult=pers(10), add=bl(2))
+        admin.set_fee(currency_id=admin.currency['USD'], payway_id=admin.payway_id['cash_kiev'], tp=45, is_active=True,
+                      mult=pers(5.5), add=bl(1), merchant_id=user1.merchant1.id)
+        admin.set_fee(currency_id=admin.currency['USD'], payway_id=admin.payway_id['anycash'], tp=46, is_active=True,
+                      mult=pers(10), add=bl(2))
+        admin.set_fee(currency_id=admin.currency['USD'], payway_id=admin.payway_id['anycash'], tp=46, is_active=True,
+                      mult=pers(5.5), add=bl(1), merchant_id=user1.merchant1.id)
+        user1.delegate(params={'m_lid': user1.merchant1.lid, 'merch_model': 'sci_pay', 'merch_method': 'create',
+                               'out_curr': 'USD', 'expiry': '7d',  'externalid': user1.ex_id(), 'payway': 'cash_kiev',
+                               'amount': '20', 'in_curr': 'USD'})
+        # pprint.pprint(user1.resp_delegate)
+        assert user1.resp_delegate['account_amount'] == '17.9'
+        sci_pay_lid = user1.resp_delegate['lid']
+        sci_pay_token = user1.resp_delegate['token']
+        user1.delegate(params={'sci_pay_token': sci_pay_token, 'externalid': user1.ex_id(), 'm_lid': user1.merchant1.lid,
+                               'merch_model': 'sci_subpay', 'merch_method': 'create',
+                               'payway': 'paymer', 'amount': '10', 'in_curr': 'USD', 'contact': '@Bobik19'})
+        # pprint.pprint(user1.resp_delegate)
+        assert user1.resp_delegate['code'] == -32081
+        assert user1.resp_delegate['data']['field'] == 'payway'
+        assert user1.resp_delegate['data']['reason'] == 'Invalid payway name'
+        assert user1.resp_delegate['message'] == 'EParamPaywayInvalid'
+        admin.set_fee(currency_id=admin.currency['USD'], payway_id=admin.payway_id['anycash'], tp=46, is_active=False)
+        admin.set_fee(currency_id=admin.currency['USD'], payway_id=admin.payway_id['anycash'], tp=46, is_active=False,
+                      merchant_id=user1.merchant1.id)
+
+    def test_sci_refund_create_8_2(self, _custom_fee, _set_fee):
+        """ SCI payin from CASH_KIEV 10 USD by OWNER with common absolute fee 2 USD and common percent fee 10%,
+            with personal absolute fee 1 USD and personal percent fee 5.5%. """
+        admin.set_pwc(pw_id=admin.payway_id['cash_kiev'], currency='USD', is_out=False, is_active=True,
+                      tech_min=bl(1), tech_max=bl(100))
+        admin.set_fee(currency_id=admin.currency['USD'], tp=40, is_active=True, mult=pers(10), add=bl(2))
+        admin.set_fee(currency_id=admin.currency['USD'], tp=40, is_active=True, mult=pers(5.5), add=bl(1),
+                      merchant_id=user1.merchant1.id)
+        admin.set_fee(currency_id=admin.currency['USD'], payway_id=admin.payway_id['cash_kiev'], tp=45, is_active=True,
+                      mult=pers(10), add=bl(2))
+        admin.set_fee(currency_id=admin.currency['USD'], payway_id=admin.payway_id['cash_kiev'], tp=45, is_active=True,
+                      mult=pers(5.5), add=bl(1), merchant_id=user1.merchant1.id)
+        admin.set_fee(currency_id=admin.currency['USD'], payway_id=admin.payway_id['anycash'], tp=46, is_active=True,
+                      mult=pers(10), add=bl(2))
+        admin.set_fee(currency_id=admin.currency['USD'], payway_id=admin.payway_id['anycash'], tp=46, is_active=True,
+                      mult=pers(5.5), add=bl(1), merchant_id=user1.merchant1.id)
+        user1.delegate(params={'m_lid': user1.merchant1.lid, 'merch_model': 'sci_pay', 'merch_method': 'create',
+                               'out_curr': 'USD', 'expiry': '7d',  'externalid': user1.ex_id(), 'payway': 'cash_kiev',
+                               'amount': '20', 'in_curr': 'USD'})
+        # pprint.pprint(user1.resp_delegate)
+        assert user1.resp_delegate['account_amount'] == '17.9'
+        sci_pay_lid = user1.resp_delegate['lid']
+        sci_pay_token = user1.resp_delegate['token']
+        user1.delegate(params={'sci_pay_token': sci_pay_token, 'externalid': user1.ex_id(), 'm_lid': user1.merchant1.lid,
+                               'merch_model': 'sci_subpay', 'merch_method': 'create',
+                               'payway': 'cash_kiev', 'amount': '10', 'in_curr': 'USD', 'contact': '@Bobik19'})
+        # pprint.pprint(user1.resp_delegate)
+        assert (float(user1.resp_delegate['in_amount']) -
+                float(user1.resp_delegate['in_fee_amount'])) == 8.45
+        admin.set_order_status(lid=user1.resp_delegate['lid'], status=100)
+        admin.set_order_status(lid=sci_pay_lid, status=0, amount_paid=bl(10))
+        user1.delegate(params={'m_lid': user1.merchant1.lid,  'merch_model': 'sci_refund', 'merch_method': 'create',
+                               'sci_pay_token': sci_pay_token})
+        # pprint.pprint(user1.resp_delegate)
+        assert user1.resp_delegate['account_amount'] == '8.45'
+        assert user1.resp_delegate['in_amount'] == '10'
+        assert user1.resp_delegate['in_fee_amount'] == '1.55'
+        assert user1.resp_delegate['orig_amount'] == '10'
+        assert user1.resp_delegate['out_amount'] == '8.45'
+        assert user1.resp_delegate['out_fee_amount'] == '1.55'
+        assert user1.resp_delegate['status'] == 'started'
+        """ Проверка поля refund_status 
+        pprint.pprint(user1.resp_delegate['lid'])
+        admin.set_order_status(lid=user1.resp_delegate['lid'], status=100)
+        user1.merchant1.sci_pay(method='get', params={'sci_pay_token': user1.merchant1.sci_pay_token})
+        pprint.pprint(user1.merchant1.resp_sci_pay) """
+        admin.set_fee(currency_id=admin.currency['USD'], payway_id=admin.payway_id['anycash'], tp=46, is_active=False)
+        admin.set_fee(currency_id=admin.currency['USD'], payway_id=admin.payway_id['anycash'], tp=46, is_active=False,
+                      merchant_id=user1.merchant1.id)
+
+    def test_sci_refund_create_9_1(self):
+        """ SCI payin from QIWI 50 RUB by OWNER with exchange to UAH without any fee. """
+        admin.set_wallet_amount(balance=bl(100), currency='RUB', merch_lid=user1.merchant1.lid)
+        admin.set_fee(currency_id=admin.currency['RUB'], payway_id=admin.payway_id['qiwi'], tp=40, is_active=True)
+        admin.set_fee(currency_id=admin.currency['RUB'], payway_id=admin.payway_id['qiwi'], tp=45, is_active=True)
+        admin.set_fee(currency_id=admin.currency['RUB'], payway_id=admin.payway_id['anycash'], tp=46, is_active=True)
+        admin.set_pwc(pw_id=admin.payway_id['qiwi'], currency='RUB', is_out=False, is_active=True,
+                      tech_min=bl(1), tech_max=bl(100))
+        admin.set_rate_exchange(fee=0, rate=bl(2.6666), in_currency='RUB', out_currency='UAH')
+        user1.delegate(params={'m_lid': user1.merchant1.lid, 'merch_model': 'sci_pay', 'merch_method': 'create',
+                               'out_curr': 'UAH', 'expiry': '7d', 'externalid': user1.ex_id(), 'payway': 'qiwi',
+                               'amount': '50', 'in_curr': 'RUB'})
+        # pprint.pprint(user1.resp_delegate)
+        assert user1.resp_delegate['account_amount'] == '18.75'
+        sci_pay_lid = user1.resp_delegate['lid']
+        sci_pay_token = user1.resp_delegate['token']
+        user1.delegate(params={'sci_pay_token': sci_pay_token, 'externalid': user1.ex_id(), 'm_lid': user1.merchant1.lid,
+                               'merch_model': 'sci_subpay', 'merch_method': 'create', 'payway': 'visamc', 'amount': '20',
+                               'in_curr': 'RUB', 'contact': '@Bobik19', 'payer': '+380663319145'})
+        # pprint.pprint(user1.resp_delegate)
+        assert user1.resp_delegate['code'] == -32081
+        assert user1.resp_delegate['data']['field'] == 'payway'
+        assert user1.resp_delegate['data']['reason'] == 'Invalid payway name'
+        assert user1.resp_delegate['message'] == 'EParamPaywayInvalid'
+
+    def test_sci_refund_create_9_2(self):
+        """ SCI payin from QIWI 50 RUB by OWNER with exchange to UAH without any fee. """
+        admin.set_wallet_amount(balance=bl(100), currency='RUB', merch_lid=user1.merchant1.lid)
+        admin.set_fee(currency_id=admin.currency['RUB'], tp=40, is_active=True)
+        admin.set_fee(currency_id=admin.currency['RUB'], payway_id=admin.payway_id['qiwi'], tp=45, is_active=True)
+        admin.set_fee(currency_id=admin.currency['RUB'], payway_id=admin.payway_id['anycash'], tp=46, is_active=True)
+        admin.set_pwc(pw_id=admin.payway_id['qiwi'], currency='RUB', is_out=False, is_active=True,
+                      tech_min=bl(0.01), tech_max=bl(3000))
+        admin.set_pwc(pw_id=admin.payway_id['anycash'], currency='RUB', is_out=False, is_active=True,
+                      tech_min=bl(0.01), tech_max=bl(3000))
+        admin.set_rate_exchange(fee=0, rate=bl(2.6666), in_currency='RUB', out_currency='UAH')
+        user1.delegate(params={'m_lid': user1.merchant1.lid, 'merch_model': 'sci_pay', 'merch_method': 'create',
+                               'out_curr': 'UAH', 'expiry': '7d', 'externalid': user1.ex_id(), 'payway': 'qiwi',
+                               'amount': '50', 'in_curr': 'RUB'})
+        # pprint.pprint(user1.resp_delegate)
+        assert user1.resp_delegate['account_amount'] == '18.75'
+        sci_pay_lid = user1.resp_delegate['lid']
+        sci_pay_token = user1.resp_delegate['token']
+        user1.delegate(params={'sci_pay_token': sci_pay_token, 'externalid': user1.ex_id(), 'm_lid': user1.merchant1.lid,
+                               'merch_model': 'sci_subpay', 'merch_method': 'create', 'payway': 'qiwi', 'amount': '20',
+                               'in_curr': 'RUB', 'contact': '@Bobik19', 'payer': '+380663319145'})
+        # pprint.pprint(user1.resp_delegate)
+        assert (float(user1.resp_delegate['in_amount']) -
+                float(user1.resp_delegate['in_fee_amount'])) == 20
+        admin.set_order_status(lid=user1.resp_delegate['lid'], status=100)
+        admin.set_order_status(lid=sci_pay_lid, status=0, amount_paid=bl(20))
+        user1.delegate(params={'m_lid': user1.merchant1.lid,  'merch_model': 'sci_refund', 'merch_method': 'create',
+                               'sci_pay_token': sci_pay_token})
+        # pprint.pprint(user1.resp_delegate)
+        assert user1.resp_delegate['account_amount'] == '20'
+        assert user1.resp_delegate['in_amount'] == '20'
+        assert user1.resp_delegate['in_fee_amount'] == '0'
+        assert user1.resp_delegate['in_curr'] == 'RUB'
+        assert user1.resp_delegate['orig_amount'] == '20'
+        assert user1.resp_delegate['out_amount'] == '20'
+        assert user1.resp_delegate['out_fee_amount'] == '0'
+        assert user1.resp_delegate['out_curr'] == 'RUB'
+        assert user1.resp_delegate['rate'] is None
+
+    def test_sci_refund_create_10_1(self, _custom_fee, _disable_personal_exchange_fee):
+        """ SCI payin from PAYEER 8.33 USD by MERCHANT with exchange to UAH with common exchange fee 3%,
+            with personal exchange fee 1.55%. """
+        admin.set_wallet_amount(balance=bl(20), currency='USD', merch_lid=user1.merchant1.lid)
+        admin.set_wallet_amount(balance=0, currency='UAH', merch_lid=user1.merchant1.lid)
+        admin.set_fee(currency_id=admin.currency['USD'], payway_id=admin.payway_id['payeer'], tp=40, is_active=True)
+        admin.set_pwc(pw_id=admin.payway_id['payeer'], currency='USD', is_out=False, is_active=True,
+                      tech_min=bl(1), tech_max=bl(100))
+        admin.set_rate_exchange(fee=pers(3), rate=bl(28.1999), in_currency='USD', out_currency='UAH')
+        admin.set_personal_exchange_fee(fee=pers(1.55), in_curr=admin.currency['USD'], out_curr=admin.currency['UAH'],
+                                        is_active=True, merchant_id=user1.merchant1.id)
+        user1.merchant1.sci_pay(method='create',
+                                params={'externalid': user1.ex_id(), 'payway': 'payeer', 'amount': '8.33',
+                                        'in_curr': 'USD', 'out_curr': 'UAH', 'expiry': '7d'})
+        # pprint.pprint(user1.merchant1.resp_sci_pay)
+        user1.merchant1.sci_subpay(method='create',
+                                   params={'sci_pay_token': user1.merchant1.sci_pay_token,
+                                           'externalid': user1.ex_id(), 'payway': 'exmo', 'amount': '16.66',
+                                           'in_curr': 'USD', 'contact': '+380661111111'})
+        # pprint.pprint(user1.merchant1.resp_sci_subpay)
+        assert user1.merchant1.resp_sci_subpay['code'] == -32081
+        assert user1.merchant1.resp_sci_subpay['data']['field'] == 'payway'
+        assert user1.merchant1.resp_sci_subpay['data']['reason'] == 'Invalid payway name'
+        assert user1.merchant1.resp_sci_subpay['message'] == 'EParamPaywayInvalid'
+
+    def test_sci_refund_create_10_2(self, _custom_fee, _disable_personal_exchange_fee):
+        """ SCI payin from PAYEER 8.33 USD by MERCHANT with exchange to UAH with common exchange fee 3%,
+            with personal exchange fee 1.55%. """
+        admin.set_wallet_amount(balance=bl(20), currency='USD', merch_lid=user1.merchant1.lid)
+        admin.set_wallet_amount(balance=0, currency='UAH', merch_lid=user1.merchant1.lid)
+        admin.set_fee(currency_id=admin.currency['USD'], tp=40, is_active=True)
+        admin.set_fee(currency_id=admin.currency['USD'], payway_id=admin.payway_id['payeer'], tp=45, is_active=True)
+        admin.set_fee(currency_id=admin.currency['USD'], payway_id=admin.payway_id['anycash'], tp=46, is_active=True)
+        admin.set_pwc(pw_id=admin.payway_id['payeer'], currency='USD', is_out=False, is_active=True,
+                      tech_min=bl(1), tech_max=bl(100))
+        admin.set_rate_exchange(fee=pers(3), rate=bl(28.1999), in_currency='USD', out_currency='UAH')
+        admin.set_personal_exchange_fee(fee=pers(1.55), in_curr=admin.currency['USD'], out_curr=admin.currency['UAH'],
+                                        is_active=True, merchant_id=user1.merchant1.id)
+        user1.merchant1.sci_pay(method='create',
+                                params={'externalid': user1.ex_id(), 'amount': '8.33', 'in_curr': 'USD',
+                                        'out_curr': 'UAH', 'expiry': '7d'})
+        # pprint.pprint(user1.merchant1.resp_sci_pay)
+        assert user1.merchant1.resp_sci_pay['account_amount'] == '190.72'
+        user1.merchant1.sci_subpay(method='create',
+                                   params={'sci_pay_token': user1.merchant1.sci_pay_token,
+                                           'externalid': user1.ex_id(), 'payway': 'payeer', 'amount': '16.66',
+                                           'in_curr': 'USD', 'contact': '+380661111111'})
+        # pprint.pprint(user1.merchant1.resp_sci_subpay)
+        assert (float(user1.merchant1.resp_sci_subpay['in_amount']) -
+                float(user1.merchant1.resp_sci_subpay['in_fee_amount'])) == 16.66
+        admin.set_order_status(lid=user1.merchant1.sci_subpay_lid, status=0)
+        admin.set_order_status(lid=user1.merchant1.sci_subpay_lid, status=100)
+        admin.set_order_status(lid=user1.merchant1.sci_pay_lid, status=100, amount_paid=bl(16.66))
+        # pprint.pprint(admin.resp_order_status)
+        assert user1.merchant1.balance('UAH') == '190.72'
+        # pprint.pprint(user1.merchant1.resp_balance)
+        user1.merchant1.sci_pay(method='get', params={'sci_pay_token': user1.merchant1.sci_pay_token})
+        # pprint.pprint(user1.merchant1.resp_sci_pay)
+        user1.merchant1.sci_refund(method='create', params={'sci_pay_token': user1.merchant1.sci_pay_token})
+        # pprint.pprint(user1.merchant1.resp_sci_refund)
+        assert user1.merchant1.resp_sci_refund['account_amount'] == '8.33'
+        assert user1.merchant1.resp_sci_refund['in_amount'] == '8.33'
+        assert user1.merchant1.resp_sci_refund['in_curr'] == 'USD'
+        assert user1.merchant1.resp_sci_refund['in_fee_amount'] == '0'
+        assert user1.merchant1.resp_sci_refund['orig_amount'] == '8.33'
+        assert user1.merchant1.resp_sci_refund['out_amount'] == '8.33'
+        assert user1.merchant1.resp_sci_refund['out_fee_amount'] == '0'
+        assert user1.merchant1.resp_sci_refund['out_curr'] == 'USD'
+
+    def test_sci_refund_create_11_1(self, _custom_fee, _disable_personal_exchange_fee):
+        """ SCI payin from PRIVAT24 115 UAH by MERCHANT with exchange to USD with common percent operation fee 5%
+            with common absolute operation fee 5 UAH, with personal percent operation fee 3.5% with personal
+            absolute operation fee 2 UAH, with common exchange fee 4% with personal exchange fee 2%. """
+        admin.set_wallet_amount(balance=bl(1), currency='USD', merch_lid=user1.merchant1.lid)
+        admin.set_wallet_amount(balance=bl(120), currency='UAH', merch_lid=user1.merchant1.lid)
+        admin.set_pwc(pw_id=admin.payway_id['privat24'], currency='UAH', is_out=False, is_active=True,
+                      tech_min=bl(1), tech_max=bl(120))
+        admin.set_rate_exchange(fee=pers(4), rate=bl(28.1999), in_currency='UAH', out_currency='USD',
+                                tech_min=bl(0.01), tech_max=bl(120))
+        admin.set_personal_exchange_fee(fee=pers(2), in_curr=admin.currency['UAH'], out_curr=admin.currency['USD'],
+                                        is_active=True, merchant_id=user1.merchant1.id)
+        admin.set_fee(currency_id=admin.currency['UAH'], payway_id=admin.payway_id['privat24'], tp=40, is_active=True,
+                      mult=pers(5), add=bl(5))
+        admin.set_fee(currency_id=admin.currency['UAH'], payway_id=admin.payway_id['privat24'], tp=40, is_active=True,
+                      mult=pers(3.5), add=bl(2), merchant_id=user1.merchant1.id)
+        admin.set_fee(currency_id=admin.currency['UAH'], payway_id=admin.payway_id['privat24'], tp=45, is_active=True,
+                      mult=pers(5), add=bl(5))
+        admin.set_fee(currency_id=admin.currency['UAH'], payway_id=admin.payway_id['privat24'], tp=45, is_active=True,
+                      mult=pers(3.5), add=bl(2), merchant_id=user1.merchant1.id)
+        admin.set_fee(currency_id=admin.currency['UAH'], payway_id=admin.payway_id['anycash'], tp=46, is_active=True,
+                      mult=pers(5), add=bl(5))
+        admin.set_fee(currency_id=admin.currency['UAH'], payway_id=admin.payway_id['anycash'], tp=46, is_active=True,
+                      mult=pers(3.5), add=bl(2), merchant_id=user1.merchant1.id)
+        user1.merchant1.sci_pay(method='create',
+                                params={'externalid': user1.ex_id(), 'payway': 'privat24', 'amount': '120',
+                                        'in_curr': 'UAH', 'out_curr': 'USD', 'expiry': '7d'})
+        # pprint.pprint(user1.merchant1.resp_sci_pay)
+        user1.merchant1.sci_subpay(method='create',
+                                   params={'sci_pay_token': user1.merchant1.sci_pay_token,
+                                           'externalid': user1.ex_id(), 'payway': 'visamc', 'amount': '115',
+                                           'in_curr': 'UAH', 'contact': '+380661111111'})
+        # pprint.pprint(user1.merchant1.resp_sci_subpay)
+        assert user1.merchant1.resp_sci_subpay['code'] == -32081
+        assert user1.merchant1.resp_sci_subpay['data']['field'] == 'payway'
+        assert user1.merchant1.resp_sci_subpay['data']['reason'] == 'Invalid payway name'
+        assert user1.merchant1.resp_sci_subpay['message'] == 'EParamPaywayInvalid'
+
+    def test_sci_refund_create_11_2(self, _custom_fee, _disable_personal_exchange_fee):
+        """ SCI payin from PRIVAT24 115 UAH by MERCHANT with exchange to USD with common percent operation fee 5%
+            with common absolute operation fee 5 UAH, with personal percent operation fee 3.5% with personal
+            absolute operation fee 2 UAH, with common exchange fee 4% with personal exchange fee 2%. """
+        admin.set_wallet_amount(balance=bl(1), currency='USD', merch_lid=user1.merchant1.lid)
+        admin.set_wallet_amount(balance=bl(120), currency='UAH', merch_lid=user1.merchant1.lid)
+        admin.set_pwc(pw_id=admin.payway_id['privat24'], currency='UAH', is_out=False, is_active=True,
+                      tech_min=bl(1), tech_max=bl(120))
+        admin.set_rate_exchange(fee=pers(4), rate=bl(28.1999), in_currency='UAH', out_currency='USD',
+                                tech_min=bl(0.01), tech_max=bl(120))
+        admin.set_personal_exchange_fee(fee=pers(2), in_curr=admin.currency['UAH'], out_curr=admin.currency['USD'],
+                                        is_active=True, merchant_id=user1.merchant1.id)
+        admin.set_fee(currency_id=admin.currency['UAH'], tp=40, is_active=True, mult=pers(5), add=bl(5))
+        admin.set_fee(currency_id=admin.currency['UAH'], tp=40, is_active=True, mult=pers(3.5), add=bl(2),
+                      merchant_id=user1.merchant1.id)
+        admin.set_fee(currency_id=admin.currency['UAH'], payway_id=admin.payway_id['privat24'], tp=45, is_active=True,
+                      mult=pers(5), add=bl(5))
+        admin.set_fee(currency_id=admin.currency['UAH'], payway_id=admin.payway_id['privat24'], tp=45, is_active=True,
+                      mult=pers(3.5), add=bl(2), merchant_id=user1.merchant1.id)
+        admin.set_fee(currency_id=admin.currency['UAH'], payway_id=admin.payway_id['anycash'], tp=46, is_active=True,
+                      mult=pers(5), add=bl(5))
+        admin.set_fee(currency_id=admin.currency['UAH'], payway_id=admin.payway_id['anycash'], tp=46, is_active=True,
+                      mult=pers(3.5), add=bl(2), merchant_id=user1.merchant1.id)
+        user1.merchant1.sci_pay(method='create',
+                                params={'externalid': user1.ex_id(), 'amount': '120', 'in_curr': 'UAH',
+                                        'out_curr': 'USD', 'expiry': '7d'})
+        # pprint.pprint(user1.merchant1.resp_sci_pay)
+        assert user1.merchant1.resp_sci_pay['account_amount'] == '3.95'
+        user1.merchant1.sci_subpay(method='create',
+                                   params={'sci_pay_token': user1.merchant1.sci_pay_token,
+                                           'externalid': user1.ex_id(), 'payway': 'privat24', 'amount': '115',
+                                           'in_curr': 'UAH', 'contact': '+380661111111'})
+        # pprint.pprint(user1.merchant1.resp_sci_subpay)
+        assert (float(user1.merchant1.resp_sci_subpay['in_amount']) -
+                float(user1.merchant1.resp_sci_subpay['in_fee_amount'])) == 108.97
+        admin.set_order_status(lid=user1.merchant1.sci_subpay_lid, status=0)
+        admin.set_order_status(lid=user1.merchant1.sci_subpay_lid, status=100)
+        admin.set_order_status(lid=user1.merchant1.sci_pay_lid, status=0, amount_paid=bl(115))
+        user1.merchant1.sci_pay(method='get', params={'sci_pay_token': user1.merchant1.sci_pay_token})
+        # pprint.pprint(user1.merchant1.resp_sci_pay)
+        user1.merchant1.sci_refund(method='create', params={'sci_pay_token': user1.merchant1.sci_pay_token})
+        # pprint.pprint(user1.merchant1.resp_sci_refund)
+        assert user1.merchant1.resp_sci_refund['account_amount'] == '108.97'
+        assert user1.merchant1.resp_sci_refund['in_amount'] == '115'
+        assert user1.merchant1.resp_sci_refund['in_fee_amount'] == '6.03'
+        assert user1.merchant1.resp_sci_refund['orig_amount'] == '115'
+        assert user1.merchant1.resp_sci_refund['out_amount'] == '108.97'
+        assert user1.merchant1.resp_sci_refund['out_fee_amount'] == '6.03'
+
+    def test_sci_refund_create_12_1(self, _custom_fee, _disable_personal_exchange_fee):
+        """ Payin from BTC 0.0067 BTC by OWNER with exchange to USD with common percent operation fee 5%
+            with common absolute operation fee 0.0003 BTC, with personal percent operation fee 3.5% with personal,
+            with common exchange fee 3% with personal exchange fee 1.5%. """
+        admin.set_pwc(pw_id=admin.payway_id['btc'], currency='BTC', is_out=False, is_active=True,
+                      tech_min=bl(0.0005), tech_max=bl(1))
+        admin.set_rate_exchange(fee=pers(3), rate=bl(3580.6541), in_currency='BTC', out_currency='USD')
+        admin.set_personal_exchange_fee(fee=pers(1.5), in_curr=admin.currency['BTC'], out_curr=admin.currency['USD'],
+                                        is_active=True, merchant_id=user1.merchant1.id)
+        admin.set_fee(currency_id=admin.currency['BTC'], payway_id=admin.payway_id['btc'], tp=40, is_active=True,
+                      mult=pers(5), add=bl(0.0003))
+        admin.set_fee(currency_id=admin.currency['BTC'], payway_id=admin.payway_id['btc'], tp=40, is_active=True,
+                      mult=pers(3.5), add=0, merchant_id=user1.merchant1.id)
+        admin.set_fee(currency_id=admin.currency['BTC'], payway_id=admin.payway_id['anycash'], tp=46, is_active=True,
+                      mult=pers(5), add=bl(0.0003))
+        admin.set_fee(currency_id=admin.currency['BTC'], payway_id=admin.payway_id['anycash'], tp=46, is_active=True,
+                      mult=pers(3.5), add=0, merchant_id=user1.merchant1.id)
+        user1.delegate(params={'m_lid': user1.merchant1.lid, 'merch_model': 'sci_pay', 'merch_method': 'create',
+                               'externalid': user1.ex_id(), 'payway': 'btc', 'amount': '0.0067', 'in_curr': 'BTC',
+                               'out_curr': 'USD', 'expiry': '7d'})
+        # pprint.pprint(user1.resp_delegate)
+        assert user1.resp_delegate['account_amount'] == '22.8'
+        sci_pay_lid = user1.resp_delegate['lid']
+        sci_pay_token = user1.resp_delegate['token']
+        user1.delegate(params={'sci_pay_token': sci_pay_token, 'externalid': user1.ex_id(), 'm_lid': user1.merchant1.lid,
+                               'merch_model': 'sci_subpay', 'merch_method': 'create', 'payway': 'kuna', 'amount': '0.006',
+                               'in_curr': 'BTC', 'contact': '+380661111111'})
+        # pprint.pprint(user1.resp_delegate)
+        assert user1.resp_delegate['code'] == -32081
+        assert user1.resp_delegate['data']['field'] == 'payway'
+        assert user1.resp_delegate['data']['reason'] == 'Invalid payway name'
+        assert user1.resp_delegate['message'] == 'EParamPaywayInvalid'
+
+    def test_sci_refund_create_12_2(self, _custom_fee, _disable_personal_exchange_fee):
+        """ Payin from BTC 0.0067 BTC by OWNER with exchange to USD with common percent operation fee 5%
+            with common absolute operation fee 0.0003 BTC, with personal percent operation fee 3.5% with personal,
+            with common exchange fee 3% with personal exchange fee 1.5%. """
+        admin.set_pwc(pw_id=admin.payway_id['btc'], currency='BTC', is_out=False, is_active=True,
+                      tech_min=bl(0.0005), tech_max=bl(1))
+        admin.set_rate_exchange(fee=pers(3), rate=bl(3580.6541), in_currency='BTC', out_currency='USD')
+        admin.set_personal_exchange_fee(fee=pers(1.5), in_curr=admin.currency['BTC'], out_curr=admin.currency['USD'],
+                                        is_active=True, merchant_id=user1.merchant1.id)
+        admin.set_fee(currency_id=admin.currency['BTC'], tp=40, is_active=True, mult=pers(5), add=bl(0.0003))
+        admin.set_fee(currency_id=admin.currency['BTC'], tp=40, is_active=True, mult=pers(3.5), add=0,
+                      merchant_id=user1.merchant1.id)
+        admin.set_fee(currency_id=admin.currency['BTC'], payway_id=admin.payway_id['btc'], tp=45, is_active=True,
+                      mult=pers(5), add=bl(0.0003))
+        admin.set_fee(currency_id=admin.currency['BTC'], payway_id=admin.payway_id['btc'], tp=45, is_active=True,
+                      mult=pers(3.5), add=0, merchant_id=user1.merchant1.id)
+        admin.set_fee(currency_id=admin.currency['BTC'], payway_id=admin.payway_id['anycash'], tp=46, is_active=True,
+                      mult=pers(5), add=bl(0.0003))
+        admin.set_fee(currency_id=admin.currency['BTC'], payway_id=admin.payway_id['anycash'], tp=46, is_active=True,
+                      mult=pers(3.5), add=0, merchant_id=user1.merchant1.id)
+        user1.delegate(params={'m_lid': user1.merchant1.lid, 'merch_model': 'sci_pay', 'merch_method': 'create',
+                               'externalid': user1.ex_id(), 'amount': '0.0067', 'in_curr': 'BTC', 'out_curr': 'USD',
+                               'expiry': '7d'})
+        pprint.pprint(user1.resp_delegate)
+        assert user1.resp_delegate['account_amount'] == '22.8'
+        sci_pay_lid = user1.resp_delegate['lid']
+        sci_pay_token = user1.resp_delegate['token']
+        user1.delegate(params={'sci_pay_token': sci_pay_token, 'externalid': user1.ex_id(), 'm_lid': user1.merchant1.lid,
+                               'merch_model': 'sci_subpay', 'merch_method': 'create', 'payway': 'btc', 'amount': '0.006',
+                               'in_curr': 'BTC', 'contact': '+380661111111'})
+        pprint.pprint(user1.resp_delegate)
+        assert (float(user1.resp_delegate['in_amount']) -
+                float(user1.resp_delegate['in_fee_amount'])) == 0.00579
+        admin.set_order_status(lid=user1.resp_delegate['lid'], status=100)
+        admin.set_order_status(lid=sci_pay_lid, status=0, amount_paid=bl(0.006))
+        user1.delegate(params={'m_lid': user1.merchant1.lid,  'merch_model': 'sci_refund', 'merch_method': 'create',
+                               'sci_pay_token': sci_pay_token})
+        # pprint.pprint(user1.resp_delegate)
+        assert user1.resp_delegate['account_amount'] == '0.00579'
+        assert user1.resp_delegate['in_amount'] == '0.006'
+        assert user1.resp_delegate['in_fee_amount'] == '0.00021'
+        assert user1.resp_delegate['orig_amount'] == '0.006'
+        assert user1.resp_delegate['out_amount'] == '0.00579'
+        assert user1.resp_delegate['out_fee_amount'] == '0.00021'
+        assert user1.resp_delegate['payway_name'] == 'anycash'
+        assert 0 == 1
 
     def test_sci_refund_create_13(self):
         """ Refund for sci_pay from VISAMC 0.5 of 1 UAH by MERCHANT. """
@@ -1706,491 +2632,491 @@ class TestSciRefundGet:
         assert user1.merchant1.resp_sci_refund['out_curr'] == 'UAH'
         assert user1.merchant1.resp_sci_refund['out_fee_amount'] == '0'
 
-    # def test_sci_refund_get_2(self):
-    #     """ Calc for sci_pay from PAYEER 1.02 USD by OWNER. """
-    #     admin.set_fee(currency_id=admin.currency['USD'], payway_id=admin.payway_id['payeer'], tp=40, is_active=True)
-    #     admin.set_pwc(pw_id=admin.payway_id['payeer'], currency='USD', is_out=False, is_active=True,
-    #                   tech_min=bl(0.5), tech_max=bl(100))
-    #     user1.delegate(params={'externalid': user1.ex_id(), 'expiry': '7d', 'm_lid': user1.merchant1.lid,
-    #                            'merch_model': 'sci_pay', 'merch_method': 'create',
-    #                            'payway': 'payeer', 'amount': '1.02', 'in_curr': 'USD'})
-    #     # pprint.pprint(user1.resp_delegate)
-    #     sci_pay_lid = user1.resp_delegate['lid']
-    #     sci_pay_token = user1.resp_delegate['token']
-    #     user1.delegate(params={'sci_pay_token': sci_pay_token, 'externalid': user1.ex_id(), 'contact': 'P14812343',
-    #                            'm_lid': user1.merchant1.lid,  'merch_model': 'sci_subpay', 'merch_method': 'create',
-    #                            'payway': 'payeer', 'amount': '0.52', 'in_curr': 'USD'})
-    #     # pprint.pprint(user1.resp_delegate)
-    #     admin.set_order_status(lid=user1.resp_delegate['lid'], status=100)
-    #     admin.set_order_status(lid=sci_pay_lid, status=0, amount_paid=bl(0.52))
-    #     user1.delegate(params={'m_lid': user1.merchant1.lid,  'merch_model': 'sci_refund', 'merch_method': 'create',
-    #                            'sci_pay_token': sci_pay_token})
-    #     refund_token = user1.resp_delegate['token']
-    #     # pprint.pprint(user1.resp_delegate)
-    #     user1.delegate(params={'m_lid': user1.merchant1.lid,  'merch_model': 'sci_refund', 'merch_method': 'get',
-    #                            'sci_pay_token': sci_pay_token})
-    #     # pprint.pprint(user1.resp_delegate)
-    #     assert user1.resp_delegate['account_amount'] == '0.52'
-    #     assert user1.resp_delegate['in_amount'] == '0.52'
-    #     assert user1.resp_delegate['in_curr'] == 'USD'
-    #     assert user1.resp_delegate['in_fee_amount'] == '0'
-    #     assert user1.resp_delegate['orig_amount'] == '0.52'
-    #     assert user1.resp_delegate['out_amount'] == '0.52'
-    #     assert user1.resp_delegate['out_curr'] == 'USD'
-    #     assert user1.resp_delegate['out_fee_amount'] == '0'
-    #     user1.delegate(params={'m_lid': user1.merchant1.lid,  'merch_model': 'sci_refund', 'merch_method': 'get',
-    #                            'refund_token': refund_token})
-    #     # pprint.pprint(user1.resp_delegate)
-    #     assert user1.resp_delegate['account_amount'] == '0.52'
-    #     assert user1.resp_delegate['in_amount'] == '0.52'
-    #     assert user1.resp_delegate['in_curr'] == 'USD'
-    #     assert user1.resp_delegate['in_fee_amount'] == '0'
-    #     assert user1.resp_delegate['orig_amount'] == '0.52'
-    #     assert user1.resp_delegate['out_amount'] == '0.52'
-    #     assert user1.resp_delegate['out_curr'] == 'USD'
-    #     assert user1.resp_delegate['out_fee_amount'] == '0'
-    #
-    # def test_sci_refund_get_3(self):
-    #     """ Calc for sci_pay from BTC 0.99999 BTC by OWNER. """
-    #     admin.set_fee(currency_id=admin.currency['BTC'], payway_id=admin.payway_id['btc'], tp=40, is_active=True)
-    #     admin.set_pwc(pw_id=admin.payway_id['btc'], currency='BTC', is_out=False, is_active=True,
-    #                   tech_min=bl(0.0008), tech_max=bl(1))
-    #     # print('\n', 'user1.merchant1.id', user1.merchant1.id)
-    #     # admin.create_pwmerchactive(merch_id=user1.merchant1.id, payway_id=admin.payway_id['btc'], is_active=True)
-    #     admin.set_pwmerchactive(merch_id=user1.merchant1.id, payway_id=admin.payway_id['btc'], is_active=True)
-    #     user1.delegate(params={'externalid': user1.ex_id(), 'expiry': '7d',  'm_lid': user1.merchant1.lid,
-    #                            'merch_model': 'sci_pay', 'merch_method': 'create',
-    #                            'payway': 'btc', 'amount': '0.99999', 'in_curr': 'BTC'})
-    #     # pprint.pprint(user1.resp_delegate)
-    #     sci_pay_lid = user1.resp_delegate['lid']
-    #     sci_pay_token = user1.resp_delegate['token']
-    #     user1.delegate(params={'sci_pay_token': sci_pay_token, 'externalid': user1.ex_id(), 'm_lid': user1.merchant1.lid,
-    #                            'merch_model': 'sci_subpay', 'merch_method': 'create',
-    #                            'contact': '32LdQGCG1PHYNP2sRkZgrP6UAfQYTSkshx',
-    #                            'payway': 'btc', 'amount': '0.01999', 'in_curr': 'BTC'})
-    #     # pprint.pprint(user1.resp_delegate)
-    #     admin.set_order_status(lid=user1.resp_delegate['lid'], status=100)
-    #     admin.set_order_status(lid=sci_pay_lid, status=0, amount_paid=bl(0.01))
-    #     user1.delegate(params={'sci_pay_token': sci_pay_token, 'externalid': user1.ex_id(), 'm_lid': user1.merchant1.lid,
-    #                            'merch_model': 'sci_subpay', 'merch_method': 'create',
-    #                            'contact': '32LdQGCG1PHYNP2sRkZgrP6UAfQYTSkshx',
-    #                            'payway': 'btc', 'amount': '0.01', 'in_curr': 'BTC'})
-    #     # pprint.pprint(user1.resp_delegate)
-    #     admin.set_order_status(lid=user1.resp_delegate['lid'], status=100)
-    #     admin.set_order_status(lid=sci_pay_lid, status=0, amount_paid=bl(0.02999))
-    #     user1.delegate(params={'m_lid': user1.merchant1.lid,  'merch_model': 'sci_refund', 'merch_method': 'create',
-    #                            'sci_pay_token': sci_pay_token})
-    #     refund_token = user1.resp_delegate['token']
-    #     # pprint.pprint(user1.resp_delegate)
-    #     user1.delegate(params={'m_lid': user1.merchant1.lid,  'merch_model': 'sci_refund', 'merch_method': 'get',
-    #                            'sci_pay_token': sci_pay_token})
-    #     # pprint.pprint(user1.resp_delegate)
-    #     assert user1.resp_delegate['account_amount'] == '0.02999'
-    #     assert user1.resp_delegate['in_amount'] == '0.02999'
-    #     assert user1.resp_delegate['in_curr'] == 'BTC'
-    #     assert user1.resp_delegate['in_fee_amount'] == '0'
-    #     assert user1.resp_delegate['orig_amount'] == '0.02999'
-    #     assert user1.resp_delegate['out_amount'] == '0.02999'
-    #     assert user1.resp_delegate['out_curr'] == 'BTC'
-    #     assert user1.resp_delegate['out_fee_amount'] == '0'
-    #     user1.delegate(params={'m_lid': user1.merchant1.lid,  'merch_model': 'sci_refund', 'merch_method': 'get',
-    #                            'refund_token': refund_token})
-    #     # pprint.pprint(user1.resp_delegate)
-    #     assert user1.resp_delegate['account_amount'] == '0.02999'
-    #     assert user1.resp_delegate['in_amount'] == '0.02999'
-    #     assert user1.resp_delegate['in_curr'] == 'BTC'
-    #     assert user1.resp_delegate['in_fee_amount'] == '0'
-    #     assert user1.resp_delegate['orig_amount'] == '0.02999'
-    #     assert user1.resp_delegate['out_amount'] == '0.02999'
-    #     assert user1.resp_delegate['out_curr'] == 'BTC'
-    #     assert user1.resp_delegate['out_fee_amount'] == '0'
-    #
-    # def test_sci_refund_get_4(self):
-    #     """ Calc for sci_pay from PRIVAT24 10 UAH by MERCHANT with common percent fee 15. """
-    #     admin.set_wallet_amount(balance=bl(0), currency='UAH', merch_lid=user1.merchant1.lid)
-    #     admin.set_fee(currency_id=admin.currency['UAH'], payway_id=admin.payway_id['privat24'], tp=40, is_active=True,
-    #                   mult=pers(15))
-    #     admin.set_pwc(pw_id=admin.payway_id['privat24'], currency='UAH', is_out=False, is_active=True,
-    #                   tech_min=bl(3), tech_max=bl(200))
-    #     admin.set_pwmerchactive(merch_id=user1.merchant1.id, payway_id=admin.payway_id['privat24'], is_active=True)
-    #     user1.merchant1.sci_pay(method='create',
-    #                             params={'externalid': user1.ex_id(), 'payway': 'privat24', 'amount': '10',
-    #                                     'in_curr': 'UAH', 'expiry': '7d'})
-    #     # pprint.pprint(user1.merchant1.resp_sci_pay)
-    #     user1.merchant1.sci_subpay(method='create',
-    #                                params={'sci_pay_token': user1.merchant1.sci_pay_token,
-    #                                        'externalid': user1.ex_id(), 'payway': 'privat24', 'amount': '3',
-    #                                        'in_curr': 'UAH', 'contact': '4731185613244273'})
-    #     # pprint.pprint(user1.merchant1.resp_sci_subpay)
-    #     admin.set_order_status(lid=user1.merchant1.sci_subpay_lid, status=0)
-    #     admin.set_order_status(lid=user1.merchant1.sci_subpay_lid, status=100)
-    #     user1.merchant1.sci_subpay(method='get', params={'sci_subpay_token': user1.merchant1.sci_subpay_token})
-    #     # print('\n', 'sci_subpay status', user1.merchant1.resp_sci_subpay['status'])
-    #     admin.set_order_status(lid=user1.merchant1.sci_pay_lid, status=0, amount_paid=bl(3))
-    #     # admin.set_order_status(lid=user1.merchant1.sci_pay_lid, status=30, amount_paid=0.5)
-    #     user1.merchant1.sci_subpay(method='create',
-    #                                params={'sci_pay_token': user1.merchant1.sci_pay_token,
-    #                                        'externalid': user1.ex_id(), 'payway': 'privat24', 'amount': '9',
-    #                                        'in_curr': 'UAH', 'contact': '4731185613244273'})
-    #     # pprint.pprint(user1.merchant1.resp_sci_subpay)
-    #     admin.set_order_status(lid=user1.merchant1.sci_subpay_lid, status=0)
-    #     admin.set_order_status(lid=user1.merchant1.sci_subpay_lid, status=100)
-    #     admin.set_order_status(lid=user1.merchant1.sci_pay_lid, status=100, amount_paid=bl(11))
-    #     user1.merchant1.balance(curr='UAH')
-    #     # pprint.pprint(user1.merchant1.resp_balance)
-    #     assert user1.merchant1.resp_balance['UAH'] == '8.5'
-    #     user1.merchant1.sci_pay(method='get', params={'o_lid': str(user1.merchant1.sci_pay_lid)})
-    #     # print('\n', 'sci_pay status', user1.merchant1.resp_sci_pay['status'])
-    #     user1.merchant1.sci_refund(method='create', params={'sci_pay_token': user1.merchant1.sci_pay_token})
-    #     # pprint.pprint(user1.merchant1.resp_sci_refund)
-    #     user1.merchant1.sci_refund(method='get', params={'sci_pay_token': user1.merchant1.sci_pay_token})
-    #     # pprint.pprint(user1.merchant1.resp_sci_refund)
-    #     assert user1.merchant1.resp_sci_refund['account_amount'] == '1'
-    #     assert user1.merchant1.resp_sci_refund['in_amount'] == '1'
-    #     assert user1.merchant1.resp_sci_refund['in_curr'] == 'UAH'
-    #     assert user1.merchant1.resp_sci_refund['in_fee_amount'] == '0'
-    #     assert user1.merchant1.resp_sci_refund['orig_amount'] == '1'
-    #     assert user1.merchant1.resp_sci_refund['out_amount'] == '1'
-    #     assert user1.merchant1.resp_sci_refund['out_curr'] == 'UAH'
-    #     assert user1.merchant1.resp_sci_refund['out_fee_amount'] == '0'
-    #     user1.merchant1.sci_refund(method='get', params={'refund_token': user1.merchant1.resp_sci_refund['token']})
-    #     # pprint.pprint(user1.merchant1.resp_sci_refund)
-    #     assert user1.merchant1.resp_sci_refund['account_amount'] == '1'
-    #     assert user1.merchant1.resp_sci_refund['in_amount'] == '1'
-    #     assert user1.merchant1.resp_sci_refund['in_curr'] == 'UAH'
-    #     assert user1.merchant1.resp_sci_refund['in_fee_amount'] == '0'
-    #     assert user1.merchant1.resp_sci_refund['orig_amount'] == '1'
-    #     assert user1.merchant1.resp_sci_refund['out_amount'] == '1'
-    #     assert user1.merchant1.resp_sci_refund['out_curr'] == 'UAH'
-    #     assert user1.merchant1.resp_sci_refund['out_fee_amount'] == '0'
-    #
-    # def test_sci_refund_get_5(self):
-    #     """ Calc for sci_pay from LTC 0.5 BTC by OWNER with common absolute fee 0.001 BTC. """
-    #     admin.set_wallet_amount(balance=bl(0), currency='BTC', merch_lid=user1.merchant1.lid)
-    #     admin.set_fee(currency_id=admin.currency['BTC'], payway_id=admin.payway_id['btc'], tp=40, is_active=True, add=bl(0.001))
-    #     admin.set_pwc(pw_id=admin.payway_id['btc'], currency='BTC', is_out=False, is_active=True,
-    #                   tech_min=bl(0.0008), tech_max=bl(200))
-    #     admin.set_pwmerchactive(merch_id=user1.merchant1.id, payway_id=admin.payway_id['btc'], is_active=True)
-    #     user1.delegate(params={'externalid': user1.ex_id(), 'expiry': '7d', 'm_lid': user1.merchant1.lid,
-    #                            'merch_model': 'sci_pay', 'merch_method': 'create',
-    #                            'payway': 'btc', 'amount': '0.5', 'in_curr': 'BTC'})
-    #     # pprint.pprint(user1.resp_delegate)
-    #     sci_pay_lid = user1.resp_delegate['lid']
-    #     sci_pay_token = user1.resp_delegate['token']
-    #     user1.delegate(params={'sci_pay_token': sci_pay_token, 'externalid': user1.ex_id(), 'm_lid': user1.merchant1.lid,
-    #                            'merch_model': 'sci_subpay', 'merch_method': 'create', 'payway': 'btc', 'amount': '0.4',
-    #                            'in_curr': 'BTC', 'contact': '32LdQGCG1PHYNP2sRkZgrP6UAfQYTSkshx'})
-    #     # pprint.pprint(user1.resp_delegate)
-    #     admin.set_order_status(lid=user1.resp_delegate['lid'], status=100)
-    #     admin.set_order_status(lid=sci_pay_lid, status=0, amount_paid=bl(0.4))
-    #     user1.delegate(params={'sci_pay_token': sci_pay_token, 'externalid': user1.ex_id(), 'm_lid': user1.merchant1.lid,
-    #                            'merch_model': 'sci_subpay', 'merch_method': 'create', 'payway': 'btc', 'amount': '0.1',
-    #                            'in_curr': 'BTC', 'contact': '32LdQGCG1PHYNP2sRkZgrP6UAfQYTSkshx'})
-    #     # pprint.pprint(user1.resp_delegate)
-    #     admin.set_order_status(lid=user1.resp_delegate['lid'], status=100)
-    #     admin.set_order_status(lid=sci_pay_lid, status=100, amount_paid=bl(0.5))
-    #     user1.merchant1.balance(curr='BTC')
-    #     assert user1.merchant1.resp_balance['BTC'] == '0.499'
-    #     user1.delegate(params={'m_lid': user1.merchant1.lid,  'merch_model': 'sci_refund', 'merch_method': 'get',
-    #                            'sci_pay_token': sci_pay_token})
-    #     # pprint.pprint(user1.resp_delegate)
-    #     # print('\n', 'sci_pay_token', sci_pay_token)
-    #     assert user1.resp_delegate['code'] == -32090
-    #     assert user1.resp_delegate['message'] == 'EParamNotFound'
-    #     assert user1.resp_delegate['data']['field'] == 'sci_pay_token'
-    #     assert user1.resp_delegate['data']['reason'] == 'Not found'
-    #
-    # def test_sci_refund_get_6(self):
-    #     """ SCI payin from QIWI 10 RUB by OWNER with common absolute fee 1 RUB and common percent fee 5.5% . """
-    #     admin.set_wallet_amount(balance=0, currency='UAH', merch_lid=user1.merchant1.lid)
-    #     admin.set_fee(currency_id=admin.currency['UAH'], payway_id=admin.payway_id['qiwi'], tp=40, is_active=True,
-    #                   mult=pers(5.5), add=bl(1))
-    #     admin.set_pwc(pw_id=admin.payway_id['qiwi'], currency='UAH', is_out=False, is_active=True,
-    #                   tech_min=bl(0.05), tech_max=bl(1000))
-    #     user1.delegate(params={'m_lid': user1.merchant1.lid, 'merch_model': 'sci_pay', 'merch_method': 'create',
-    #                            'out_curr': None, 'payway': 'qiwi', 'externalid': user1.ex_id(), 'amount': '10',
-    #                            'in_curr': 'UAH', 'expiry': '7d'})
-    #     # pprint.pprint(user1.resp_delegate)
-    #     sci_pay_lid = user1.resp_delegate['lid']
-    #     sci_pay_token = user1.resp_delegate['token']
-    #     user1.delegate(params={'sci_pay_token': sci_pay_token, 'externalid': user1.ex_id(), 'm_lid': user1.merchant1.lid,
-    #                            'merch_model': 'sci_subpay', 'merch_method': 'create',
-    #                            'payway': 'qiwi', 'amount': '4', 'in_curr': 'UAH', 'contact': '+123@gmail.com',
-    #                            'payer': '+380663319145'})
-    #     # pprint.pprint(user1.resp_delegate)
-    #     admin.set_order_status(lid=user1.resp_delegate['lid'], status=100)
-    #     admin.set_order_status(lid=sci_pay_lid, status=0, amount_paid=bl(4))
-    #     user1.delegate(params={'m_lid': user1.merchant1.lid,  'merch_model': 'sci_refund', 'merch_method': 'create',
-    #                            'sci_pay_token': sci_pay_token})
-    #     refund_token = user1.resp_delegate['token']
-    #     # pprint.pprint(user1.resp_delegate)
-    #     user1.delegate(params={'m_lid': user1.merchant1.lid,  'merch_model': 'sci_refund', 'merch_method': 'get',
-    #                            'sci_pay_token': sci_pay_token})
-    #     # pprint.pprint(user1.resp_delegate)
-    #     assert user1.resp_delegate['account_amount'] == '4'
-    #     assert user1.resp_delegate['in_amount'] == '4'
-    #     assert user1.resp_delegate['in_fee_amount'] == '0'
-    #     assert user1.resp_delegate['orig_amount'] == '4'
-    #     assert user1.resp_delegate['out_amount'] == '4'
-    #     assert user1.resp_delegate['out_fee_amount'] == '0'
-    #     user1.delegate(params={'m_lid': user1.merchant1.lid,  'merch_model': 'sci_refund', 'merch_method': 'get',
-    #                            'refund_token': refund_token})
-    #     # pprint.pprint(user1.resp_delegate)
-    #     assert user1.resp_delegate['account_amount'] == '4'
-    #     assert user1.resp_delegate['in_amount'] == '4'
-    #     assert user1.resp_delegate['in_fee_amount'] == '0'
-    #     assert user1.resp_delegate['orig_amount'] == '4'
-    #     assert user1.resp_delegate['out_amount'] == '4'
-    #     assert user1.resp_delegate['out_fee_amount'] == '0'
-    #
-    # def test_sci_refund_get_7(self, _custom_fee, _set_fee):
-    #     """ SCI payin from PERFECT 10 USD by MERCHANT with personal absolute fee 1 USD and personal percent fee 5.5%. """
-    #     admin.set_wallet_amount(balance=bl(2), currency='USD', merch_lid=user1.merchant1.lid)
-    #     admin.set_fee(currency_id=admin.currency['USD'], payway_id=admin.payway_id['perfect'], tp=40, is_active=True)
-    #     admin.set_fee(currency_id=admin.currency['USD'], payway_id=admin.payway_id['perfect'], tp=40, is_active=True,
-    #                   mult=pers(5.5), add=bl(1), merchant_id=user1.merchant1.id)
-    #     admin.set_fee(currency_id=admin.currency['USD'], tp=46, is_active=True, payway_id=admin.payway_id['anycash'])
-    #     admin.set_fee(currency_id=admin.currency['USD'], tp=46, is_active=True, mult=pers(5.5), add=bl(1),
-    #                   merchant_id=user1.merchant1.id, payway_id=admin.payway_id['anycash'])
-    #     admin.set_pwc(pw_id=admin.payway_id['perfect'], currency='USD', is_out=False, is_active=True,
-    #                   tech_min=bl(1), tech_max=bl(1000))
-    #     user1.merchant1.sci_pay(method='create',
-    #                             params={'externalid': user1.ex_id(), 'payway': 'perfect', 'amount': '10',
-    #                                     'in_curr': 'USD', 'expiry': '7d'})
-    #     # pprint.pprint(user1.merchant1.resp_sci_pay)
-    #     user1.merchant1.sci_subpay(method='create',
-    #                                params={'sci_pay_token': user1.merchant1.sci_pay_token,
-    #                                        'externalid': user1.ex_id(), 'payway': 'perfect', 'amount': '20',
-    #                                        'in_curr': 'USD', 'contact': '+380661111111'})
-    #     # pprint.pprint(user1.merchant1.resp_sci_subpay)
-    #     admin.set_order_status(lid=user1.merchant1.sci_subpay_lid, status=100)
-    #     admin.set_order_status(lid=user1.merchant1.sci_pay_lid, status=100, amount_paid=bl(20))
-    #     user1.merchant1.sci_pay(method='get', params={'sci_pay_token': user1.merchant1.sci_pay_token})
-    #     user1.merchant1.sci_refund(method='create', params={'sci_pay_token': user1.merchant1.sci_pay_token})
-    #     # pprint.pprint(user1.merchant1.resp_sci_refund)
-    #     user1.merchant1.sci_refund(method='get', params={'sci_pay_token': user1.merchant1.sci_pay_token})
-    #     # pprint.pprint(user1.merchant1.resp_sci_refund)
-    #     assert user1.merchant1.resp_sci_refund['account_amount'] == '8.45'
-    #     assert user1.merchant1.resp_sci_refund['in_amount'] == '10'
-    #     assert user1.merchant1.resp_sci_refund['in_curr'] == 'USD'
-    #     assert user1.merchant1.resp_sci_refund['in_fee_amount'] == '1.55'
-    #     assert user1.merchant1.resp_sci_refund['orig_amount'] == '10'
-    #     assert user1.merchant1.resp_sci_refund['out_amount'] == '8.45'
-    #     assert user1.merchant1.resp_sci_refund['out_curr'] == 'USD'
-    #     assert user1.merchant1.resp_sci_refund['out_fee_amount'] == '1.55'
-    #     user1.merchant1.sci_refund(method='get', params={'refund_token': user1.merchant1.resp_sci_refund['token']})
-    #     # pprint.pprint(user1.merchant1.resp_sci_refund)
-    #     assert user1.merchant1.resp_sci_refund['account_amount'] == '8.45'
-    #     assert user1.merchant1.resp_sci_refund['in_amount'] == '10'
-    #     assert user1.merchant1.resp_sci_refund['in_curr'] == 'USD'
-    #     assert user1.merchant1.resp_sci_refund['in_fee_amount'] == '1.55'
-    #     assert user1.merchant1.resp_sci_refund['orig_amount'] == '10'
-    #     assert user1.merchant1.resp_sci_refund['out_amount'] == '8.45'
-    #     assert user1.merchant1.resp_sci_refund['out_curr'] == 'USD'
-    #     assert user1.merchant1.resp_sci_refund['out_fee_amount'] == '1.55'
-    #
-    # def test_sci_refund_get_8(self, _custom_fee, _set_fee):
-    #     """ SCI payin from CASH_KIEV 10 USD by OWNER with common absolute fee 2 USD and common percent fee 10%,
-    #         with personal absolute fee 1 USD and personal percent fee 5.5%. """
-    #     admin.set_pwc(pw_id=admin.payway_id['cash_kiev'], currency='USD', is_out=False, is_active=True,
-    #                   tech_min=bl(1), tech_max=bl(100))
-    #     admin.set_fee(currency_id=admin.currency['USD'], payway_id=admin.payway_id['cash_kiev'], tp=40, is_active=True,
-    #                   mult=pers(10), add=bl(2))
-    #     admin.set_fee(currency_id=admin.currency['USD'], payway_id=admin.payway_id['cash_kiev'], tp=40, is_active=True,
-    #                   mult=pers(5.5), add=bl(1), merchant_id=user1.merchant1.id)
-    #     admin.set_fee(currency_id=admin.currency['USD'], payway_id=admin.payway_id['anycash'], tp=46, is_active=True,
-    #                   mult=pers(10), add=bl(2))
-    #     admin.set_fee(currency_id=admin.currency['USD'], payway_id=admin.payway_id['anycash'], tp=46, is_active=True,
-    #                   mult=pers(5.5), add=bl(1), merchant_id=user1.merchant1.id)
-    #     user1.delegate(params={'m_lid': user1.merchant1.lid, 'merch_model': 'sci_pay', 'merch_method': 'create',
-    #                            'out_curr': 'USD', 'expiry': '7d',  'externalid': user1.ex_id(), 'payway': 'cash_kiev',
-    #                            'amount': '20', 'in_curr': 'USD'})
-    #     # pprint.pprint(user1.resp_delegate)
-    #     sci_pay_lid = user1.resp_delegate['lid']
-    #     sci_pay_token = user1.resp_delegate['token']
-    #     user1.delegate(params={'sci_pay_token': sci_pay_token, 'externalid': user1.ex_id(), 'm_lid': user1.merchant1.lid,
-    #                            'merch_model': 'sci_subpay', 'merch_method': 'create',
-    #                            'payway': 'cash_kiev', 'amount': '10', 'in_curr': 'USD', 'contact': '@Bobik19'})
-    #     # pprint.pprint(user1.resp_delegate)
-    #     admin.set_order_status(lid=user1.resp_delegate['lid'], status=100)
-    #     admin.set_order_status(lid=sci_pay_lid, status=0, amount_paid=bl(10))
-    #     user1.delegate(params={'m_lid': user1.merchant1.lid,  'merch_model': 'sci_refund', 'merch_method': 'create',
-    #                            'sci_pay_token': sci_pay_token})
-    #     # pprint.pprint(user1.resp_delegate)
-    #     user1.delegate(params={'m_lid': user1.merchant1.lid,  'merch_model': 'sci_refund', 'merch_method': 'get',
-    #                            'sci_pay_token': sci_pay_token})
-    #     # pprint.pprint(user1.resp_delegate)
-    #     assert user1.resp_delegate['account_amount'] == '8.45'
-    #     assert user1.resp_delegate['in_amount'] == '10'
-    #     assert user1.resp_delegate['in_fee_amount'] == '1.55'
-    #     assert user1.resp_delegate['orig_amount'] == '10'
-    #     assert user1.resp_delegate['out_amount'] == '8.45'
-    #     assert user1.resp_delegate['out_fee_amount'] == '1.55'
-    #     assert user1.resp_delegate['status'] == 'started'
-    #     user1.delegate(params={'m_lid': user1.merchant1.lid,  'merch_model': 'sci_refund', 'merch_method': 'get',
-    #                            'refund_token': user1.resp_delegate['token']})
-    #     # pprint.pprint(user1.resp_delegate)
-    #     assert user1.resp_delegate['account_amount'] == '8.45'
-    #     assert user1.resp_delegate['in_amount'] == '10'
-    #     assert user1.resp_delegate['in_fee_amount'] == '1.55'
-    #     assert user1.resp_delegate['orig_amount'] == '10'
-    #     assert user1.resp_delegate['out_amount'] == '8.45'
-    #     assert user1.resp_delegate['out_fee_amount'] == '1.55'
-    #     assert user1.resp_delegate['status'] == 'started'
-    #     admin.set_fee(currency_id=admin.currency['USD'], payway_id=admin.payway_id['anycash'], tp=46, is_active=False)
-    #     admin.set_fee(currency_id=admin.currency['USD'], payway_id=admin.payway_id['anycash'], tp=46, is_active=False,
-    #                   merchant_id=user1.merchant1.id)
-    #
-    # def test_sci_refund_get_9(self):
-    #     """ SCI payin from QIWI 50 RUB by OWNER with exchange to UAH without any fee. """
-    #     admin.set_wallet_amount(balance=bl(100), currency='RUB', merch_lid=user1.merchant1.lid)
-    #     admin.set_fee(currency_id=admin.currency['RUB'], payway_id=admin.payway_id['qiwi'], tp=40, is_active=True)
-    #     admin.set_pwc(pw_id=admin.payway_id['qiwi'], currency='RUB', is_out=False, is_active=True,
-    #                   tech_min=bl(1), tech_max=bl(100))
-    #     admin.set_rate_exchange(fee=0, rate=bl(2.6666), in_currency='RUB', out_currency='UAH')
-    #     user1.delegate(params={'m_lid': user1.merchant1.lid, 'merch_model': 'sci_pay', 'merch_method': 'create',
-    #                            'out_curr': 'UAH', 'expiry': '7d', 'externalid': user1.ex_id(), 'payway': 'qiwi',
-    #                            'amount': '50', 'in_curr': 'RUB'})
-    #     # pprint.pprint(user1.resp_delegate)
-    #     sci_pay_lid = user1.resp_delegate['lid']
-    #     sci_pay_token = user1.resp_delegate['token']
-    #     user1.delegate(params={'sci_pay_token': sci_pay_token, 'externalid': user1.ex_id(), 'm_lid': user1.merchant1.lid,
-    #                            'merch_model': 'sci_subpay', 'merch_method': 'create', 'payway': 'qiwi', 'amount': '20',
-    #                            'in_curr': 'RUB', 'contact': '@Bobik19', 'payer': '+380663319145'})
-    #     # pprint.pprint(user1.resp_delegate)
-    #     admin.set_order_status(lid=user1.resp_delegate['lid'], status=100)
-    #     admin.set_order_status(lid=sci_pay_lid, status=0, amount_paid=bl(20))
-    #     user1.delegate(params={'m_lid': user1.merchant1.lid,  'merch_model': 'sci_refund', 'merch_method': 'create',
-    #                            'sci_pay_token': sci_pay_token})
-    #     # pprint.pprint(user1.resp_delegate)
-    #     user1.delegate(params={'m_lid': user1.merchant1.lid,  'merch_model': 'sci_refund', 'merch_method': 'get',
-    #                            'sci_pay_token': sci_pay_token})
-    #     # pprint.pprint(user1.resp_delegate)
-    #     assert user1.resp_delegate['account_amount'] == '20'
-    #     assert user1.resp_delegate['in_amount'] == '20'
-    #     assert user1.resp_delegate['in_fee_amount'] == '0'
-    #     assert user1.resp_delegate['in_curr'] == 'RUB'
-    #     assert user1.resp_delegate['orig_amount'] == '20'
-    #     assert user1.resp_delegate['out_amount'] == '20'
-    #     assert user1.resp_delegate['out_fee_amount'] == '0'
-    #     assert user1.resp_delegate['out_curr'] == 'RUB'
-    #     assert user1.resp_delegate['rate'] == None
-    #     user1.delegate(params={'m_lid': user1.merchant1.lid,  'merch_model': 'sci_refund', 'merch_method': 'get',
-    #                            'refund_token': user1.resp_delegate['token']})
-    #     # pprint.pprint(user1.resp_delegate)
-    #     assert user1.resp_delegate['account_amount'] == '20'
-    #     assert user1.resp_delegate['in_amount'] == '20'
-    #     assert user1.resp_delegate['in_fee_amount'] == '0'
-    #     assert user1.resp_delegate['in_curr'] == 'RUB'
-    #     assert user1.resp_delegate['orig_amount'] == '20'
-    #     assert user1.resp_delegate['out_amount'] == '20'
-    #     assert user1.resp_delegate['out_fee_amount'] == '0'
-    #     assert user1.resp_delegate['out_curr'] == 'RUB'
-    #     assert user1.resp_delegate['rate'] == None
-    #
-    # def test_sci_refund_get_10(self, _custom_fee, _disable_personal_exchange_fee):
-    #     """ SCI payin from PAYEER 8.33 USD by MERCHANT with exchange to UAH with common exchange fee 3%,
-    #         with personal exchange fee 1.55%. """
-    #     admin.set_wallet_amount(balance=bl(20), currency='USD', merch_lid=user1.merchant1.lid)
-    #     admin.set_wallet_amount(balance=0, currency='UAH', merch_lid=user1.merchant1.lid)
-    #     admin.set_fee(currency_id=admin.currency['USD'], payway_id=admin.payway_id['payeer'], tp=40, is_active=True)
-    #     admin.set_pwc(pw_id=admin.payway_id['payeer'], currency='USD', is_out=False, is_active=True,
-    #                   tech_min=bl(1), tech_max=bl(100))
-    #     admin.set_rate_exchange(fee=pers(3), rate=bl(28.1999), in_currency='USD', out_currency='UAH')
-    #     admin.set_personal_exchange_fee(fee=pers(1.55), in_curr=admin.currency['USD'], out_curr=admin.currency['UAH'],
-    #                                     is_active=True, merchant_id=user1.merchant1.id)
-    #     user1.merchant1.sci_pay(method='create',
-    #                             params={'externalid': user1.ex_id(), 'payway': 'payeer', 'amount': '8.33',
-    #                                     'in_curr': 'USD', 'out_curr': 'UAH', 'expiry': '7d'})
-    #     # pprint.pprint(user1.merchant1.resp_sci_pay)
-    #     user1.merchant1.sci_subpay(method='create',
-    #                                params={'sci_pay_token': user1.merchant1.sci_pay_token,
-    #                                        'externalid': user1.ex_id(), 'payway': 'payeer', 'amount': '16.66',
-    #                                        'in_curr': 'USD', 'contact': '+380661111111'})
-    #     # pprint.pprint(user1.merchant1.resp_sci_subpay)
-    #     admin.set_order_status(lid=user1.merchant1.sci_subpay_lid, status=0)
-    #     admin.set_order_status(lid=user1.merchant1.sci_subpay_lid, status=100)
-    #     admin.set_order_status(lid=user1.merchant1.sci_pay_lid, status=100, amount_paid=bl(16.66))
-    #     # pprint.pprint(admin.resp_order_status)
-    #     assert user1.merchant1.balance('UAH') == '231.26'
-    #     # pprint.pprint(user1.merchant1.resp_balance)
-    #     user1.merchant1.sci_pay(method='get', params={'sci_pay_token': user1.merchant1.sci_pay_token})
-    #     # pprint.pprint(user1.merchant1.resp_sci_pay)
-    #     user1.merchant1.sci_refund(method='create', params={'sci_pay_token': user1.merchant1.sci_pay_token})
-    #     # pprint.pprint(user1.merchant1.resp_sci_refund)
-    #     user1.merchant1.sci_refund(method='get', params={'sci_pay_token': user1.merchant1.sci_pay_token})
-    #     # pprint.pprint(user1.merchant1.resp_sci_refund)
-    #     assert user1.merchant1.resp_sci_refund['account_amount'] == '8.33'
-    #     assert user1.merchant1.resp_sci_refund['in_amount'] == '8.33'
-    #     assert user1.merchant1.resp_sci_refund['in_curr'] == 'USD'
-    #     assert user1.merchant1.resp_sci_refund['in_fee_amount'] == '0'
-    #     assert user1.merchant1.resp_sci_refund['orig_amount'] == '8.33'
-    #     assert user1.merchant1.resp_sci_refund['out_amount'] == '8.33'
-    #     assert user1.merchant1.resp_sci_refund['out_fee_amount'] == '0'
-    #     assert user1.merchant1.resp_sci_refund['out_curr'] == 'USD'
-    #     user1.merchant1.sci_refund(method='get', params={'refund_token': user1.merchant1.resp_sci_refund['token']})
-    #     # pprint.pprint(user1.merchant1.resp_sci_refund)
-    #     assert user1.merchant1.resp_sci_refund['account_amount'] == '8.33'
-    #     assert user1.merchant1.resp_sci_refund['in_amount'] == '8.33'
-    #     assert user1.merchant1.resp_sci_refund['in_curr'] == 'USD'
-    #     assert user1.merchant1.resp_sci_refund['in_fee_amount'] == '0'
-    #     assert user1.merchant1.resp_sci_refund['orig_amount'] == '8.33'
-    #     assert user1.merchant1.resp_sci_refund['out_amount'] == '8.33'
-    #     assert user1.merchant1.resp_sci_refund['out_fee_amount'] == '0'
-    #     assert user1.merchant1.resp_sci_refund['out_curr'] == 'USD'
-    #
-    # def test_sci_refund_get_11(self, _custom_fee, _disable_personal_exchange_fee):
-    #     """ SCI payin from PRIVAT24 115 UAH by MERCHANT with exchange to USD with common percent operation fee 5%
-    #         with common absolute operation fee 5 UAH, with personal percent operation fee 3.5% with personal
-    #         absolute operation fee 2 UAH, with common exchange fee 4% with personal exchange fee 2%. """
-    #     admin.set_wallet_amount(balance=bl(1), currency='USD', merch_lid=user1.merchant1.lid)
-    #     admin.set_wallet_amount(balance=bl(120), currency='UAH', merch_lid=user1.merchant1.lid)
-    #     admin.set_pwc(pw_id=admin.payway_id['privat24'], currency='UAH', is_out=False, is_active=True,
-    #                   tech_min=bl(1), tech_max=bl(120))
-    #     admin.set_rate_exchange(fee=pers(4), rate=bl(28.1999), in_currency='UAH', out_currency='USD',
-    #                             tech_min=bl(0.01), tech_max=bl(120))
-    #     admin.set_personal_exchange_fee(fee=pers(2), in_curr=admin.currency['UAH'], out_curr=admin.currency['USD'],
-    #                                     is_active=True, merchant_id=user1.merchant1.id)
-    #     admin.set_fee(currency_id=admin.currency['UAH'], payway_id=admin.payway_id['privat24'], tp=40, is_active=True,
-    #                   mult=pers(5), add=bl(5))
-    #     admin.set_fee(currency_id=admin.currency['UAH'], payway_id=admin.payway_id['privat24'], tp=40, is_active=True,
-    #                   mult=pers(3.5), add=bl(2), merchant_id=user1.merchant1.id)
-    #     admin.set_fee(currency_id=admin.currency['UAH'], payway_id=admin.payway_id['anycash'], tp=46, is_active=True,
-    #                   mult=pers(5), add=bl(5))
-    #     admin.set_fee(currency_id=admin.currency['UAH'], payway_id=admin.payway_id['anycash'], tp=46, is_active=True,
-    #                   mult=pers(3.5), add=bl(2), merchant_id=user1.merchant1.id)
-    #     user1.merchant1.sci_pay(method='create',
-    #                             params={'externalid': user1.ex_id(), 'payway': 'privat24', 'amount': '120',
-    #                                     'in_curr': 'UAH', 'out_curr': 'USD', 'expiry': '7d'})
-    #     # pprint.pprint(user1.merchant1.resp_sci_pay)
-    #     user1.merchant1.sci_subpay(method='create',
-    #                                params={'sci_pay_token': user1.merchant1.sci_pay_token,
-    #                                        'externalid': user1.ex_id(), 'payway': 'privat24', 'amount': '115',
-    #                                        'in_curr': 'UAH', 'contact': '+380661111111'})
-    #     # pprint.pprint(user1.merchant1.resp_sci_subpay)
-    #     admin.set_order_status(lid=user1.merchant1.sci_subpay_lid, status=0)
-    #     admin.set_order_status(lid=user1.merchant1.sci_subpay_lid, status=100)
-    #     admin.set_order_status(lid=user1.merchant1.sci_pay_lid, status=0, amount_paid=bl(115))
-    #     user1.merchant1.sci_pay(method='get', params={'sci_pay_token': user1.merchant1.sci_pay_token})
-    #     # pprint.pprint(user1.merchant1.resp_sci_pay)
-    #     user1.merchant1.sci_refund(method='create', params={'sci_pay_token': user1.merchant1.sci_pay_token})
-    #     # pprint.pprint(user1.merchant1.resp_sci_refund)
-    #     user1.merchant1.sci_refund(method='get', params={'sci_pay_token': user1.merchant1.sci_pay_token})
-    #     # pprint.pprint(user1.merchant1.resp_sci_refund)
-    #     assert user1.merchant1.resp_sci_refund['account_amount'] == '108.97'
-    #     assert user1.merchant1.resp_sci_refund['in_amount'] == '115'
-    #     assert user1.merchant1.resp_sci_refund['in_fee_amount'] == '6.03'
-    #     assert user1.merchant1.resp_sci_refund['orig_amount'] == '115'
-    #     assert user1.merchant1.resp_sci_refund['out_amount'] == '108.97'
-    #     assert user1.merchant1.resp_sci_refund['out_fee_amount'] == '6.03'
-    #     user1.merchant1.sci_refund(method='get', params={'refund_token': user1.merchant1.resp_sci_refund['token']})
-    #     # pprint.pprint(user1.merchant1.resp_sci_refund)
-    #     assert user1.merchant1.resp_sci_refund['account_amount'] == '108.97'
-    #     assert user1.merchant1.resp_sci_refund['in_amount'] == '115'
-    #     assert user1.merchant1.resp_sci_refund['in_fee_amount'] == '6.03'
-    #     assert user1.merchant1.resp_sci_refund['orig_amount'] == '115'
-    #     assert user1.merchant1.resp_sci_refund['out_amount'] == '108.97'
-    #     assert user1.merchant1.resp_sci_refund['out_fee_amount'] == '6.03'
+    def test_sci_refund_get_2(self):
+        """ Calc for sci_pay from PAYEER 1.02 USD by OWNER. """
+        admin.set_fee(currency_id=admin.currency['USD'], payway_id=admin.payway_id['payeer'], tp=40, is_active=True)
+        admin.set_pwc(pw_id=admin.payway_id['payeer'], currency='USD', is_out=False, is_active=True,
+                      tech_min=bl(0.5), tech_max=bl(100))
+        user1.delegate(params={'externalid': user1.ex_id(), 'expiry': '7d', 'm_lid': user1.merchant1.lid,
+                               'merch_model': 'sci_pay', 'merch_method': 'create',
+                               'payway': 'payeer', 'amount': '1.02', 'in_curr': 'USD'})
+        # pprint.pprint(user1.resp_delegate)
+        sci_pay_lid = user1.resp_delegate['lid']
+        sci_pay_token = user1.resp_delegate['token']
+        user1.delegate(params={'sci_pay_token': sci_pay_token, 'externalid': user1.ex_id(), 'contact': 'P14812343',
+                               'm_lid': user1.merchant1.lid,  'merch_model': 'sci_subpay', 'merch_method': 'create',
+                               'payway': 'payeer', 'amount': '0.52', 'in_curr': 'USD'})
+        # pprint.pprint(user1.resp_delegate)
+        admin.set_order_status(lid=user1.resp_delegate['lid'], status=100)
+        admin.set_order_status(lid=sci_pay_lid, status=0, amount_paid=bl(0.52))
+        user1.delegate(params={'m_lid': user1.merchant1.lid,  'merch_model': 'sci_refund', 'merch_method': 'create',
+                               'sci_pay_token': sci_pay_token})
+        refund_token = user1.resp_delegate['token']
+        # pprint.pprint(user1.resp_delegate)
+        user1.delegate(params={'m_lid': user1.merchant1.lid,  'merch_model': 'sci_refund', 'merch_method': 'get',
+                               'sci_pay_token': sci_pay_token})
+        # pprint.pprint(user1.resp_delegate)
+        assert user1.resp_delegate['account_amount'] == '0.52'
+        assert user1.resp_delegate['in_amount'] == '0.52'
+        assert user1.resp_delegate['in_curr'] == 'USD'
+        assert user1.resp_delegate['in_fee_amount'] == '0'
+        assert user1.resp_delegate['orig_amount'] == '0.52'
+        assert user1.resp_delegate['out_amount'] == '0.52'
+        assert user1.resp_delegate['out_curr'] == 'USD'
+        assert user1.resp_delegate['out_fee_amount'] == '0'
+        user1.delegate(params={'m_lid': user1.merchant1.lid,  'merch_model': 'sci_refund', 'merch_method': 'get',
+                               'refund_token': refund_token})
+        # pprint.pprint(user1.resp_delegate)
+        assert user1.resp_delegate['account_amount'] == '0.52'
+        assert user1.resp_delegate['in_amount'] == '0.52'
+        assert user1.resp_delegate['in_curr'] == 'USD'
+        assert user1.resp_delegate['in_fee_amount'] == '0'
+        assert user1.resp_delegate['orig_amount'] == '0.52'
+        assert user1.resp_delegate['out_amount'] == '0.52'
+        assert user1.resp_delegate['out_curr'] == 'USD'
+        assert user1.resp_delegate['out_fee_amount'] == '0'
+
+    def test_sci_refund_get_3(self):
+        """ Calc for sci_pay from BTC 0.99999 BTC by OWNER. """
+        admin.set_fee(currency_id=admin.currency['BTC'], payway_id=admin.payway_id['btc'], tp=40, is_active=True)
+        admin.set_pwc(pw_id=admin.payway_id['btc'], currency='BTC', is_out=False, is_active=True,
+                      tech_min=bl(0.0008), tech_max=bl(1))
+        # print('\n', 'user1.merchant1.id', user1.merchant1.id)
+        # admin.create_pwmerchactive(merch_id=user1.merchant1.id, payway_id=admin.payway_id['btc'], is_active=True)
+        admin.set_pwmerchactive(merch_id=user1.merchant1.id, payway_id=admin.payway_id['btc'], is_active=True)
+        user1.delegate(params={'externalid': user1.ex_id(), 'expiry': '7d',  'm_lid': user1.merchant1.lid,
+                               'merch_model': 'sci_pay', 'merch_method': 'create',
+                               'payway': 'btc', 'amount': '0.99999', 'in_curr': 'BTC'})
+        # pprint.pprint(user1.resp_delegate)
+        sci_pay_lid = user1.resp_delegate['lid']
+        sci_pay_token = user1.resp_delegate['token']
+        user1.delegate(params={'sci_pay_token': sci_pay_token, 'externalid': user1.ex_id(), 'm_lid': user1.merchant1.lid,
+                               'merch_model': 'sci_subpay', 'merch_method': 'create',
+                               'contact': '32LdQGCG1PHYNP2sRkZgrP6UAfQYTSkshx',
+                               'payway': 'btc', 'amount': '0.01999', 'in_curr': 'BTC'})
+        # pprint.pprint(user1.resp_delegate)
+        admin.set_order_status(lid=user1.resp_delegate['lid'], status=100)
+        admin.set_order_status(lid=sci_pay_lid, status=0, amount_paid=bl(0.01))
+        user1.delegate(params={'sci_pay_token': sci_pay_token, 'externalid': user1.ex_id(), 'm_lid': user1.merchant1.lid,
+                               'merch_model': 'sci_subpay', 'merch_method': 'create',
+                               'contact': '32LdQGCG1PHYNP2sRkZgrP6UAfQYTSkshx',
+                               'payway': 'btc', 'amount': '0.01', 'in_curr': 'BTC'})
+        # pprint.pprint(user1.resp_delegate)
+        admin.set_order_status(lid=user1.resp_delegate['lid'], status=100)
+        admin.set_order_status(lid=sci_pay_lid, status=0, amount_paid=bl(0.02999))
+        user1.delegate(params={'m_lid': user1.merchant1.lid,  'merch_model': 'sci_refund', 'merch_method': 'create',
+                               'sci_pay_token': sci_pay_token})
+        refund_token = user1.resp_delegate['token']
+        # pprint.pprint(user1.resp_delegate)
+        user1.delegate(params={'m_lid': user1.merchant1.lid,  'merch_model': 'sci_refund', 'merch_method': 'get',
+                               'sci_pay_token': sci_pay_token})
+        # pprint.pprint(user1.resp_delegate)
+        assert user1.resp_delegate['account_amount'] == '0.02999'
+        assert user1.resp_delegate['in_amount'] == '0.02999'
+        assert user1.resp_delegate['in_curr'] == 'BTC'
+        assert user1.resp_delegate['in_fee_amount'] == '0'
+        assert user1.resp_delegate['orig_amount'] == '0.02999'
+        assert user1.resp_delegate['out_amount'] == '0.02999'
+        assert user1.resp_delegate['out_curr'] == 'BTC'
+        assert user1.resp_delegate['out_fee_amount'] == '0'
+        user1.delegate(params={'m_lid': user1.merchant1.lid,  'merch_model': 'sci_refund', 'merch_method': 'get',
+                               'refund_token': refund_token})
+        # pprint.pprint(user1.resp_delegate)
+        assert user1.resp_delegate['account_amount'] == '0.02999'
+        assert user1.resp_delegate['in_amount'] == '0.02999'
+        assert user1.resp_delegate['in_curr'] == 'BTC'
+        assert user1.resp_delegate['in_fee_amount'] == '0'
+        assert user1.resp_delegate['orig_amount'] == '0.02999'
+        assert user1.resp_delegate['out_amount'] == '0.02999'
+        assert user1.resp_delegate['out_curr'] == 'BTC'
+        assert user1.resp_delegate['out_fee_amount'] == '0'
+
+    def test_sci_refund_get_4(self):
+        """ Calc for sci_pay from PRIVAT24 10 UAH by MERCHANT with common percent fee 15. """
+        admin.set_wallet_amount(balance=bl(0), currency='UAH', merch_lid=user1.merchant1.lid)
+        admin.set_fee(currency_id=admin.currency['UAH'], payway_id=admin.payway_id['privat24'], tp=40, is_active=True,
+                      mult=pers(15))
+        admin.set_pwc(pw_id=admin.payway_id['privat24'], currency='UAH', is_out=False, is_active=True,
+                      tech_min=bl(3), tech_max=bl(200))
+        admin.set_pwmerchactive(merch_id=user1.merchant1.id, payway_id=admin.payway_id['privat24'], is_active=True)
+        user1.merchant1.sci_pay(method='create',
+                                params={'externalid': user1.ex_id(), 'payway': 'privat24', 'amount': '10',
+                                        'in_curr': 'UAH', 'expiry': '7d'})
+        # pprint.pprint(user1.merchant1.resp_sci_pay)
+        user1.merchant1.sci_subpay(method='create',
+                                   params={'sci_pay_token': user1.merchant1.sci_pay_token,
+                                           'externalid': user1.ex_id(), 'payway': 'privat24', 'amount': '3',
+                                           'in_curr': 'UAH', 'contact': '4731185613244273'})
+        # pprint.pprint(user1.merchant1.resp_sci_subpay)
+        admin.set_order_status(lid=user1.merchant1.sci_subpay_lid, status=0)
+        admin.set_order_status(lid=user1.merchant1.sci_subpay_lid, status=100)
+        user1.merchant1.sci_subpay(method='get', params={'sci_subpay_token': user1.merchant1.sci_subpay_token})
+        # print('\n', 'sci_subpay status', user1.merchant1.resp_sci_subpay['status'])
+        admin.set_order_status(lid=user1.merchant1.sci_pay_lid, status=0, amount_paid=bl(3))
+        # admin.set_order_status(lid=user1.merchant1.sci_pay_lid, status=30, amount_paid=0.5)
+        user1.merchant1.sci_subpay(method='create',
+                                   params={'sci_pay_token': user1.merchant1.sci_pay_token,
+                                           'externalid': user1.ex_id(), 'payway': 'privat24', 'amount': '9',
+                                           'in_curr': 'UAH', 'contact': '4731185613244273'})
+        # pprint.pprint(user1.merchant1.resp_sci_subpay)
+        admin.set_order_status(lid=user1.merchant1.sci_subpay_lid, status=0)
+        admin.set_order_status(lid=user1.merchant1.sci_subpay_lid, status=100)
+        admin.set_order_status(lid=user1.merchant1.sci_pay_lid, status=100, amount_paid=bl(11))
+        user1.merchant1.balance(curr='UAH')
+        # pprint.pprint(user1.merchant1.resp_balance)
+        assert user1.merchant1.resp_balance['UAH'] == '8.5'
+        user1.merchant1.sci_pay(method='get', params={'o_lid': str(user1.merchant1.sci_pay_lid)})
+        # print('\n', 'sci_pay status', user1.merchant1.resp_sci_pay['status'])
+        user1.merchant1.sci_refund(method='create', params={'sci_pay_token': user1.merchant1.sci_pay_token})
+        # pprint.pprint(user1.merchant1.resp_sci_refund)
+        user1.merchant1.sci_refund(method='get', params={'sci_pay_token': user1.merchant1.sci_pay_token})
+        # pprint.pprint(user1.merchant1.resp_sci_refund)
+        assert user1.merchant1.resp_sci_refund['account_amount'] == '1'
+        assert user1.merchant1.resp_sci_refund['in_amount'] == '1'
+        assert user1.merchant1.resp_sci_refund['in_curr'] == 'UAH'
+        assert user1.merchant1.resp_sci_refund['in_fee_amount'] == '0'
+        assert user1.merchant1.resp_sci_refund['orig_amount'] == '1'
+        assert user1.merchant1.resp_sci_refund['out_amount'] == '1'
+        assert user1.merchant1.resp_sci_refund['out_curr'] == 'UAH'
+        assert user1.merchant1.resp_sci_refund['out_fee_amount'] == '0'
+        user1.merchant1.sci_refund(method='get', params={'refund_token': user1.merchant1.resp_sci_refund['token']})
+        # pprint.pprint(user1.merchant1.resp_sci_refund)
+        assert user1.merchant1.resp_sci_refund['account_amount'] == '1'
+        assert user1.merchant1.resp_sci_refund['in_amount'] == '1'
+        assert user1.merchant1.resp_sci_refund['in_curr'] == 'UAH'
+        assert user1.merchant1.resp_sci_refund['in_fee_amount'] == '0'
+        assert user1.merchant1.resp_sci_refund['orig_amount'] == '1'
+        assert user1.merchant1.resp_sci_refund['out_amount'] == '1'
+        assert user1.merchant1.resp_sci_refund['out_curr'] == 'UAH'
+        assert user1.merchant1.resp_sci_refund['out_fee_amount'] == '0'
+
+    def test_sci_refund_get_5(self):
+        """ Calc for sci_pay from LTC 0.5 BTC by OWNER with common absolute fee 0.001 BTC. """
+        admin.set_wallet_amount(balance=bl(0), currency='BTC', merch_lid=user1.merchant1.lid)
+        admin.set_fee(currency_id=admin.currency['BTC'], payway_id=admin.payway_id['btc'], tp=40, is_active=True, add=bl(0.001))
+        admin.set_pwc(pw_id=admin.payway_id['btc'], currency='BTC', is_out=False, is_active=True,
+                      tech_min=bl(0.0008), tech_max=bl(200))
+        admin.set_pwmerchactive(merch_id=user1.merchant1.id, payway_id=admin.payway_id['btc'], is_active=True)
+        user1.delegate(params={'externalid': user1.ex_id(), 'expiry': '7d', 'm_lid': user1.merchant1.lid,
+                               'merch_model': 'sci_pay', 'merch_method': 'create',
+                               'payway': 'btc', 'amount': '0.5', 'in_curr': 'BTC'})
+        # pprint.pprint(user1.resp_delegate)
+        sci_pay_lid = user1.resp_delegate['lid']
+        sci_pay_token = user1.resp_delegate['token']
+        user1.delegate(params={'sci_pay_token': sci_pay_token, 'externalid': user1.ex_id(), 'm_lid': user1.merchant1.lid,
+                               'merch_model': 'sci_subpay', 'merch_method': 'create', 'payway': 'btc', 'amount': '0.4',
+                               'in_curr': 'BTC', 'contact': '32LdQGCG1PHYNP2sRkZgrP6UAfQYTSkshx'})
+        # pprint.pprint(user1.resp_delegate)
+        admin.set_order_status(lid=user1.resp_delegate['lid'], status=100)
+        admin.set_order_status(lid=sci_pay_lid, status=0, amount_paid=bl(0.4))
+        user1.delegate(params={'sci_pay_token': sci_pay_token, 'externalid': user1.ex_id(), 'm_lid': user1.merchant1.lid,
+                               'merch_model': 'sci_subpay', 'merch_method': 'create', 'payway': 'btc', 'amount': '0.1',
+                               'in_curr': 'BTC', 'contact': '32LdQGCG1PHYNP2sRkZgrP6UAfQYTSkshx'})
+        # pprint.pprint(user1.resp_delegate)
+        admin.set_order_status(lid=user1.resp_delegate['lid'], status=100)
+        admin.set_order_status(lid=sci_pay_lid, status=100, amount_paid=bl(0.5))
+        user1.merchant1.balance(curr='BTC')
+        assert user1.merchant1.resp_balance['BTC'] == '0.499'
+        user1.delegate(params={'m_lid': user1.merchant1.lid,  'merch_model': 'sci_refund', 'merch_method': 'get',
+                               'sci_pay_token': sci_pay_token})
+        # pprint.pprint(user1.resp_delegate)
+        # print('\n', 'sci_pay_token', sci_pay_token)
+        assert user1.resp_delegate['code'] == -32090
+        assert user1.resp_delegate['message'] == 'EParamNotFound'
+        assert user1.resp_delegate['data']['field'] == 'sci_pay_token'
+        assert user1.resp_delegate['data']['reason'] == 'Not found'
+
+    def test_sci_refund_get_6(self):
+        """ SCI payin from QIWI 10 RUB by OWNER with common absolute fee 1 RUB and common percent fee 5.5% . """
+        admin.set_wallet_amount(balance=0, currency='UAH', merch_lid=user1.merchant1.lid)
+        admin.set_fee(currency_id=admin.currency['UAH'], payway_id=admin.payway_id['qiwi'], tp=40, is_active=True,
+                      mult=pers(5.5), add=bl(1))
+        admin.set_pwc(pw_id=admin.payway_id['qiwi'], currency='UAH', is_out=False, is_active=True,
+                      tech_min=bl(0.05), tech_max=bl(1000))
+        user1.delegate(params={'m_lid': user1.merchant1.lid, 'merch_model': 'sci_pay', 'merch_method': 'create',
+                               'out_curr': None, 'payway': 'qiwi', 'externalid': user1.ex_id(), 'amount': '10',
+                               'in_curr': 'UAH', 'expiry': '7d'})
+        # pprint.pprint(user1.resp_delegate)
+        sci_pay_lid = user1.resp_delegate['lid']
+        sci_pay_token = user1.resp_delegate['token']
+        user1.delegate(params={'sci_pay_token': sci_pay_token, 'externalid': user1.ex_id(), 'm_lid': user1.merchant1.lid,
+                               'merch_model': 'sci_subpay', 'merch_method': 'create',
+                               'payway': 'qiwi', 'amount': '4', 'in_curr': 'UAH', 'contact': '+123@gmail.com',
+                               'payer': '+380663319145'})
+        # pprint.pprint(user1.resp_delegate)
+        admin.set_order_status(lid=user1.resp_delegate['lid'], status=100)
+        admin.set_order_status(lid=sci_pay_lid, status=0, amount_paid=bl(4))
+        user1.delegate(params={'m_lid': user1.merchant1.lid,  'merch_model': 'sci_refund', 'merch_method': 'create',
+                               'sci_pay_token': sci_pay_token})
+        refund_token = user1.resp_delegate['token']
+        # pprint.pprint(user1.resp_delegate)
+        user1.delegate(params={'m_lid': user1.merchant1.lid,  'merch_model': 'sci_refund', 'merch_method': 'get',
+                               'sci_pay_token': sci_pay_token})
+        # pprint.pprint(user1.resp_delegate)
+        assert user1.resp_delegate['account_amount'] == '4'
+        assert user1.resp_delegate['in_amount'] == '4'
+        assert user1.resp_delegate['in_fee_amount'] == '0'
+        assert user1.resp_delegate['orig_amount'] == '4'
+        assert user1.resp_delegate['out_amount'] == '4'
+        assert user1.resp_delegate['out_fee_amount'] == '0'
+        user1.delegate(params={'m_lid': user1.merchant1.lid,  'merch_model': 'sci_refund', 'merch_method': 'get',
+                               'refund_token': refund_token})
+        # pprint.pprint(user1.resp_delegate)
+        assert user1.resp_delegate['account_amount'] == '4'
+        assert user1.resp_delegate['in_amount'] == '4'
+        assert user1.resp_delegate['in_fee_amount'] == '0'
+        assert user1.resp_delegate['orig_amount'] == '4'
+        assert user1.resp_delegate['out_amount'] == '4'
+        assert user1.resp_delegate['out_fee_amount'] == '0'
+
+    def test_sci_refund_get_7(self, _custom_fee, _set_fee):
+        """ SCI payin from PERFECT 10 USD by MERCHANT with personal absolute fee 1 USD and personal percent fee 5.5%. """
+        admin.set_wallet_amount(balance=bl(2), currency='USD', merch_lid=user1.merchant1.lid)
+        admin.set_fee(currency_id=admin.currency['USD'], payway_id=admin.payway_id['perfect'], tp=40, is_active=True)
+        admin.set_fee(currency_id=admin.currency['USD'], payway_id=admin.payway_id['perfect'], tp=40, is_active=True,
+                      mult=pers(5.5), add=bl(1), merchant_id=user1.merchant1.id)
+        admin.set_fee(currency_id=admin.currency['USD'], tp=46, is_active=True, payway_id=admin.payway_id['anycash'])
+        admin.set_fee(currency_id=admin.currency['USD'], tp=46, is_active=True, mult=pers(5.5), add=bl(1),
+                      merchant_id=user1.merchant1.id, payway_id=admin.payway_id['anycash'])
+        admin.set_pwc(pw_id=admin.payway_id['perfect'], currency='USD', is_out=False, is_active=True,
+                      tech_min=bl(1), tech_max=bl(1000))
+        user1.merchant1.sci_pay(method='create',
+                                params={'externalid': user1.ex_id(), 'payway': 'perfect', 'amount': '10',
+                                        'in_curr': 'USD', 'expiry': '7d'})
+        # pprint.pprint(user1.merchant1.resp_sci_pay)
+        user1.merchant1.sci_subpay(method='create',
+                                   params={'sci_pay_token': user1.merchant1.sci_pay_token,
+                                           'externalid': user1.ex_id(), 'payway': 'perfect', 'amount': '20',
+                                           'in_curr': 'USD', 'contact': '+380661111111'})
+        # pprint.pprint(user1.merchant1.resp_sci_subpay)
+        admin.set_order_status(lid=user1.merchant1.sci_subpay_lid, status=100)
+        admin.set_order_status(lid=user1.merchant1.sci_pay_lid, status=100, amount_paid=bl(20))
+        user1.merchant1.sci_pay(method='get', params={'sci_pay_token': user1.merchant1.sci_pay_token})
+        user1.merchant1.sci_refund(method='create', params={'sci_pay_token': user1.merchant1.sci_pay_token})
+        # pprint.pprint(user1.merchant1.resp_sci_refund)
+        user1.merchant1.sci_refund(method='get', params={'sci_pay_token': user1.merchant1.sci_pay_token})
+        # pprint.pprint(user1.merchant1.resp_sci_refund)
+        assert user1.merchant1.resp_sci_refund['account_amount'] == '8.45'
+        assert user1.merchant1.resp_sci_refund['in_amount'] == '10'
+        assert user1.merchant1.resp_sci_refund['in_curr'] == 'USD'
+        assert user1.merchant1.resp_sci_refund['in_fee_amount'] == '1.55'
+        assert user1.merchant1.resp_sci_refund['orig_amount'] == '10'
+        assert user1.merchant1.resp_sci_refund['out_amount'] == '8.45'
+        assert user1.merchant1.resp_sci_refund['out_curr'] == 'USD'
+        assert user1.merchant1.resp_sci_refund['out_fee_amount'] == '1.55'
+        user1.merchant1.sci_refund(method='get', params={'refund_token': user1.merchant1.resp_sci_refund['token']})
+        # pprint.pprint(user1.merchant1.resp_sci_refund)
+        assert user1.merchant1.resp_sci_refund['account_amount'] == '8.45'
+        assert user1.merchant1.resp_sci_refund['in_amount'] == '10'
+        assert user1.merchant1.resp_sci_refund['in_curr'] == 'USD'
+        assert user1.merchant1.resp_sci_refund['in_fee_amount'] == '1.55'
+        assert user1.merchant1.resp_sci_refund['orig_amount'] == '10'
+        assert user1.merchant1.resp_sci_refund['out_amount'] == '8.45'
+        assert user1.merchant1.resp_sci_refund['out_curr'] == 'USD'
+        assert user1.merchant1.resp_sci_refund['out_fee_amount'] == '1.55'
+
+    def test_sci_refund_get_8(self, _custom_fee, _set_fee):
+        """ SCI payin from CASH_KIEV 10 USD by OWNER with common absolute fee 2 USD and common percent fee 10%,
+            with personal absolute fee 1 USD and personal percent fee 5.5%. """
+        admin.set_pwc(pw_id=admin.payway_id['cash_kiev'], currency='USD', is_out=False, is_active=True,
+                      tech_min=bl(1), tech_max=bl(100))
+        admin.set_fee(currency_id=admin.currency['USD'], payway_id=admin.payway_id['cash_kiev'], tp=40, is_active=True,
+                      mult=pers(10), add=bl(2))
+        admin.set_fee(currency_id=admin.currency['USD'], payway_id=admin.payway_id['cash_kiev'], tp=40, is_active=True,
+                      mult=pers(5.5), add=bl(1), merchant_id=user1.merchant1.id)
+        admin.set_fee(currency_id=admin.currency['USD'], payway_id=admin.payway_id['anycash'], tp=46, is_active=True,
+                      mult=pers(10), add=bl(2))
+        admin.set_fee(currency_id=admin.currency['USD'], payway_id=admin.payway_id['anycash'], tp=46, is_active=True,
+                      mult=pers(5.5), add=bl(1), merchant_id=user1.merchant1.id)
+        user1.delegate(params={'m_lid': user1.merchant1.lid, 'merch_model': 'sci_pay', 'merch_method': 'create',
+                               'out_curr': 'USD', 'expiry': '7d',  'externalid': user1.ex_id(), 'payway': 'cash_kiev',
+                               'amount': '20', 'in_curr': 'USD'})
+        # pprint.pprint(user1.resp_delegate)
+        sci_pay_lid = user1.resp_delegate['lid']
+        sci_pay_token = user1.resp_delegate['token']
+        user1.delegate(params={'sci_pay_token': sci_pay_token, 'externalid': user1.ex_id(), 'm_lid': user1.merchant1.lid,
+                               'merch_model': 'sci_subpay', 'merch_method': 'create',
+                               'payway': 'cash_kiev', 'amount': '10', 'in_curr': 'USD', 'contact': '@Bobik19'})
+        # pprint.pprint(user1.resp_delegate)
+        admin.set_order_status(lid=user1.resp_delegate['lid'], status=100)
+        admin.set_order_status(lid=sci_pay_lid, status=0, amount_paid=bl(10))
+        user1.delegate(params={'m_lid': user1.merchant1.lid,  'merch_model': 'sci_refund', 'merch_method': 'create',
+                               'sci_pay_token': sci_pay_token})
+        # pprint.pprint(user1.resp_delegate)
+        user1.delegate(params={'m_lid': user1.merchant1.lid,  'merch_model': 'sci_refund', 'merch_method': 'get',
+                               'sci_pay_token': sci_pay_token})
+        # pprint.pprint(user1.resp_delegate)
+        assert user1.resp_delegate['account_amount'] == '8.45'
+        assert user1.resp_delegate['in_amount'] == '10'
+        assert user1.resp_delegate['in_fee_amount'] == '1.55'
+        assert user1.resp_delegate['orig_amount'] == '10'
+        assert user1.resp_delegate['out_amount'] == '8.45'
+        assert user1.resp_delegate['out_fee_amount'] == '1.55'
+        assert user1.resp_delegate['status'] == 'started'
+        user1.delegate(params={'m_lid': user1.merchant1.lid,  'merch_model': 'sci_refund', 'merch_method': 'get',
+                               'refund_token': user1.resp_delegate['token']})
+        # pprint.pprint(user1.resp_delegate)
+        assert user1.resp_delegate['account_amount'] == '8.45'
+        assert user1.resp_delegate['in_amount'] == '10'
+        assert user1.resp_delegate['in_fee_amount'] == '1.55'
+        assert user1.resp_delegate['orig_amount'] == '10'
+        assert user1.resp_delegate['out_amount'] == '8.45'
+        assert user1.resp_delegate['out_fee_amount'] == '1.55'
+        assert user1.resp_delegate['status'] == 'started'
+        admin.set_fee(currency_id=admin.currency['USD'], payway_id=admin.payway_id['anycash'], tp=46, is_active=False)
+        admin.set_fee(currency_id=admin.currency['USD'], payway_id=admin.payway_id['anycash'], tp=46, is_active=False,
+                      merchant_id=user1.merchant1.id)
+
+    def test_sci_refund_get_9(self):
+        """ SCI payin from QIWI 50 RUB by OWNER with exchange to UAH without any fee. """
+        admin.set_wallet_amount(balance=bl(100), currency='RUB', merch_lid=user1.merchant1.lid)
+        admin.set_fee(currency_id=admin.currency['RUB'], payway_id=admin.payway_id['qiwi'], tp=40, is_active=True)
+        admin.set_pwc(pw_id=admin.payway_id['qiwi'], currency='RUB', is_out=False, is_active=True,
+                      tech_min=bl(1), tech_max=bl(100))
+        admin.set_rate_exchange(fee=0, rate=bl(2.6666), in_currency='RUB', out_currency='UAH')
+        user1.delegate(params={'m_lid': user1.merchant1.lid, 'merch_model': 'sci_pay', 'merch_method': 'create',
+                               'out_curr': 'UAH', 'expiry': '7d', 'externalid': user1.ex_id(), 'payway': 'qiwi',
+                               'amount': '50', 'in_curr': 'RUB'})
+        # pprint.pprint(user1.resp_delegate)
+        sci_pay_lid = user1.resp_delegate['lid']
+        sci_pay_token = user1.resp_delegate['token']
+        user1.delegate(params={'sci_pay_token': sci_pay_token, 'externalid': user1.ex_id(), 'm_lid': user1.merchant1.lid,
+                               'merch_model': 'sci_subpay', 'merch_method': 'create', 'payway': 'qiwi', 'amount': '20',
+                               'in_curr': 'RUB', 'contact': '@Bobik19', 'payer': '+380663319145'})
+        # pprint.pprint(user1.resp_delegate)
+        admin.set_order_status(lid=user1.resp_delegate['lid'], status=100)
+        admin.set_order_status(lid=sci_pay_lid, status=0, amount_paid=bl(20))
+        user1.delegate(params={'m_lid': user1.merchant1.lid,  'merch_model': 'sci_refund', 'merch_method': 'create',
+                               'sci_pay_token': sci_pay_token})
+        # pprint.pprint(user1.resp_delegate)
+        user1.delegate(params={'m_lid': user1.merchant1.lid,  'merch_model': 'sci_refund', 'merch_method': 'get',
+                               'sci_pay_token': sci_pay_token})
+        # pprint.pprint(user1.resp_delegate)
+        assert user1.resp_delegate['account_amount'] == '20'
+        assert user1.resp_delegate['in_amount'] == '20'
+        assert user1.resp_delegate['in_fee_amount'] == '0'
+        assert user1.resp_delegate['in_curr'] == 'RUB'
+        assert user1.resp_delegate['orig_amount'] == '20'
+        assert user1.resp_delegate['out_amount'] == '20'
+        assert user1.resp_delegate['out_fee_amount'] == '0'
+        assert user1.resp_delegate['out_curr'] == 'RUB'
+        assert user1.resp_delegate['rate'] == None
+        user1.delegate(params={'m_lid': user1.merchant1.lid,  'merch_model': 'sci_refund', 'merch_method': 'get',
+                               'refund_token': user1.resp_delegate['token']})
+        # pprint.pprint(user1.resp_delegate)
+        assert user1.resp_delegate['account_amount'] == '20'
+        assert user1.resp_delegate['in_amount'] == '20'
+        assert user1.resp_delegate['in_fee_amount'] == '0'
+        assert user1.resp_delegate['in_curr'] == 'RUB'
+        assert user1.resp_delegate['orig_amount'] == '20'
+        assert user1.resp_delegate['out_amount'] == '20'
+        assert user1.resp_delegate['out_fee_amount'] == '0'
+        assert user1.resp_delegate['out_curr'] == 'RUB'
+        assert user1.resp_delegate['rate'] == None
+
+    def test_sci_refund_get_10(self, _custom_fee, _disable_personal_exchange_fee):
+        """ SCI payin from PAYEER 8.33 USD by MERCHANT with exchange to UAH with common exchange fee 3%,
+            with personal exchange fee 1.55%. """
+        admin.set_wallet_amount(balance=bl(20), currency='USD', merch_lid=user1.merchant1.lid)
+        admin.set_wallet_amount(balance=0, currency='UAH', merch_lid=user1.merchant1.lid)
+        admin.set_fee(currency_id=admin.currency['USD'], payway_id=admin.payway_id['payeer'], tp=40, is_active=True)
+        admin.set_pwc(pw_id=admin.payway_id['payeer'], currency='USD', is_out=False, is_active=True,
+                      tech_min=bl(1), tech_max=bl(100))
+        admin.set_rate_exchange(fee=pers(3), rate=bl(28.1999), in_currency='USD', out_currency='UAH')
+        admin.set_personal_exchange_fee(fee=pers(1.55), in_curr=admin.currency['USD'], out_curr=admin.currency['UAH'],
+                                        is_active=True, merchant_id=user1.merchant1.id)
+        user1.merchant1.sci_pay(method='create',
+                                params={'externalid': user1.ex_id(), 'payway': 'payeer', 'amount': '8.33',
+                                        'in_curr': 'USD', 'out_curr': 'UAH', 'expiry': '7d'})
+        # pprint.pprint(user1.merchant1.resp_sci_pay)
+        user1.merchant1.sci_subpay(method='create',
+                                   params={'sci_pay_token': user1.merchant1.sci_pay_token,
+                                           'externalid': user1.ex_id(), 'payway': 'payeer', 'amount': '16.66',
+                                           'in_curr': 'USD', 'contact': '+380661111111'})
+        # pprint.pprint(user1.merchant1.resp_sci_subpay)
+        admin.set_order_status(lid=user1.merchant1.sci_subpay_lid, status=0)
+        admin.set_order_status(lid=user1.merchant1.sci_subpay_lid, status=100)
+        admin.set_order_status(lid=user1.merchant1.sci_pay_lid, status=100, amount_paid=bl(16.66))
+        # pprint.pprint(admin.resp_order_status)
+        assert user1.merchant1.balance('UAH') == '231.26'
+        # pprint.pprint(user1.merchant1.resp_balance)
+        user1.merchant1.sci_pay(method='get', params={'sci_pay_token': user1.merchant1.sci_pay_token})
+        # pprint.pprint(user1.merchant1.resp_sci_pay)
+        user1.merchant1.sci_refund(method='create', params={'sci_pay_token': user1.merchant1.sci_pay_token})
+        # pprint.pprint(user1.merchant1.resp_sci_refund)
+        user1.merchant1.sci_refund(method='get', params={'sci_pay_token': user1.merchant1.sci_pay_token})
+        # pprint.pprint(user1.merchant1.resp_sci_refund)
+        assert user1.merchant1.resp_sci_refund['account_amount'] == '8.33'
+        assert user1.merchant1.resp_sci_refund['in_amount'] == '8.33'
+        assert user1.merchant1.resp_sci_refund['in_curr'] == 'USD'
+        assert user1.merchant1.resp_sci_refund['in_fee_amount'] == '0'
+        assert user1.merchant1.resp_sci_refund['orig_amount'] == '8.33'
+        assert user1.merchant1.resp_sci_refund['out_amount'] == '8.33'
+        assert user1.merchant1.resp_sci_refund['out_fee_amount'] == '0'
+        assert user1.merchant1.resp_sci_refund['out_curr'] == 'USD'
+        user1.merchant1.sci_refund(method='get', params={'refund_token': user1.merchant1.resp_sci_refund['token']})
+        # pprint.pprint(user1.merchant1.resp_sci_refund)
+        assert user1.merchant1.resp_sci_refund['account_amount'] == '8.33'
+        assert user1.merchant1.resp_sci_refund['in_amount'] == '8.33'
+        assert user1.merchant1.resp_sci_refund['in_curr'] == 'USD'
+        assert user1.merchant1.resp_sci_refund['in_fee_amount'] == '0'
+        assert user1.merchant1.resp_sci_refund['orig_amount'] == '8.33'
+        assert user1.merchant1.resp_sci_refund['out_amount'] == '8.33'
+        assert user1.merchant1.resp_sci_refund['out_fee_amount'] == '0'
+        assert user1.merchant1.resp_sci_refund['out_curr'] == 'USD'
+
+    def test_sci_refund_get_11(self, _custom_fee, _disable_personal_exchange_fee):
+        """ SCI payin from PRIVAT24 115 UAH by MERCHANT with exchange to USD with common percent operation fee 5%
+            with common absolute operation fee 5 UAH, with personal percent operation fee 3.5% with personal
+            absolute operation fee 2 UAH, with common exchange fee 4% with personal exchange fee 2%. """
+        admin.set_wallet_amount(balance=bl(1), currency='USD', merch_lid=user1.merchant1.lid)
+        admin.set_wallet_amount(balance=bl(120), currency='UAH', merch_lid=user1.merchant1.lid)
+        admin.set_pwc(pw_id=admin.payway_id['privat24'], currency='UAH', is_out=False, is_active=True,
+                      tech_min=bl(1), tech_max=bl(120))
+        admin.set_rate_exchange(fee=pers(4), rate=bl(28.1999), in_currency='UAH', out_currency='USD',
+                                tech_min=bl(0.01), tech_max=bl(120))
+        admin.set_personal_exchange_fee(fee=pers(2), in_curr=admin.currency['UAH'], out_curr=admin.currency['USD'],
+                                        is_active=True, merchant_id=user1.merchant1.id)
+        admin.set_fee(currency_id=admin.currency['UAH'], payway_id=admin.payway_id['privat24'], tp=40, is_active=True,
+                      mult=pers(5), add=bl(5))
+        admin.set_fee(currency_id=admin.currency['UAH'], payway_id=admin.payway_id['privat24'], tp=40, is_active=True,
+                      mult=pers(3.5), add=bl(2), merchant_id=user1.merchant1.id)
+        admin.set_fee(currency_id=admin.currency['UAH'], payway_id=admin.payway_id['anycash'], tp=46, is_active=True,
+                      mult=pers(5), add=bl(5))
+        admin.set_fee(currency_id=admin.currency['UAH'], payway_id=admin.payway_id['anycash'], tp=46, is_active=True,
+                      mult=pers(3.5), add=bl(2), merchant_id=user1.merchant1.id)
+        user1.merchant1.sci_pay(method='create',
+                                params={'externalid': user1.ex_id(), 'payway': 'privat24', 'amount': '120',
+                                        'in_curr': 'UAH', 'out_curr': 'USD', 'expiry': '7d'})
+        # pprint.pprint(user1.merchant1.resp_sci_pay)
+        user1.merchant1.sci_subpay(method='create',
+                                   params={'sci_pay_token': user1.merchant1.sci_pay_token,
+                                           'externalid': user1.ex_id(), 'payway': 'privat24', 'amount': '115',
+                                           'in_curr': 'UAH', 'contact': '+380661111111'})
+        # pprint.pprint(user1.merchant1.resp_sci_subpay)
+        admin.set_order_status(lid=user1.merchant1.sci_subpay_lid, status=0)
+        admin.set_order_status(lid=user1.merchant1.sci_subpay_lid, status=100)
+        admin.set_order_status(lid=user1.merchant1.sci_pay_lid, status=0, amount_paid=bl(115))
+        user1.merchant1.sci_pay(method='get', params={'sci_pay_token': user1.merchant1.sci_pay_token})
+        # pprint.pprint(user1.merchant1.resp_sci_pay)
+        user1.merchant1.sci_refund(method='create', params={'sci_pay_token': user1.merchant1.sci_pay_token})
+        # pprint.pprint(user1.merchant1.resp_sci_refund)
+        user1.merchant1.sci_refund(method='get', params={'sci_pay_token': user1.merchant1.sci_pay_token})
+        # pprint.pprint(user1.merchant1.resp_sci_refund)
+        assert user1.merchant1.resp_sci_refund['account_amount'] == '108.97'
+        assert user1.merchant1.resp_sci_refund['in_amount'] == '115'
+        assert user1.merchant1.resp_sci_refund['in_fee_amount'] == '6.03'
+        assert user1.merchant1.resp_sci_refund['orig_amount'] == '115'
+        assert user1.merchant1.resp_sci_refund['out_amount'] == '108.97'
+        assert user1.merchant1.resp_sci_refund['out_fee_amount'] == '6.03'
+        user1.merchant1.sci_refund(method='get', params={'refund_token': user1.merchant1.resp_sci_refund['token']})
+        # pprint.pprint(user1.merchant1.resp_sci_refund)
+        assert user1.merchant1.resp_sci_refund['account_amount'] == '108.97'
+        assert user1.merchant1.resp_sci_refund['in_amount'] == '115'
+        assert user1.merchant1.resp_sci_refund['in_fee_amount'] == '6.03'
+        assert user1.merchant1.resp_sci_refund['orig_amount'] == '115'
+        assert user1.merchant1.resp_sci_refund['out_amount'] == '108.97'
+        assert user1.merchant1.resp_sci_refund['out_fee_amount'] == '6.03'
 
     def test_sci_refund_get_12(self, _custom_fee, _disable_personal_exchange_fee):
         """ Payin from BTC 0.0067 BTC by OWNER with exchange to USD with common percent operation fee 5%
@@ -2415,7 +3341,7 @@ class TestSciRefundGet:
         user1.merchant1.sci_refund(method='create', params={'sci_pay_token': user1.merchant1.sci_pay_token})
         # pprint.pprint(user1.merchant1.resp_sci_refund)
         user1.merchant1.sci_refund(method='get', params={'sci_pay_token': user1.merchant1.sci_subpay_token})
-        pprint.pprint(user1.merchant1.resp_sci_refund)
+        # pprint.pprint(user1.merchant1.resp_sci_refund)
         assert user1.merchant1.resp_sci_refund['code'] == -32090
         assert user1.merchant1.resp_sci_refund['data']['field'] == 'sci_pay_token'
         assert user1.merchant1.resp_sci_refund['data']['reason'] == 'Not found'

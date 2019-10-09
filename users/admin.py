@@ -216,7 +216,7 @@ class Admin:
                     ls.append(dct)
             except KeyError:
                 ls.append(dct)
-        print(ls)
+        # print(ls)
         return ls
 
     def get_exchange(self, _filter=None, value=None):
@@ -280,19 +280,18 @@ class Admin:
         for data in data:
             yield dict(zip(fields, data))
 
-
     def set_fee(self, mult=0, add=0, _min=0, _max=0, around='ceil', tp=None, currency_id=None, payway_id=None,
                 is_active=True, merchant_id=None, is_bound=False):
         requests.post(url=self.admin_url,
                       json={'model': 'fee', 'method': 'update',
                             'data': {'fee': {'max': _max, 'add': add, 'm': around, 'mult': mult, 'min': _min},
-                                     'is_active': is_active, 'is_bound': is_bound},
+                                     'is_active': is_active},
                             'selector': {'currency_id': ['=', currency_id], 'payway_id': ['=', payway_id], 'tp': ['=', tp],
-                                         'merchant_id': ['=', merchant_id]}},
+                                         'merchant_id': ['=', merchant_id], 'is_bound': ['=', is_bound]}},
                       headers=self.headers, verify=False)
 
     def create_payway_fee(self, mult=0, add=0, _min=0, _max=0, around='ceil', tp=0, payway_id=None, currency=None,
-                            is_active=False, is_bound=True):
+                          is_active=False, is_bound=True):
         r = requests.post(url=self.admin_url,
                       json={'model': 'fee',
                             'method': 'insert',
@@ -499,10 +498,10 @@ class Admin:
 
 
 if __name__ == '__main__':
-    admin = Admin(token='4edRlyz7MOlCwSuIy_RoaH9KeyDJrBh1lvjNhcOOCizBaQsV7OtTvNeQi_bSeE1Aj0Az')
+    admin = Admin(token='33vbIrwpAV7V4XA8IDagNtz3f_f0auF6N8Wk3xfSM64aAKLWd9ddO7mHBkB4FBVV_4F_')
     # print(list(admin.get_merchants(owner_id=35184372090605)))
-    print(admin.payway_id)
-    print({v: k for k, v in admin.payway_id.items()})
+    admin.set_fee(add=1000000000, around='ceil', tp=0, currency_id=admin.currency['UAH'], payway_id=admin.payway_id['visamc'],
+                  is_active=True, merchant_id=None, is_bound=True)
     # print(admin.get_model(model='merchant', _filter='lid', value=37)[0]['is_active'])
     # admin.set_model(model='merchant', selector={'lid': ['=', 37]}, data={'apiip': ''})
 

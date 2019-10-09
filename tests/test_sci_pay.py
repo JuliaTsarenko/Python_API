@@ -5,6 +5,7 @@ from users.tools import *
 from users.sign import create_sign
 
 
+@pytest.mark.positive
 @pytest.mark.usefixtures('_personal_sci_fee', '_personal_exchange_fee')
 class TestSciPayCalc:
     """ Checking calc sci_pay. """
@@ -173,6 +174,7 @@ class TestSciPayCalc:
         assert user1.merchant1.resp_sci_pay['out_fee_amount'] == '0.83'
 
 
+@pytest.mark.negative
 class TestWrongSciPayCalc:
     """ Testing bad request sci_pay calc. """
 
@@ -301,7 +303,7 @@ class TestWrongSciPayCalc:
     def test_wrong_sci_pay_calc_16(self):
         """ Payin with wrong merchant. """
         data = {'method': 'sci_pay.calc', 'params': {'payway': 'visamc', 'amount': '10', 'in_curr': 'UAH'},
-                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': '01',
@@ -313,7 +315,7 @@ class TestWrongSciPayCalc:
     def test_wrong_sci_pay_calc_17(self):
         """ Payin without merchant. """
         data = {'method': 'sci_pay.calc', 'params': {'payway': 'visamc', 'amount': '10', 'in_curr': 'UAH'},
-                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': None,
@@ -325,7 +327,7 @@ class TestWrongSciPayCalc:
     def test_wrong_sci_pay_calc_18(self):
         """ Payin with wrong sign. """
         data = {'method': 'sci_pay.calc', 'params': {'payway': 'visamc', 'amount': '10', 'in_curr': 'UAH'},
-                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': user1.merchant1.lid,
@@ -337,7 +339,7 @@ class TestWrongSciPayCalc:
     def test_wrong_sci_pay_calc_19(self):
         """ Payin without sign. """
         data = {'method': 'sci_pay.calc', 'params': {'payway': 'visamc', 'amount': '10', 'in_curr': 'UAH'},
-                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': str(user1.merchant1.lid),
@@ -349,7 +351,7 @@ class TestWrongSciPayCalc:
     def test_wrong_sci_pay_calc_20(self):
         """ Payin without utc_time. """
         data = {'method': 'sci_pay.calc', 'params': {'payway': 'visamc', 'amount': '10', 'in_curr': 'UAH'},
-                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': str(user1.merchant1.lid),
@@ -359,6 +361,7 @@ class TestWrongSciPayCalc:
         assert loads(r.text)['error'] == {'code': -32012, 'message': 'EParamHeadersInvalid', 'data': {'field': 'x-utc-now-ms', 'reason': 'Not present'}}
 
 
+@pytest.mark.positive
 @pytest.mark.usefixtures('_personal_sci_fee', '_personal_exchange_fee')
 class TestSciPayParams:
     """ Checking params sci_pay. """
@@ -462,6 +465,7 @@ class TestSciPayParams:
         assert user1.merchant1.resp_sci_pay['rate'] == ['1', '27.7769']
 
 
+@pytest.mark.negative
 class TestWrongSciPayParams:
     """ Testing wrong sci_pay params request. """
 
@@ -526,7 +530,7 @@ class TestWrongSciPayParams:
     def test_wrong_sci_pay_params_10(self):
         """ Getting params for sci_pay with wrong merchant. """
         data = {'method': 'sci_pay.params', 'params': {'payway': 'visamc', 'in_curr': 'UAH', 'out_curr': 'UAH'},
-                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': '01',
@@ -538,7 +542,7 @@ class TestWrongSciPayParams:
     def test_wrong_sci_pay_params_11(self):
         """ Getting params for payin without merchant. """
         data = {'method': 'sci_pay.params', 'params': {'payway': 'visamc', 'in_curr': 'UAH', 'out_curr': 'UAH'},
-                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': None,
@@ -550,7 +554,7 @@ class TestWrongSciPayParams:
     def test_wrong_sci_pay_params_12(self):
         """ Getting params for payin with wrong signature: Api Key from other user. """
         data = {'method': 'sci_pay.params', 'params': {'payway': 'visamc', 'in_curr': 'UAH', 'out_curr': 'UAH'},
-                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': user1.merchant1.lid,
@@ -562,7 +566,7 @@ class TestWrongSciPayParams:
     def test_wrong_sci_pay_params_13(self):
         """ Getting params for payin without signature. """
         data = {'method': 'sci_pay.params', 'params': {'payway': 'visamc', 'in_curr': 'UAH', 'out_curr': 'UAH'},
-                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': user1.merchant1.lid,
@@ -574,7 +578,7 @@ class TestWrongSciPayParams:
     def test_wrong_sci_pay_params_14(self):
         """ Getting params for payin with None x-utc-now-ms. """
         data = {'method': 'sci_pay.params', 'params': {'payway': 'visamc', 'in_curr': 'UAH', 'out_curr': 'UAH'},
-                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': user1.merchant1.lid,
@@ -584,6 +588,7 @@ class TestWrongSciPayParams:
         assert loads(r.text)['error'] == {'code': -32012, 'data': {'field': 'x-utc-now-ms', 'reason': 'Not present'}, 'message': 'EParamHeadersInvalid'}
 
 
+@pytest.mark.positive
 @pytest.mark.usefixtures('_create_sci_pay_order')
 class TestSciPayGet:
     """ Testing sci pay get. """
@@ -621,6 +626,7 @@ class TestSciPayGet:
         assert user1.resp_delegate['outer_orders']['1']['lid'] == user2.merchant1.resp_sci_subpay['lid']
 
 
+@pytest.mark.negative
 @pytest.mark.usefixtures('_create_other_type_order')
 class TestWrongSciPayGet:
     """ Wrong requests to sci_pay get method. """
@@ -660,7 +666,7 @@ class TestWrongSciPayGet:
 
     def test_wrong_sci_pay_get_6(self):
         """ Getting order with not real merchant. """
-        data = {'method': 'sci_pay.get', 'params': {'sci_pay_token': '333'}, 'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+        data = {'method': 'sci_pay.get', 'params': {'sci_pay_token': '333'}, 'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': '01',
@@ -670,7 +676,7 @@ class TestWrongSciPayGet:
 
     def test_wrong_sci_pay_get_7(self):
         """ Getting order with NONE merchant. """
-        data = {'method': 'sci_pay.get', 'params': {'sci_pay_token': '333'}, 'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+        data = {'method': 'sci_pay.get', 'params': {'sci_pay_token': '333'}, 'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': None,
@@ -680,7 +686,7 @@ class TestWrongSciPayGet:
 
     def test_wrong_sci_pay_get_8(self):
         """ Getting order with wrong sign in headers. """
-        data = {'method': 'sci_pay.get', 'params': {'sci_pay_token': '15'}, 'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+        data = {'method': 'sci_pay.get', 'params': {'sci_pay_token': '15'}, 'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': user1.merchant1.lid,
@@ -690,7 +696,7 @@ class TestWrongSciPayGet:
 
     def test_wrong_sci_pay_get_9(self):
         """ Getting order with NONE signature. """
-        data = {'method': 'payin.get', 'params': {'sci_pay_token': '15'}, 'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+        data = {'method': 'payin.get', 'params': {'sci_pay_token': '15'}, 'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': user1.merchant1.lid, 'x-signature': None, 'x-utc-now-ms': time_sent}, verify=False)
@@ -698,7 +704,7 @@ class TestWrongSciPayGet:
 
     def test_wrong_sci_pay_get_10(self):
         """ Getting order without x-utc-now-ms parameter. """
-        data = {'method': 'payin.get', 'params': {'sci_pay_token': '15'}, 'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+        data = {'method': 'payin.get', 'params': {'sci_pay_token': '15'}, 'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': user1.merchant1.lid,
@@ -706,6 +712,7 @@ class TestWrongSciPayGet:
         assert loads(r.text)['error'] == {'code': -32012, 'data': {'field': 'x-utc-now-ms', 'reason': 'Not present'}, 'message': 'EParamHeadersInvalid'}
 
 
+@pytest.mark.positive
 @pytest.mark.usefixtures('_personal_sci_fee', '_personal_exchange_fee')
 class TestSciPayCreate:
     """ Test Sci_pay_creating. """
@@ -916,6 +923,7 @@ class TestSciPayCreate:
         assert user1.resp_delegate['out_fee_amount'] == '0.83'
 
 
+@pytest.mark.negative
 class TestWrongSciPayCreate:
     """ Testing bad sci pay create request. """
 
@@ -1097,7 +1105,7 @@ class TestWrongSciPayCreate:
         """ Payin with wrong merchant. """
         data = {'method': 'sci_pay.create',
                 'params': {'payway': 'visamc', 'amount': '10', 'out_curr': 'UAH', 'externalid': user1.merchant1._id(), 'expiry': '1h'},
-                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': '01',
@@ -1109,7 +1117,7 @@ class TestWrongSciPayCreate:
         """ Payin without merchant. """
         data = {'method': 'sci_pay.create',
                 'params': {'payway': 'visamc', 'amount': '10', 'out_curr': 'UAH', 'externalid': user1.merchant1._id(), 'expiry': '1h'},
-                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': None,
@@ -1121,7 +1129,7 @@ class TestWrongSciPayCreate:
         """ Payin with wrong sign. """
         data = {'method': 'sci_pay.create',
                 'params': {'payway': 'visamc', 'amount': '10', 'out_curr': 'UAH', 'externalid': user1.merchant1._id(), 'expiry': '1h'},
-                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': user1.merchant1.lid,
@@ -1133,7 +1141,7 @@ class TestWrongSciPayCreate:
         """ Payin without sign. """
         data = {'method': 'sci_pay.create',
                 'params': {'payway': 'visamc', 'amount': '10', 'out_curr': 'UAH', 'externalid': user1.merchant1._id(), 'expiry': '1h'},
-                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': str(user1.merchant1.lid), 'x-signature': None, 'x-utc-now-ms': time_sent}, verify=False)
@@ -1144,7 +1152,7 @@ class TestWrongSciPayCreate:
         """ Payin without utc_time. """
         data = {'method': 'sci_pay.create',
                 'params': {'payway': 'visamc', 'amount': '10', 'out_curr': 'UAH', 'externalid': user1.merchant1._id(), 'expiry': '1h'},
-                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': user1.merchant1.lid,
@@ -1154,6 +1162,7 @@ class TestWrongSciPayCreate:
         assert loads(r.text)['error'] == {'code': -32012, 'data': {'field': 'x-utc-now-ms', 'reason': 'Not present'}, 'message': 'EParamHeadersInvalid'}
 
 
+@pytest.mark.positive
 class TestSciPayCancel:
     """ Cancelling sci_pay order"""
 
@@ -1193,6 +1202,7 @@ class TestSciPayCancel:
         assert admin.get_model(model='order', _filter='token', value=user1.merchant1.resp_sci_pay['token'])[0]['status'] == 120
 
 
+@pytest.mark.negative
 class TestWrongSciPayCancel:
     """ Wrong cancelling sci_pay order. """
 
@@ -1258,7 +1268,7 @@ class TestWrongSciPayCancel:
 
     def test_wrong_cancel_sci_pay_order_7(self):
         """ Cancel order with wrong merchant. """
-        data = {'method': 'sci_pay.cancel', 'params': {'sci_pay_token': '333'}, 'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+        data = {'method': 'sci_pay.cancel', 'params': {'sci_pay_token': '333'}, 'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': '01',
@@ -1268,7 +1278,7 @@ class TestWrongSciPayCancel:
 
     def test_wrong_cancel_sci_pay_order_8(self):
         """ Cancel order without merchant. """
-        data = {'method': 'sci_pay.cancel', 'params': {'sci_pay_token': '333'}, 'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+        data = {'method': 'sci_pay.cancel', 'params': {'sci_pay_token': '333'}, 'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': None,
@@ -1278,7 +1288,7 @@ class TestWrongSciPayCancel:
 
     def test_wrong_cancel_sci_pay_order_9(self):
         """ Cancel order with wrong sign. """
-        data = {'method': 'sci_pay.cancel', 'params': {'sci_pay_token': '333'}, 'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+        data = {'method': 'sci_pay.cancel', 'params': {'sci_pay_token': '333'}, 'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': user1.merchant1.lid,
@@ -1288,7 +1298,7 @@ class TestWrongSciPayCancel:
 
     def test_wrong_cancel_sci_pay_order_10(self):
         """ Cancel order without sign. """
-        data = {'method': 'sci_pay.cancel', 'params': {'sci_pay_token': '333'}, 'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+        data = {'method': 'sci_pay.cancel', 'params': {'sci_pay_token': '333'}, 'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': user1.merchant1.lid,
@@ -1299,7 +1309,7 @@ class TestWrongSciPayCancel:
 
     def test_wrong_cancel_sci_pay_order_11(self):
         """ Cancel order with NONE x-utc-now-ms sign. """
-        data = {'method': 'sci_pay.cancel', 'params': {'sci_pay_token': '333'}, 'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+        data = {'method': 'sci_pay.cancel', 'params': {'sci_pay_token': '333'}, 'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': user1.merchant1.lid,
@@ -1308,6 +1318,7 @@ class TestWrongSciPayCancel:
         assert loads(r.text)['error'] == {'code': -32012, 'data': {'field': 'x-utc-now-ms', 'reason': 'Not present'}, 'message': 'EParamHeadersInvalid'}
 
 
+@pytest.mark.positive
 @pytest.mark.usefixtures('_create_sci_pay_list')
 class TestListSciPay:
     """ Testing list sci_pay. """
@@ -1372,6 +1383,7 @@ class TestListSciPay:
         assert adm_ls == us_ls
 
 
+@pytest.mark.negative
 class TestWrongListSciPay:
     """ Wrong request to sci_pay.list. """
 
@@ -1449,7 +1461,7 @@ class TestWrongListSciPay:
     def test_wrong_sci_pay_list_10(self):
         """ Request with wrong merchant. """
         data = {'method': 'sci_pay.list', 'params': {'in_curr': None, 'out_curr': None, 'payway': None, 'first': None, 'count': None},
-                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': '01',
@@ -1461,7 +1473,7 @@ class TestWrongListSciPay:
     def test_wrong_sci_pay_list_11(self):
         """ Request without merchant. """
         data = {'method': 'sci_pay.cancel', 'params': {'in_curr': None, 'out_curr': None, 'payway': None, 'first': None, 'count': None},
-                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': None,
@@ -1473,7 +1485,7 @@ class TestWrongListSciPay:
     def test_wrong_sci_pay_list_12(self):
         """ Request with wrong sign. """
         data = {'method': 'sci_pay.cancel', 'params': {'in_curr': None, 'out_curr': None, 'payway': None, 'first': None, 'count': None},
-                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': user1.merchant1.lid,
@@ -1484,7 +1496,7 @@ class TestWrongListSciPay:
     def test_wrong_sci_pay_list_13(self):
         """ Request without sign. """
         data = {'method': 'sci_pay.list', 'params': {'in_curr': None, 'out_curr': None, 'payway': None, 'first': None, 'count': None},
-                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': user1.merchant1.lid,
@@ -1495,7 +1507,7 @@ class TestWrongListSciPay:
     def test_wrong_sci_pay_list_15(self):
         """ Request without x-utc-now. """
         data = {'method': 'sci_pay.list', 'params': {'in_curr': None, 'out_curr': None, 'payway': None, 'first': None, 'count': None},
-                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': user1.merchant1.lid,

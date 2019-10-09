@@ -216,7 +216,6 @@ class User:
                           json={'method': 'account.update_tz', 'params': {'tz': tz},
                                 'jsonrpc': self.json_rpc, 'id': self.ex_id()},
                           headers=self.headers, verify=False)
-        print('Update tz - ', r.text)
         try:
             self.headers['x-token'] = loads(r.text)['result']['session']['token']
         except KeyError:
@@ -227,7 +226,6 @@ class User:
                           json={'method': 'account.update_lang', 'params': {'lang': lang},
                                 'jsonrpc': self.json_rpc, 'id': self.ex_id()},
                           headers=self.headers, verify=False)
-        print('Update lang - ', r.text)
         try:
             self.headers['x-token'] = loads(r.text)['result']['session']['token']
         except KeyError:
@@ -238,7 +236,6 @@ class User:
                           json={'method': 'account.update_safemode', 'params': {'safemode': safemode},
                                 'jsonrpc': self.json_rpc, 'id': self.ex_id()},
                           headers=self.headers, verify=False)
-        print('Update safemode - ', r.text)
         try:
             self.headers['x-token'] = loads(r.text)['result']['session']['token']
             self.resp_update_safemode = loads(r.text)['result']
@@ -266,7 +263,7 @@ class User:
         r = requests.post(url=self.wapi_url,
                           json={'method': 'merchant.' + method, 'params': params, 'jsonrpc': self.json_rpc, 'id': self.ex_id()},
                           headers=self.headers, verify=False)
-        print(r.text)
+        # pprint.pprint(loads(r.text))
         try:
             self.resp_merchant = loads(r.text)['result']
         except KeyError:
@@ -332,7 +329,7 @@ class User:
     def delegate(self, params):
         data = {'method': 'merchant.delegate', 'params': params, 'jsonrpc': self.json_rpc, 'id': self.ex_id()}
         r = requests.post(url=self.wapi_url, json=data, headers=self.headers, verify=False)
-        print(r.content)
+        # pprint.pprint(loads(r.text))
         try:
             self.resp_delegate = loads(r.text)['result']
         except KeyError:

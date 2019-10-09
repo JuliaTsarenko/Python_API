@@ -5,6 +5,7 @@ from users.tools import *
 from users.sign import create_sign
 
 
+@pytest.mark.positive
 @pytest.mark.usefixtures('_personal_operation_fee', '_personal_exchange_fee')
 class TestPayinCalc:
     """ Checking success payin calc. """
@@ -189,6 +190,7 @@ class TestPayinCalc:
         assert user1.merchant1.resp_payin_calc['out_fee_amount'] == '0.83'
 
 
+@pytest.mark.negative
 class TestWrongPayinCalc:
     """ Testing bad payin calc request. """
 
@@ -291,7 +293,7 @@ class TestWrongPayinCalc:
         """ Payin without in_curr parameter. """
         data = {'method': 'payin.calc',
                 'params': {'payway': 'visamc', 'amount': '10', 'out_curr': 'UAH'},
-                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': str(user1.merchant1.lid),
@@ -305,7 +307,7 @@ class TestWrongPayinCalc:
         """ Payin without payway parameter. """
         data = {'method': 'payin.calc',
                 'params': {'amount': '10', 'in_curr': 'UAH',  'out_curr': 'UAH'},
-                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': str(user1.merchant1.lid),
@@ -319,7 +321,7 @@ class TestWrongPayinCalc:
         """ Payin without amount parameter. """
         data = {'method': 'payin.calc',
                 'params': {'payway': 'visamc', 'in_curr': 'UAH'},
-                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': str(user1.merchant1.lid),
@@ -353,7 +355,7 @@ class TestWrongPayinCalc:
         """ Payin with wrong merchant. """
         data = {'method': 'payin.calc',
                 'params': {'payway': 'visamc', 'amount': '10', 'in_curr': 'UAH'},
-                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': '01',
@@ -367,7 +369,7 @@ class TestWrongPayinCalc:
         """ Payin without merchant. """
         data = {'method': 'payin.calc',
                 'params': {'payway': 'visamc', 'amount': '10', 'in_curr': 'UAH'},
-                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': None,
@@ -381,7 +383,7 @@ class TestWrongPayinCalc:
         """ Payin with wrong sign. """
         data = {'method': 'payin.calc',
                 'params': {'payway': 'visamc', 'amount': '10', 'in_curr': 'UAH'},
-                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': str(user1.merchant1.lid),
@@ -395,7 +397,7 @@ class TestWrongPayinCalc:
         """ Payin without sign. """
         data = {'method': 'payin.calc',
                 'params': {'payway': 'visamc', 'amount': '10', 'in_curr': 'UAH'},
-                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': str(user1.merchant1.lid),
@@ -408,7 +410,7 @@ class TestWrongPayinCalc:
         """ Payin without utc_time. """
         data = {'method': 'payin.calc',
                 'params': {'payway': 'visamc', 'amount': '10', 'in_curr': 'UAH'},
-                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': str(user1.merchant1.lid),
@@ -422,7 +424,7 @@ class TestWrongPayinCalc:
         """ Request with not correct name method. """
         data = {'method': 'payin.calcc',
                 'params': {'payway': 'visamc', 'amount': '10', 'in_curr': 'UAH'},
-                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': str(user1.merchant1.lid),
@@ -759,7 +761,7 @@ class TestWrongPayinCreate:
         """ Payin without in_curr parameter. """
         data = {'method': 'payin.create',
                 'params': {'payway': 'visamc', 'amount': '10', 'out_curr': 'UAH', 'externalid': user1.merchant1._id()},
-                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': str(user1.merchant1.lid),
@@ -773,7 +775,7 @@ class TestWrongPayinCreate:
         """ Payin without payway parameter. """
         data = {'method': 'payin.create',
                 'params': {'amount': '10', 'in_curr': 'UAH',  'out_curr': 'UAH', 'externalid': user1.merchant1._id()},
-                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': str(user1.merchant1.lid),
@@ -787,7 +789,7 @@ class TestWrongPayinCreate:
         """ Payin without externalid parameter. """
         data = {'method': 'payin.create',
                 'params': {'payway': 'visamc', 'amount': '10', 'in_curr': 'UAH',  'out_curr': 'UAH'},
-                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': str(user1.merchant1.lid),
@@ -801,7 +803,7 @@ class TestWrongPayinCreate:
         """ Payin without amount parameter. """
         data = {'method': 'payin.create',
                 'params': {'payway': 'visamc', 'in_curr': 'UAH', 'externalid': user1.merchant1._id()},
-                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': str(user1.merchant1.lid),
@@ -838,7 +840,7 @@ class TestWrongPayinCreate:
         data = {'method': 'sci_pay.create',
                 'params': {'amount': '50', 'in_curr': 'UAH', 'payway': 'visamc',
                            'externalid': ex_id},
-                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         requests.post(url=user1.merchant1.japi_url, json=data,
                       headers={'x-merchant': str(user1.merchant1.lid),
                                'x-signature': create_sign(user1.merchant1.akey, data['params'], time_sent),
@@ -855,7 +857,7 @@ class TestWrongPayinCreate:
         """ Payin with wrong merchant. """
         data = {'method': 'payin.create',
                 'params': {'payway': 'visamc', 'amount': '10', 'out_curr': 'UAH', 'externalid': user1.merchant1._id()},
-                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': '01',
@@ -869,7 +871,7 @@ class TestWrongPayinCreate:
         """ Payin without merchant. """
         data = {'method': 'payin.create',
                 'params': {'payway': 'visamc', 'amount': '10', 'out_curr': 'UAH', 'externalid': user1.merchant1._id()},
-                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': None,
@@ -883,7 +885,7 @@ class TestWrongPayinCreate:
         """ Payin with wrong sign. """
         data = {'method': 'payin.create',
                 'params': {'payway': 'visamc', 'amount': '10', 'out_curr': 'UAH', 'externalid': user1.merchant1._id()},
-                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': str(user1.merchant1.lid),
@@ -896,7 +898,7 @@ class TestWrongPayinCreate:
         """ Payin without sign. """
         data = {'method': 'payin.create',
                 'params': {'payway': 'visamc', 'amount': '10', 'out_curr': 'UAH', 'externalid': user1.merchant1._id()},
-                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': str(user1.merchant1.lid),
@@ -909,7 +911,7 @@ class TestWrongPayinCreate:
         """ Payin without utc_time. """
         data = {'method': 'payin.create',
                 'params': {'payway': 'visamc', 'amount': '10', 'out_curr': 'UAH', 'externalid': user1.merchant1._id()},
-                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': str(user1.merchant1.lid),
@@ -990,7 +992,7 @@ class TestWrongPayinGet:
         """ Getting order without lid parameter. """
         data = {'method': 'payin.get',
                 'params': {},
-                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': str(user1.merchant1.lid),
@@ -1004,7 +1006,7 @@ class TestWrongPayinGet:
         """ Getting order with excess parameter 'par'. """
         data = {'method': 'payin.get',
                 'params': {'o_lid': None, 'par': '123'},
-                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': str(user1.merchant1.lid),
@@ -1017,7 +1019,7 @@ class TestWrongPayinGet:
         """ Getting order with not real merchant. """
         data = {'method': 'payin.get',
                 'params': {'o_lid': None},
-                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': '01',
@@ -1030,7 +1032,7 @@ class TestWrongPayinGet:
         """ Getting order with NONE merchant. """
         data = {'method': 'payin.get',
                 'params': {'o_lid': None},
-                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': None,
@@ -1042,7 +1044,7 @@ class TestWrongPayinGet:
         """ Getting order without merchant in headers. """
         data = {'method': 'payin.get',
                 'params': {'o_lid': '15'},
-                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-signature': create_sign(user1.merchant1.akey, data['params'], time_sent),
@@ -1054,7 +1056,7 @@ class TestWrongPayinGet:
         """ Getting order with wrong signature. """
         data = {'method': 'payin.get',
                 'params': {'o_lid': '15'},
-                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': str(user1.merchant1.lid),
@@ -1066,7 +1068,7 @@ class TestWrongPayinGet:
         """ Getting order with NONE signature. """
         data = {'method': 'payin.get',
                 'params': {'o_lid': '15'},
-                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': str(user1.merchant1.lid),
@@ -1078,7 +1080,7 @@ class TestWrongPayinGet:
         """ Getting order without x-signature parameter. """
         data = {'method': 'payin.get',
                 'params': {'o_lid': '15'},
-                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': str(user1.merchant1.lid),
@@ -1089,7 +1091,7 @@ class TestWrongPayinGet:
         """ Getting order without x-utc-now-ms parameter. """
         data = {'method': 'payin.get',
                 'params': {'o_lid': '15'},
-                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': str(user1.merchant1.lid),
@@ -1100,7 +1102,7 @@ class TestWrongPayinGet:
         """ Getting order with request for wrong method. """
         data = {'method': 'payin.gett',
                 'params': {'o_lid': '15'},
-                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': str(user1.merchant1.lid),
@@ -1274,7 +1276,7 @@ class TestWrongParams:
         """ Getting params for payin without in_curr parameter. """
         data = {'method': 'payin.params',
                 'params': {'payway': 'visamc', 'out_curr': 'UAH'},
-                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': str(user1.merchant1.lid),
@@ -1288,7 +1290,7 @@ class TestWrongParams:
         """ Getting params for payin without payway parameter. """
         data = {'method': 'payin.params',
                 'params': {'in_curr': 'UAH', 'out_curr': 'UAH'},
-                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': str(user1.merchant1.lid),
@@ -1302,7 +1304,7 @@ class TestWrongParams:
         """ Getting params for payin with existing parameter. """
         data = {'method': 'payin.params',
                 'params': {'payway': 'visamc', 'in_curr': 'UAH', 'out_curr': 'UAH', 'par': '123'},
-                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': str(user1.merchant1.lid),
@@ -1316,7 +1318,7 @@ class TestWrongParams:
         """ Getting params for payin with wrong merchant. """
         data = {'method': 'payin.params',
                 'params': {'payway': 'visamc', 'in_curr': 'UAH', 'out_curr': 'UAH'},
-                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': '01',
@@ -1329,7 +1331,7 @@ class TestWrongParams:
         """ Getting params for payin without merchant. """
         data = {'method': 'payin.params',
                 'params': {'payway': 'visamc', 'in_curr': 'UAH', 'out_curr': 'UAH'},
-                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': None,
@@ -1342,7 +1344,7 @@ class TestWrongParams:
         """ Getting params for payin with wrong signature: Api Key from other user. """
         data = {'method': 'payin.params',
                 'params': {'payway': 'visamc', 'in_curr': 'UAH', 'out_curr': 'UAH'},
-                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': str(user1.merchant1.lid),
@@ -1355,7 +1357,7 @@ class TestWrongParams:
         """ Getting params for payin without signature. """
         data = {'method': 'payin.params',
                 'params': {'payway': 'visamc', 'in_curr': 'UAH', 'out_curr': 'UAH'},
-                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': str(user1.merchant1.lid),
@@ -1368,7 +1370,7 @@ class TestWrongParams:
         """ Getting params for payin with None x-utc-now-ms. """
         data = {'method': 'payin.params',
                 'params': {'payway': 'visamc', 'in_curr': 'UAH', 'out_curr': 'UAH'},
-                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': str(user1.merchant1.lid),
@@ -1486,7 +1488,7 @@ class TestWrongVerifyCheque:
     def test_wrong_verify_cheque_6(self):
         """ Request without cheque parameter. """
         data = {'method': 'payin.cheque_verify', 'params': {},
-                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': str(user1.merchant1.lid),
@@ -1499,7 +1501,7 @@ class TestWrongVerifyCheque:
     def test_wrong_verify_cheque_7(self):
         """ Request with existing parameter. """
         data = {'method': 'payin.cheque_verify', 'params': {'cheque': 'EX-CODE_3298543_USDf95e835c8a4a7f9ecd3a0540a99f8ec89900a01b', 'par': '123'},
-                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': str(user1.merchant1.lid),
@@ -1513,7 +1515,7 @@ class TestWrongVerifyCheque:
         """ Request with wrong merchant. """
         data = {'method': 'payin.cheque_verify',
                 'params': {'cheque': 'EX-CODE_3298543_USDf95e835c8a4a7f9ecd3a0540a99f8ec89900a01b'},
-                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': '01',
@@ -1527,7 +1529,7 @@ class TestWrongVerifyCheque:
         """ Request without merchant. """
         data = {'method': 'payin.cheque_verify',
                 'params': {'cheque': 'EX-CODE_3298543_USDf95e835c8a4a7f9ecd3a0540a99f8ec89900a01b'},
-                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': None,
@@ -1541,7 +1543,7 @@ class TestWrongVerifyCheque:
         """ Request without signature. """
         data = {'method': 'payin.cheque_verify',
                 'params': {'cheque': 'EX-CODE_3298543_USDf95e835c8a4a7f9ecd3a0540a99f8ec89900a01b'},
-                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': str(user1.merchant1.lid),
@@ -1555,7 +1557,7 @@ class TestWrongVerifyCheque:
         """ Request with wrong signature: Api Key from other user. """
         data = {'method': 'payin.cheque_verify',
                 'params': {'cheque': 'EX-CODE_3298543_USDf95e835c8a4a7f9ecd3a0540a99f8ec89900a01b'},
-                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': str(user1.merchant1.lid),
@@ -1569,7 +1571,7 @@ class TestWrongVerifyCheque:
         """ Request without utc-now parameter. """
         data = {'method': 'payin.cheque_verify',
                 'params': {'cheque': 'EX-CODE_3298543_USDf95e835c8a4a7f9ecd3a0540a99f8ec89900a01b'},
-                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': str(user1.merchant1.lid),
@@ -1698,7 +1700,7 @@ class TestWrongPayinList:
     def test_wrong_payin_list_7(self):
         """ Request with existing parameter. """
         data = {'method': 'payin.list', 'params':  {'payway': None, 'in_curr': None, 'out_curr': None, 'first': None, 'count': None, 'par': '123'},
-                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': str(user1.merchant1.lid),
@@ -1711,7 +1713,7 @@ class TestWrongPayinList:
     def test_wrong_payin_list_8(self):
         """ Request with wrong merchant. """
         data = {'method': 'payin.list', 'params': {'payway': None, 'in_curr': None, 'out_curr': None, 'first': None, 'count': None},
-                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': '01',
@@ -1723,7 +1725,7 @@ class TestWrongPayinList:
     def test_wrong_payin_list_9(self):
         """ Request with NONE merchant. """
         data = {'method': 'payin.list', 'params': {'payway': None, 'in_curr': None, 'out_curr': None, 'first': None, 'count': None},
-                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': None,
@@ -1735,7 +1737,7 @@ class TestWrongPayinList:
     def test_wrong_payin_list_10(self):
         """ Request without x-merchant parameter. """
         data = {'method': 'payin.list', 'params': {'payway': None, 'in_curr': None, 'out_curr': None, 'first': None, 'count': None},
-                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-signature': create_sign(user1.merchant1.akey, data['params'], time_sent),
@@ -1746,7 +1748,7 @@ class TestWrongPayinList:
     def test_wrong_payin_list_11(self):
         """ Request with wrong sign: used api key from other user. """
         data = {'method': 'payin.list', 'params': {'payway': None, 'in_curr': None, 'out_curr': None, 'first': None, 'count': None},
-                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': str(user1.merchant1.lid),
@@ -1758,7 +1760,7 @@ class TestWrongPayinList:
     def test_wrong_payin_list_12(self):
         """ Request with NONE sign. """
         data = {'method': 'payin.list', 'params': {'payway': None, 'in_curr': None, 'out_curr': None, 'first': None, 'count': None},
-                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': str(user1.merchant1.lid),
@@ -1770,7 +1772,7 @@ class TestWrongPayinList:
     def test_wrong_payin_list_13(self):
         """ Request without x-signature parameter. """
         data = {'method': 'payin.list', 'params': {'payway': None, 'in_curr': None, 'out_curr': None, 'first': None, 'count': None},
-                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': str(user1.merchant1.lid),
@@ -1781,7 +1783,7 @@ class TestWrongPayinList:
     def test_wrong_payin_list_14(self):
         """ Request without x-utc-now-ms parameter. """
         data = {'method': 'payin.list', 'params': {'payway': None, 'in_curr': None, 'out_curr': None, 'first': None, 'count': None},
-                'jsonrpc': 2.0, 'id': user1.merchant1._id()}
+                'jsonrpc': user1.json_rpc, 'id': user1.ex_id()}
         time_sent = user1.merchant1.time_sent()
         r = requests.post(url=user1.merchant1.japi_url, json=data,
                           headers={'x-merchant': str(user1.merchant1.lid),
